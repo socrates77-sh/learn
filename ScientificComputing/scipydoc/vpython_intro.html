@@ -1,0 +1,387 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Visual-制作3D演示动画 &mdash; 用Python做科学计算</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link type="text/css" href="_static/jquery-ui-1.7.2.custom.css" rel="stylesheet" />	
+    <link type="text/css" href="_static/comments.css" rel="stylesheet" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '#',
+        VERSION:     '1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/jquery-ui-1.7.2.custom.min.js"></script>
+    <script type="text/javascript" src="_static/pydoc.js"></script>
+    <link rel="top" title="用Python做科学计算" href="index.html" />
+    <link rel="下一篇" title="OpenCV-图像处理和计算机视觉" href="opencv_intro.html" />
+    <link rel="上一篇" title="Mayavi-更方便的可视化" href="mlab_and_mayavi.html" /> 
+
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-10837468-1");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="opencv_intro.html" title="OpenCV-图像处理和计算机视觉"
+             accesskey="N">下一篇</a></li>
+        <li class="right" >
+          <a href="mlab_and_mayavi.html" title="Mayavi-更方便的可视化"
+             accesskey="P">上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="visual-3d">
+<h1>Visual-制作3D演示动画<a class="headerlink" href="#visual-3d" title="Permalink to this headline">¶</a></h1>
+<p><a class="reference external" href="http://vpython.org">Visual</a> 是Python的一个简单易用的3D图形库，使用它可以快速创建3D场景、动画。和TVTK相比它更加适合于创建交互式的3D场景，而TVTK则更加适合于数据的3D图形化显示。在本节中将通过一个实例简单的介绍如何使用Visual制作3D动画。</p>
+<div class="section" id="id1">
+<h2>场景、物体和照相机<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>先来看一个最简单的例子：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">visual</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">box</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>这个程序的运行结果如下图的左图所示：</p>
+<div class="figure" id="fig-vpythonintro01">
+<img alt="_images/vpython_intro_01.png" src="_images/vpython_intro_01.png" />
+<p class="caption">用鼠标旋转之后，可以看出VPython绘制的立方体</p>
+</div>
+<p>我们先从visual库中载入所有对象，然后通过box()创建一个box类的实例，创建这个实例的同时将产生一标题为VPython的场景窗口。由于我们没有给box传递参数，所创建的立方体的所有属性都是缺省配置：</p>
+<ul class="simple">
+<li>立方体的3D空间的坐标为 0, 0, 0，即坐标原点</li>
+<li>立方体的大小为1, 1, 1</li>
+<li>立方体的颜色为白色</li>
+</ul>
+<p>而场景中的照相机缺省从Z轴的上方往下看（俯视图），缩放比例缺省是正好显示场景中的所有物体。于是我们在场景中看到的是一个刚好充满场景窗口的正方形。</p>
+<div class="topic">
+<p class="topic-title first">照相机</p>
+<p>照相机实际上就是我们观察3D场景的工具，我们通过照相机观察场景中的物体，照相机本身在场景中是不可见的。缩放比例和旋转场景其实都是对照相机进行操作，进行这些操作时，场景中的物体并没有改变，只是我们观察物体的方位改变了。</p>
+</div>
+<p>在场景窗口中，同时按住鼠标左右按键，上下移动鼠标可以进行缩放场景；按住鼠标右键移动鼠标可以旋转场景。右图是进行适当的旋转和缩放之后的效果。我们看到box()确实是创建了一个立方体。</p>
+<p>为了搞清楚照相机的位置和坐标轴之间的关系，让我们运行下面这个小程序：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="kn">from</span> <span class="nn">visual</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">display</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s">u&quot;坐标轴&quot;</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&quot;gb2312&quot;</span><span class="p">),</span> <span class="n">width</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span>
+<span class="n">arrow</span><span class="p">(</span><span class="n">pos</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">))</span>
+<span class="n">arrow</span><span class="p">(</span><span class="n">pos</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">))</span>
+<span class="n">arrow</span><span class="p">(</span><span class="n">pos</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="figure" id="fig-vpythonintro02">
+<img alt="_images/vpython_intro_02.png" src="_images/vpython_intro_02.png" />
+<p class="caption">VPython照相机的缺省位置，红绿蓝分别表示X,Y,Z轴</p>
+</div>
+<p>这段程序中，我们通过调用display()创建一个场景窗口，并且指定了窗口的标题、宽度和高度。标题必须使用Windows系统缺省的编码，因此为了显示中文，需要将unicode转换为gb2312编码。</p>
+<p>调用3次arrow()创建了三个箭头物体，我们通过几个关键字参数配置箭头的属性：</p>
+<ul class="simple">
+<li>箭头的起点坐标用pos关键字参数指定，分别为(1,0,0), (0,1,0), (0,0,1)，坐标用3元组元表示。这三个坐标都在坐标轴上。</li>
+<li>箭头的方向和长度使用axis关键字参数指定，其值为3D空间的矢量，矢量也是用三元组元表示，程序中所用的三个矢量正好是三个坐标轴的方向，长度为1。</li>
+<li>通过color参数指定箭头物体的颜色，颜色也是用三元组元表示，取值范围为0到1，分别表示红、绿、蓝三色的成分。</li>
+</ul>
+<p>通过观察图中的三个箭头的位置，我们可以知道：</p>
+<ul class="simple">
+<li>窗口的中心为坐标原点</li>
+<li>x轴为从左到右</li>
+<li>y轴为从下到上</li>
+<li>z轴为从屏幕里到屏幕外</li>
+</ul>
+<p>因此此时的照相机位于z轴正方向上的某点，方向沿着z轴负方向俯视。</p>
+</div>
+<div class="section" id="id2">
+<h2>简单动画<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>下面让我们来看看如何用visual创建一个简单的3D动画，先看一下完整的程序：</p>
+<div class="highlight-python"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17</pre></div></td><td class="code"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="kn">from</span> <span class="nn">visual</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="n">display</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s">u&quot;简单动画&quot;</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&quot;gb2312&quot;</span><span class="p">),</span> <span class="n">width</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span>
+
+<span class="n">ball</span> <span class="o">=</span> <span class="n">sphere</span><span class="p">(</span><span class="n">pos</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="n">radius</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="o">.</span><span class="n">red</span><span class="p">)</span>
+<span class="n">wall_right</span> <span class="o">=</span> <span class="n">box</span><span class="p">(</span><span class="n">pos</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="o">.</span><span class="n">green</span><span class="p">)</span>
+<span class="n">wall_left</span>  <span class="o">=</span> <span class="n">box</span><span class="p">(</span><span class="n">pos</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="o">.</span><span class="n">green</span><span class="p">)</span>
+
+<span class="n">dt</span> <span class="o">=</span> <span class="mf">0.05</span>
+<span class="n">ball</span><span class="o">.</span><span class="n">velocity</span> <span class="o">=</span> <span class="n">vector</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+<span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+    <span class="n">rate</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="n">dt</span><span class="p">)</span>
+    <span class="n">ball</span><span class="o">.</span><span class="n">pos</span> <span class="o">=</span> <span class="n">ball</span><span class="o">.</span><span class="n">pos</span> <span class="o">+</span> <span class="n">ball</span><span class="o">.</span><span class="n">velocity</span><span class="o">*</span><span class="n">dt</span>
+    <span class="k">if</span> <span class="n">ball</span><span class="o">.</span><span class="n">x</span> <span class="o">&gt;</span> <span class="n">wall_right</span><span class="o">.</span><span class="n">x</span><span class="o">-</span><span class="n">ball</span><span class="o">.</span><span class="n">radius</span> <span class="ow">or</span> <span class="n">ball</span><span class="o">.</span><span class="n">x</span> <span class="o">&lt;</span> <span class="n">wall_left</span><span class="o">.</span><span class="n">x</span><span class="o">+</span><span class="n">ball</span><span class="o">.</span><span class="n">radius</span><span class="p">:</span>
+        <span class="n">ball</span><span class="o">.</span><span class="n">velocity</span><span class="o">.</span><span class="n">x</span> <span class="o">*=</span> <span class="o">-</span><span class="mi">1</span>
+</pre></div>
+</td></tr></table></div>
+<div class="figure" id="fig-vpythonintro03">
+<img alt="_images/vpython_intro_03.png" src="_images/vpython_intro_03.png" />
+<p class="caption">球在板子之间反复运动的简单动画</p>
+</div>
+<p>运行这段程序会出现一个有两块绿色板子和一个红球的窗口，红球在两块板子之间反复运动。</p>
+<p>第6-8行创建了场景中的三个物体：两块绿色的板子(box)和一个红色的球(sphere)。sphere可以通过radius属性设置其半径，而box可以通过size属性设置其x, y, z轴方向的长度。前面提到过axis属性也可以改变box的大小，这两个属性是互相影响的，在用户手册中我们会详细讨论这个问题。</p>
+<p>第10行定义了一个变量dt，我们用它来表示动画中每帧之间的时间间隔。第11行我们给ball添加一个velocity属性，它是一个3D矢量表示球体的速度。请注意velocity不是sphere类固有的属性，是我们为ball物体动态添加的属性。</p>
+<p>第13行开始一个死循环，在这个循环中不断地更新ball的pos属性以实现动画效果，为了控制动画的播放速度，在循环中先调用rate函数。由于dt为0.05秒，因此我们动画速度为每秒20帧。rate函数会让程序等待足够长的时间使得动画播放的帧数接近指定的帧数。</p>
+<p>第15行修改ball的pos属性，加上在dt时间段中ball的位移量。第16, 17行处理和板子的碰撞，因为pos为球的中心坐标，而碰撞点在球的表面，因此处理碰撞时还需要考虑球的半径。确定碰撞之后，只需要将球的速度反转即可。</p>
+<p>由于球的速度为6，而两板之间的间隔为12，因此球从左板移动到右板需要2秒钟时间。</p>
+</div>
+<div class="section" id="id3">
+<h2>盒子中反弹的球<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<p>下面让我们来看一个完整的反弹动画程序。在场景中放置6个半透明的墙面，形成一个正方体，球体的在正方体内部运动反弹，我们可以调整重力加速度(Z方向的加速度)和反弹系数，同时还显示球的速度矢量和运动轨迹。下面是完整的程序：</p>
+<div class="highlight-python"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64</pre></div></td><td class="code"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="kn">from</span> <span class="nn">visual</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="n">display</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s">u&quot;简单动画&quot;</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&quot;gb2312&quot;</span><span class="p">),</span> <span class="n">width</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+
+<span class="c"># 创建球体和6个墙面，墙面设置为半透明，以观察球体的运动轨迹</span>
+<span class="n">ball</span> <span class="o">=</span> <span class="n">sphere</span><span class="p">(</span><span class="n">pos</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="n">radius</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="o">.</span><span class="n">red</span><span class="p">)</span>
+<span class="n">wall_right</span> <span class="o">=</span> <span class="n">box</span><span class="p">(</span><span class="n">pos</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">12</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="o">.</span><span class="n">green</span><span class="p">,</span> <span class="n">opacity</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">)</span>
+<span class="n">wall_left</span>  <span class="o">=</span> <span class="n">box</span><span class="p">(</span><span class="n">pos</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">12</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="o">.</span><span class="n">green</span><span class="p">,</span> <span class="n">opacity</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">)</span>
+<span class="n">wall_front</span> <span class="o">=</span> <span class="n">box</span><span class="p">(</span><span class="n">pos</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mi">12</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="o">.</span><span class="n">green</span><span class="p">,</span> <span class="n">opacity</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">)</span>
+<span class="n">wall_back</span>  <span class="o">=</span> <span class="n">box</span><span class="p">(</span><span class="n">pos</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mi">12</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="o">.</span><span class="n">green</span><span class="p">,</span> <span class="n">opacity</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">)</span>
+<span class="n">wall_bottom</span> <span class="o">=</span> <span class="n">box</span><span class="p">(</span><span class="n">pos</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="o">-</span><span class="mi">6</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="o">.</span><span class="n">green</span><span class="p">,</span> <span class="n">opacity</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">)</span>
+<span class="n">wall_top</span>   <span class="o">=</span> <span class="n">box</span><span class="p">(</span><span class="n">pos</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">6</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="o">.</span><span class="n">green</span><span class="p">,</span> <span class="n">opacity</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">)</span>
+
+<span class="n">dt</span> <span class="o">=</span> <span class="mf">0.05</span>
+<span class="n">g</span> <span class="o">=</span> <span class="mf">9.8</span> <span class="c"># 重力加速度</span>
+<span class="n">f</span> <span class="o">=</span> <span class="mf">0.9</span> <span class="c"># 反弹能量保持系数，1.0表示完全反弹</span>
+<span class="n">ball</span><span class="o">.</span><span class="n">velocity</span> <span class="o">=</span> <span class="n">vector</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">12</span><span class="p">)</span>
+<span class="n">bv</span> <span class="o">=</span> <span class="n">arrow</span><span class="p">(</span><span class="n">pos</span> <span class="o">=</span> <span class="n">ball</span><span class="o">.</span><span class="n">pos</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">ball</span><span class="o">.</span><span class="n">velocity</span><span class="o">*</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="o">.</span><span class="n">yellow</span><span class="p">)</span>
+<span class="n">ball</span><span class="o">.</span><span class="n">trail</span> <span class="o">=</span> <span class="n">curve</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="n">ball</span><span class="o">.</span><span class="n">color</span><span class="p">)</span>
+<span class="n">trail_color</span> <span class="o">=</span> <span class="mi">0</span> <span class="c"># 轨迹的颜色</span>
+
+<span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+    <span class="n">rate</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="n">dt</span><span class="p">)</span>
+
+    <span class="c"># 重力加速度改变z轴方向的速度，不存在反弹时修改速度</span>
+    <span class="n">ball</span><span class="o">.</span><span class="n">velocity</span><span class="o">.</span><span class="n">z</span> <span class="o">-=</span> <span class="n">g</span> <span class="o">*</span> <span class="n">dt</span>
+
+    <span class="c"># 根据速度修改球体的位置</span>
+    <span class="n">ball</span><span class="o">.</span><span class="n">pos</span> <span class="o">+=</span> <span class="n">ball</span><span class="o">.</span><span class="n">velocity</span> <span class="o">*</span> <span class="n">dt</span>
+
+    <span class="c">## 速度为正时判断正方向的墙，速度为负时判断负方向的墙</span>
+    <span class="c">## 处理反弹时需要修正球的位置，使它正好和墙面接触</span>
+    <span class="c"># 处理左右墙的反弹</span>
+    <span class="k">if</span> <span class="n">ball</span><span class="o">.</span><span class="n">velocity</span><span class="o">.</span><span class="n">x</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">ball</span><span class="o">.</span><span class="n">x</span> <span class="o">&gt;=</span> <span class="n">wall_right</span><span class="o">.</span><span class="n">x</span> <span class="o">-</span> <span class="n">ball</span><span class="o">.</span><span class="n">radius</span><span class="p">:</span>
+        <span class="n">ball</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">wall_right</span><span class="o">.</span><span class="n">x</span> <span class="o">-</span> <span class="n">ball</span><span class="o">.</span><span class="n">radius</span>
+        <span class="n">ball</span><span class="o">.</span><span class="n">velocity</span><span class="o">.</span><span class="n">x</span> <span class="o">*=</span> <span class="o">-</span><span class="n">f</span>    
+    <span class="k">if</span> <span class="n">ball</span><span class="o">.</span><span class="n">velocity</span><span class="o">.</span><span class="n">x</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">ball</span><span class="o">.</span><span class="n">x</span> <span class="o">&lt;=</span> <span class="n">wall_left</span><span class="o">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">ball</span><span class="o">.</span><span class="n">radius</span><span class="p">:</span>
+        <span class="n">ball</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">wall_left</span><span class="o">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">ball</span><span class="o">.</span><span class="n">radius</span>
+        <span class="n">ball</span><span class="o">.</span><span class="n">velocity</span><span class="o">.</span><span class="n">x</span> <span class="o">*=</span> <span class="o">-</span><span class="n">f</span>        
+
+    <span class="c"># 处理前后墙的反弹</span>
+    <span class="k">if</span> <span class="n">ball</span><span class="o">.</span><span class="n">velocity</span><span class="o">.</span><span class="n">y</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">ball</span><span class="o">.</span><span class="n">y</span> <span class="o">&gt;=</span> <span class="n">wall_back</span><span class="o">.</span><span class="n">y</span> <span class="o">-</span> <span class="n">ball</span><span class="o">.</span><span class="n">radius</span><span class="p">:</span>
+        <span class="n">ball</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">wall_back</span><span class="o">.</span><span class="n">y</span> <span class="o">-</span> <span class="n">ball</span><span class="o">.</span><span class="n">radius</span>
+        <span class="n">ball</span><span class="o">.</span><span class="n">velocity</span><span class="o">.</span><span class="n">y</span> <span class="o">*=</span> <span class="o">-</span><span class="n">f</span>
+    <span class="k">if</span> <span class="n">ball</span><span class="o">.</span><span class="n">velocity</span><span class="o">.</span><span class="n">y</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">ball</span><span class="o">.</span><span class="n">y</span> <span class="o">&lt;=</span> <span class="n">wall_front</span><span class="o">.</span><span class="n">y</span> <span class="o">+</span> <span class="n">ball</span><span class="o">.</span><span class="n">radius</span><span class="p">:</span>
+        <span class="n">ball</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">wall_front</span><span class="o">.</span><span class="n">y</span> <span class="o">+</span> <span class="n">ball</span><span class="o">.</span><span class="n">radius</span>
+        <span class="n">ball</span><span class="o">.</span><span class="n">velocity</span><span class="o">.</span><span class="n">y</span> <span class="o">*=</span> <span class="o">-</span><span class="n">f</span>
+
+    <span class="c"># 处理上下墙的反弹</span>
+    <span class="k">if</span> <span class="n">ball</span><span class="o">.</span><span class="n">velocity</span><span class="o">.</span><span class="n">z</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">ball</span><span class="o">.</span><span class="n">z</span> <span class="o">&gt;=</span> <span class="n">wall_top</span><span class="o">.</span><span class="n">z</span> <span class="o">-</span> <span class="n">ball</span><span class="o">.</span><span class="n">radius</span><span class="p">:</span>
+        <span class="n">ball</span><span class="o">.</span><span class="n">z</span> <span class="o">=</span> <span class="n">wall_top</span><span class="o">.</span><span class="n">z</span> <span class="o">-</span> <span class="n">ball</span><span class="o">.</span><span class="n">radius</span> 
+        <span class="n">ball</span><span class="o">.</span><span class="n">velocity</span><span class="o">.</span><span class="n">z</span> <span class="o">*=</span> <span class="o">-</span><span class="n">f</span>
+    <span class="k">elif</span> <span class="n">ball</span><span class="o">.</span><span class="n">velocity</span><span class="o">.</span><span class="n">z</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">ball</span><span class="o">.</span><span class="n">z</span> <span class="o">&lt;=</span> <span class="n">wall_bottom</span><span class="o">.</span><span class="n">z</span> <span class="o">+</span> <span class="n">ball</span><span class="o">.</span><span class="n">radius</span><span class="p">:</span>
+        <span class="n">ball</span><span class="o">.</span><span class="n">z</span> <span class="o">=</span> <span class="n">wall_bottom</span><span class="o">.</span><span class="n">z</span> <span class="o">+</span> <span class="n">ball</span><span class="o">.</span><span class="n">radius</span>
+        <span class="n">ball</span><span class="o">.</span><span class="n">velocity</span><span class="o">.</span><span class="n">z</span> <span class="o">*=</span> <span class="o">-</span><span class="n">f</span>
+
+    <span class="c"># 更新速度箭头的位置和方向</span>
+    <span class="n">bv</span><span class="o">.</span><span class="n">pos</span> <span class="o">=</span> <span class="n">ball</span><span class="o">.</span><span class="n">pos</span>
+    <span class="n">bv</span><span class="o">.</span><span class="n">axis</span> <span class="o">=</span> <span class="n">ball</span><span class="o">.</span><span class="n">velocity</span><span class="o">*</span><span class="mf">0.2</span>
+    <span class="c"># 添加球的轨迹点</span>
+    <span class="n">ball</span><span class="o">.</span><span class="n">trail</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="n">pos</span> <span class="o">=</span> <span class="n">ball</span><span class="o">.</span><span class="n">pos</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="p">(</span><span class="n">trail_color</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="n">trail_color</span> <span class="o">+=</span> <span class="mf">1.0</span><span class="o">/</span><span class="mf">30.0</span><span class="o">*</span><span class="n">dt</span> <span class="c"># 30秒后颜色变为全红</span>
+    <span class="k">if</span> <span class="n">trail_color</span> <span class="o">&gt;</span> <span class="mf">1.0</span><span class="p">:</span> <span class="n">trail_color</span> <span class="o">=</span> <span class="mf">1.0</span>
+</pre></div>
+</td></tr></table></div>
+<div class="figure" id="fig-vpythonintro04">
+<img alt="_images/vpython_intro_04.png" src="_images/vpython_intro_04.png" />
+<p class="caption">球在封闭的盒子中反弹的动画</p>
+</div>
+<p>第8-13行创建上下左右前后六个墙面，通过设置其opacity属性，设置其不透明度为0.2。opacity=0.0表示完全透明，opacity=1.0表示完全不透明。</p>
+<p>第19行用arrow()创建了一个箭头物体，它的起始点位置为球体的中心，方向和球体的速度方向相同：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">bv</span> <span class="o">=</span> <span class="n">arrow</span><span class="p">(</span><span class="n">pos</span> <span class="o">=</span> <span class="n">ball</span><span class="o">.</span><span class="n">pos</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">ball</span><span class="o">.</span><span class="n">velocity</span><span class="o">*</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="o">.</span><span class="n">yellow</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>第20行用cureve()创建一个曲线物体，并赋值给球体的trail属性：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">ball</span><span class="o">.</span><span class="n">trail</span> <span class="o">=</span> <span class="n">curve</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="n">ball</span><span class="o">.</span><span class="n">color</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>第27行使用加速度更新球体的速度，第30行使用速度更新球的体位移。</p>
+<p>第35-56行，处理球体和墙壁的碰撞，x, y, z三个方向的碰撞处理方式相同，这里以x方向为例简要说明一下碰撞处理。</p>
+<p>当球体的x轴方向的速度为正时，判断球体是否和正方向的墙壁(右墙)相撞，如果相撞的话则将其x轴方向的速度反向，并且乘以碰撞系数模拟能量损失，同时修改球体的x轴坐标，使得其正好和右墙相接触。球体的x轴方向速度为负时，和左墙进行碰撞检测：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">if</span> <span class="n">ball</span><span class="o">.</span><span class="n">velocity</span><span class="o">.</span><span class="n">x</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">ball</span><span class="o">.</span><span class="n">x</span> <span class="o">&gt;=</span> <span class="n">wall_right</span><span class="o">.</span><span class="n">x</span> <span class="o">-</span> <span class="n">ball</span><span class="o">.</span><span class="n">radius</span><span class="p">:</span>
+    <span class="n">ball</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">wall_right</span><span class="o">.</span><span class="n">x</span> <span class="o">-</span> <span class="n">ball</span><span class="o">.</span><span class="n">radius</span>
+    <span class="n">ball</span><span class="o">.</span><span class="n">velocity</span><span class="o">.</span><span class="n">x</span> <span class="o">*=</span> <span class="o">-</span><span class="n">f</span>
+<span class="k">if</span> <span class="n">ball</span><span class="o">.</span><span class="n">velocity</span><span class="o">.</span><span class="n">x</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">ball</span><span class="o">.</span><span class="n">x</span> <span class="o">&lt;=</span> <span class="n">wall_left</span><span class="o">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">ball</span><span class="o">.</span><span class="n">radius</span><span class="p">:</span>
+    <span class="n">ball</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">wall_left</span><span class="o">.</span><span class="n">x</span> <span class="o">+</span> <span class="n">ball</span><span class="o">.</span><span class="n">radius</span>
+    <span class="n">ball</span><span class="o">.</span><span class="n">velocity</span><span class="o">.</span><span class="n">x</span> <span class="o">*=</span> <span class="o">-</span><span class="n">f</span>
+</pre></div>
+</div>
+<p>第59,60行更新箭头物体的位置和方向以表示球体的速度。第62行将现在的球体的位置添加进球体的轨迹曲线物体。第63,64行更新轨迹的颜色，这样颜色按照随着时间逐渐变红，从黑变红一共需要30秒时间。</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">首页目录</a></h3>
+            <ul>
+<li><a class="reference external" href="#">Visual-制作3D演示动画</a><ul>
+<li><a class="reference external" href="#id1">场景、物体和照相机</a></li>
+<li><a class="reference external" href="#id2">简单动画</a></li>
+<li><a class="reference external" href="#id3">盒子中反弹的球</a></li>
+</ul>
+</li>
+</ul>
+
+            <h4>上一篇文章</h4>
+            <p class="topless"><a href="mlab_and_mayavi.html"
+                                  title="上一篇文章">Mayavi-更方便的可视化</a></p>
+            <h4>下一篇文章</h4>
+            <p class="topless"><a href="opencv_intro.html"
+                                  title="下一篇文章">OpenCV-图像处理和计算机视觉</a></p>
+          <div id="searchbox" style="display: none">
+            <h3>快速搜索</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="搜索" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              中文搜索请尽量用空格分开单个的单词，例如搜索"科学 计算"，而不是"科学计算"
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="opencv_intro.html" title="OpenCV-图像处理和计算机视觉"
+             >下一篇</a></li>
+        <li class="right" >
+          <a href="mlab_and_mayavi.html" title="Mayavi-更方便的可视化"
+             >上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+    &copy; 2009, <a href="http://hyry.dip.jp/blogt.py">HYRY Studio</a>
+      由 <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.4. 编译
+    </div>
+  </body>
+</html>

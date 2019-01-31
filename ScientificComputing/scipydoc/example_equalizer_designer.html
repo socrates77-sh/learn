@@ -1,0 +1,360 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>二次均衡器设计 &mdash; 用Python做科学计算</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link type="text/css" href="_static/jquery-ui-1.7.2.custom.css" rel="stylesheet" />	
+    <link type="text/css" href="_static/comments.css" rel="stylesheet" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '#',
+        VERSION:     '1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/jquery-ui-1.7.2.custom.min.js"></script>
+    <script type="text/javascript" src="_static/pydoc.js"></script>
+    <link rel="top" title="用Python做科学计算" href="index.html" />
+    <link rel="up" title="源程序集" href="example_code_list.html" />
+    <link rel="下一篇" title="单摆摆动周期的计算" href="example_simple_pendulum_period.html" />
+    <link rel="上一篇" title="FFT卷积的速度比较" href="example_spectrum_fft_convolve_timeit.html" /> 
+
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-10837468-1");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="example_simple_pendulum_period.html" title="单摆摆动周期的计算"
+             accesskey="N">下一篇</a></li>
+        <li class="right" >
+          <a href="example_spectrum_fft_convolve_timeit.html" title="FFT卷积的速度比较"
+             accesskey="P">上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li>
+          <li><a href="example_code_list.html" accesskey="U">源程序集</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="id1">
+<h1>二次均衡器设计<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<p>相关文档： <a class="reference external" href="filters.html"><em>数字信号系统</em></a></p>
+<p>用Traits.UI和Chaco制作的二次均衡器的设计工具，用户可以任意添加二次滤波器，并且调整其中心频率、增益和Q值，并即时查看组合之后的最终频率响应。</p>
+<img alt="_images/filter_equalizer_designer.png" src="_images/filter_equalizer_designer.png" />
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">from</span> <span class="nn">enthought.traits.api</span> <span class="kn">import</span> <span class="n">Float</span><span class="p">,</span> <span class="n">HasTraits</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Array</span><span class="p">,</span> <span class="n">on_trait_change</span><span class="p">,</span> <span class="n">Instance</span><span class="p">,</span> <span class="n">Range</span><span class="p">,</span> <span class="n">Button</span>
+<span class="kn">from</span> <span class="nn">enthought.traits.ui.api</span> <span class="kn">import</span> <span class="n">View</span><span class="p">,</span> <span class="n">TableEditor</span><span class="p">,</span> <span class="n">Item</span><span class="p">,</span> <span class="n">Group</span><span class="p">,</span> <span class="n">HGroup</span><span class="p">,</span> <span class="n">VGroup</span><span class="p">,</span> <span class="n">HSplit</span><span class="p">,</span> <span class="n">ScrubberEditor</span><span class="p">,</span> <span class="n">EnumEditor</span>
+<span class="kn">from</span> <span class="nn">enthought.traits.ui.table_column</span> <span class="kn">import</span> <span class="n">ObjectColumn</span>
+<span class="kn">from</span> <span class="nn">enthought.chaco.api</span> <span class="kn">import</span> <span class="n">Plot</span><span class="p">,</span> <span class="n">AbstractPlotData</span><span class="p">,</span> <span class="n">ArrayPlotData</span><span class="p">,</span> <span class="n">VPlotContainer</span>
+<span class="kn">from</span> <span class="nn">enthought.chaco.tools.api</span> <span class="kn">import</span> <span class="n">PanTool</span><span class="p">,</span> <span class="n">ZoomTool</span> 
+<span class="kn">from</span> <span class="nn">enthought.enable.api</span> <span class="kn">import</span> <span class="n">Component</span><span class="p">,</span> <span class="n">ComponentEditor</span>
+<span class="kn">from</span> <span class="nn">enthought.pyface.api</span> <span class="kn">import</span> <span class="n">FileDialog</span><span class="p">,</span> <span class="n">OK</span>
+<span class="kn">import</span> <span class="nn">pickle</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="n">SAMPLING_RATE</span> <span class="o">=</span> <span class="mf">44100.0</span> <span class="c"># 取样频率</span>
+<span class="n">WORN</span> <span class="o">=</span> <span class="mi">1000</span> <span class="c"># 频率响应曲线的点数</span>
+
+<span class="c"># 对数圆频率数组</span>
+<span class="n">W</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="mi">10</span><span class="o">/</span><span class="n">SAMPLING_RATE</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">),</span> <span class="n">WORN</span><span class="p">)</span>
+
+<span class="c"># 对数频率数组</span>
+<span class="n">FREQS</span> <span class="o">=</span> <span class="n">W</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">SAMPLING_RATE</span>
+
+<span class="c"># 候选频率</span>
+<span class="n">EQ_FREQS</span> <span class="o">=</span> <span class="p">[</span><span class="mf">20.0</span><span class="p">,</span><span class="mf">25.2</span><span class="p">,</span><span class="mf">31.7</span><span class="p">,</span><span class="mf">40.0</span><span class="p">,</span><span class="mf">50.4</span><span class="p">,</span><span class="mf">63.5</span><span class="p">,</span><span class="mf">80.0</span><span class="p">,</span><span class="mf">100.8</span><span class="p">,</span>
+	<span class="mf">127.0</span><span class="p">,</span><span class="mf">160.0</span><span class="p">,</span><span class="mf">201.6</span><span class="p">,</span><span class="mf">254.0</span><span class="p">,</span><span class="mf">320.0</span><span class="p">,</span><span class="mf">403.2</span><span class="p">,</span><span class="mf">508.0</span><span class="p">,</span><span class="mf">640.0</span><span class="p">,</span>
+	<span class="mf">806.3</span><span class="p">,</span><span class="mf">1015.9</span><span class="p">,</span><span class="mf">1280.0</span><span class="p">,</span><span class="mf">1612.7</span><span class="p">,</span><span class="mf">2031.9</span><span class="p">,</span><span class="mf">2560.0</span><span class="p">,</span><span class="mf">3225.4</span><span class="p">,</span>
+	<span class="mf">4063.7</span><span class="p">,</span>	<span class="mf">5120.0</span><span class="p">,</span>	<span class="mf">6450.8</span><span class="p">,</span>	<span class="mf">8127.5</span><span class="p">,</span>	<span class="mf">10240.0</span><span class="p">,</span><span class="mf">12901.6</span><span class="p">,</span>
+	<span class="mf">16255.0</span><span class="p">,</span><span class="mf">20480.0</span><span class="p">,]</span>
+
+<span class="k">def</span> <span class="nf">scrubber</span><span class="p">(</span><span class="n">inc</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;创建不同增量的ScrubberEditor&#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">ScrubberEditor</span><span class="p">(</span>
+        <span class="n">hover_color</span>  <span class="o">=</span> <span class="mh">0xFFFFFF</span><span class="p">,</span> 
+        <span class="n">active_color</span> <span class="o">=</span> <span class="mh">0xA0CD9E</span><span class="p">,</span> 
+        <span class="n">border_color</span> <span class="o">=</span> <span class="mh">0x808080</span><span class="p">,</span>
+        <span class="n">increment</span> <span class="o">=</span> <span class="n">inc</span>
+    <span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">myfreqz</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">w</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;计算滤波器在w个点的频率响应&#39;&#39;&#39;</span>
+    <span class="n">zm1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">w</span><span class="p">)</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyval</span><span class="p">(</span><span class="n">b</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">zm1</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">polyval</span><span class="p">(</span><span class="n">a</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">zm1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">h</span>
+
+<span class="k">def</span> <span class="nf">design_equalizer</span><span class="p">(</span><span class="n">freq</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">gain</span><span class="p">,</span> <span class="n">Fs</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;设计二次均衡滤波器的系数&#39;&#39;&#39;</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="mi">10</span><span class="o">**</span><span class="p">(</span><span class="n">gain</span><span class="o">/</span><span class="mf">40.0</span><span class="p">)</span>
+    <span class="n">w0</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="n">math</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="n">freq</span><span class="o">/</span><span class="n">Fs</span>
+    <span class="n">alpha</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">w0</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">/</span> <span class="n">Q</span>
+    
+    <span class="n">b0</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">A</span>
+    <span class="n">b1</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span><span class="o">*</span><span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">w0</span><span class="p">)</span>
+    <span class="n">b2</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">A</span>
+    <span class="n">a0</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">alpha</span> <span class="o">/</span> <span class="n">A</span>
+    <span class="n">a1</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span><span class="o">*</span><span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">w0</span><span class="p">)</span>
+    <span class="n">a2</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">alpha</span> <span class="o">/</span> <span class="n">A</span>
+    
+    <span class="k">return</span> <span class="p">[</span><span class="n">b0</span><span class="o">/</span><span class="n">a0</span><span class="p">,</span><span class="n">b1</span><span class="o">/</span><span class="n">a0</span><span class="p">,</span><span class="n">b2</span><span class="o">/</span><span class="n">a0</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">a1</span><span class="o">/</span><span class="n">a0</span><span class="p">,</span> <span class="n">a2</span><span class="o">/</span><span class="n">a0</span><span class="p">]</span>
+
+<span class="k">class</span> <span class="nc">Equalizer</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+    <span class="n">freq</span> <span class="o">=</span> <span class="n">Range</span><span class="p">(</span><span class="mf">10.0</span><span class="p">,</span> <span class="n">SAMPLING_RATE</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
+    <span class="n">Q</span> <span class="o">=</span> <span class="n">Range</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="n">gain</span> <span class="o">=</span> <span class="n">Range</span><span class="p">(</span><span class="o">-</span><span class="mf">24.0</span><span class="p">,</span> <span class="mf">24.0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+   
+    <span class="n">a</span> <span class="o">=</span> <span class="n">List</span><span class="p">(</span><span class="n">Float</span><span class="p">,</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">])</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">List</span><span class="p">(</span><span class="n">Float</span><span class="p">,</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">])</span>
+    
+    <span class="n">h</span> <span class="o">=</span> <span class="n">Array</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex</span><span class="p">,</span> <span class="n">transient</span> <span class="o">=</span> <span class="bp">True</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Equalizer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">design_parameter</span><span class="p">()</span>
+
+    <span class="nd">@on_trait_change</span><span class="p">(</span><span class="s">&quot;freq,Q,gain&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">design_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;设计系数并计算频率响应&#39;&#39;&#39;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">design_equalizer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">freq</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Q</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain</span><span class="p">,</span> <span class="n">SAMPLING_RATE</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">h</span> <span class="o">=</span> <span class="n">myfreqz</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="n">W</span><span class="p">)</span> 
+        
+    <span class="k">def</span> <span class="nf">export_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;输出滤波器系数为C语言数组&#39;&#39;&#39;</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">freq</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Q</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;{</span><span class="si">%s</span><span class="s">,</span><span class="si">%s</span><span class="s">,</span><span class="si">%s</span><span class="s">,</span><span class="si">%s</span><span class="s">,</span><span class="si">%s</span><span class="s">}, // </span><span class="si">%s</span><span class="s">,</span><span class="si">%s</span><span class="s">,</span><span class="si">%s</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">tmp</span><span class="p">)</span>
+        
+<span class="k">class</span> <span class="nc">Equalizers</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+    <span class="n">eqs</span> <span class="o">=</span> <span class="n">List</span><span class="p">(</span><span class="n">Equalizer</span><span class="p">,</span> <span class="p">[</span><span class="n">Equalizer</span><span class="p">()])</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">Array</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex</span><span class="p">,</span> <span class="n">transient</span> <span class="o">=</span> <span class="bp">True</span><span class="p">)</span>
+    
+    <span class="c"># Equalizer列表eqs的编辑器定义</span>
+    <span class="n">table_editor</span> <span class="o">=</span> <span class="n">TableEditor</span><span class="p">(</span>
+        <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">ObjectColumn</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&quot;freq&quot;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s">&quot;readonly&quot;</span><span class="p">),</span>
+            <span class="n">ObjectColumn</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&quot;Q&quot;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s">&quot;readonly&quot;</span><span class="p">),</span>
+            <span class="n">ObjectColumn</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&quot;gain&quot;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s">&quot;readonly&quot;</span><span class="p">),</span>
+        <span class="p">],</span>
+        <span class="n">deletable</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span>
+        <span class="n">sortable</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span>
+        <span class="n">auto_size</span> <span class="o">=</span> <span class="bp">False</span><span class="p">,</span>
+        <span class="n">show_toolbar</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span>
+        <span class="n">edit_on_first_click</span> <span class="o">=</span> <span class="bp">False</span><span class="p">,</span>
+        <span class="n">orientation</span> <span class="o">=</span> <span class="s">&#39;vertical&#39;</span><span class="p">,</span>
+        <span class="n">edit_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span>
+            <span class="n">Group</span><span class="p">(</span>
+                <span class="n">Item</span><span class="p">(</span><span class="s">&quot;freq&quot;</span><span class="p">,</span> <span class="n">editor</span><span class="o">=</span><span class="n">EnumEditor</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="n">EQ_FREQS</span><span class="p">)),</span>            
+                <span class="n">Item</span><span class="p">(</span><span class="s">&quot;freq&quot;</span><span class="p">,</span> <span class="n">editor</span><span class="o">=</span><span class="n">scrubber</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)),</span>
+                <span class="n">Item</span><span class="p">(</span><span class="s">&quot;Q&quot;</span><span class="p">,</span> <span class="n">editor</span><span class="o">=</span><span class="n">scrubber</span><span class="p">(</span><span class="mf">0.01</span><span class="p">)),</span>
+                <span class="n">Item</span><span class="p">(</span><span class="s">&quot;gain&quot;</span><span class="p">,</span> <span class="n">editor</span><span class="o">=</span><span class="n">scrubber</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)),</span>
+                <span class="n">show_border</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">resizable</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="p">),</span>
+        <span class="n">row_factory</span> <span class="o">=</span> <span class="n">Equalizer</span>
+    <span class="p">)</span>    
+    
+    <span class="n">view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span>
+        <span class="n">Item</span><span class="p">(</span><span class="s">&quot;eqs&quot;</span><span class="p">,</span> <span class="n">show_label</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">editor</span><span class="o">=</span><span class="n">table_editor</span><span class="p">),</span>
+        <span class="n">width</span>     <span class="o">=</span> <span class="mf">0.25</span><span class="p">,</span>
+        <span class="n">height</span>    <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>        
+        <span class="n">resizable</span> <span class="o">=</span> <span class="bp">True</span>
+    <span class="p">)</span>
+    
+    <span class="nd">@on_trait_change</span><span class="p">(</span><span class="s">&quot;eqs.h&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">recalculate_h</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;计算多组均衡器级联时的频率响应&#39;&#39;&#39;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">eq</span><span class="o">.</span><span class="n">h</span> <span class="k">for</span> <span class="n">eq</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">eqs</span> <span class="k">if</span> <span class="n">eq</span><span class="o">.</span><span class="n">h</span> <span class="o">!=</span> <span class="bp">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">eq</span><span class="o">.</span><span class="n">h</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">W</span><span class="p">)])</span>            
+            <span class="bp">self</span><span class="o">.</span><span class="n">h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span>   
+            
+    <span class="k">def</span> <span class="nf">export</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;将均衡器的系数输出为C语言文件&#39;&#39;&#39;</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="nb">file</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s">&quot;w&quot;</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;double EQ_PARS[][5] = {</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;//b0,b1,b2,a0,a1 // frequency, Q, gain</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">eq</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">eqs</span><span class="p">:</span>
+            <span class="n">eq</span><span class="o">.</span><span class="n">export_parameters</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;};</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    
+<span class="k">class</span> <span class="nc">EqualizerDesigner</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;均衡器设计器的主界面&#39;&#39;&#39;</span>
+    
+    <span class="n">equalizers</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">Equalizers</span><span class="p">)</span>
+    
+    <span class="c"># 保存绘图数据的对象</span>
+    <span class="n">plot_data</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">AbstractPlotData</span><span class="p">)</span>    
+
+    <span class="c"># 绘制波形图的容器</span>
+    <span class="n">container</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">Component</span><span class="p">)</span>    
+    
+    <span class="n">plot_gain</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">Component</span><span class="p">)</span>
+    <span class="n">plot_phase</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">Component</span><span class="p">)</span>   
+    <span class="n">save_button</span> <span class="o">=</span> <span class="n">Button</span><span class="p">(</span><span class="s">&quot;Save&quot;</span><span class="p">)</span>
+    <span class="n">load_button</span> <span class="o">=</span> <span class="n">Button</span><span class="p">(</span><span class="s">&quot;Load&quot;</span><span class="p">)</span>
+    <span class="n">export_button</span> <span class="o">=</span> <span class="n">Button</span><span class="p">(</span><span class="s">&quot;Export&quot;</span><span class="p">)</span>
+       
+    <span class="n">view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span>
+        <span class="n">VGroup</span><span class="p">(</span>
+            <span class="n">HGroup</span><span class="p">(</span>
+                <span class="n">Item</span><span class="p">(</span><span class="s">&quot;load_button&quot;</span><span class="p">),</span>            
+                <span class="n">Item</span><span class="p">(</span><span class="s">&quot;save_button&quot;</span><span class="p">),</span>
+                <span class="n">Item</span><span class="p">(</span><span class="s">&quot;export_button&quot;</span><span class="p">),</span>
+                <span class="n">show_labels</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="p">),</span>
+            <span class="n">HSplit</span><span class="p">(</span>
+                <span class="n">VGroup</span><span class="p">(</span>
+                    <span class="n">Item</span><span class="p">(</span><span class="s">&quot;equalizers&quot;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s">&quot;custom&quot;</span><span class="p">,</span> <span class="n">show_label</span><span class="o">=</span><span class="bp">False</span><span class="p">),</span>
+                    <span class="n">show_border</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">Item</span><span class="p">(</span><span class="s">&quot;container&quot;</span><span class="p">,</span> <span class="n">editor</span><span class="o">=</span><span class="n">ComponentEditor</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">800</span><span class="p">,</span> <span class="mi">300</span><span class="p">)),</span> <span class="n">show_label</span><span class="o">=</span><span class="bp">False</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">),</span>
+        <span class="n">resizable</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span>
+        <span class="n">width</span> <span class="o">=</span> <span class="mi">800</span><span class="p">,</span>
+        <span class="n">height</span> <span class="o">=</span> <span class="mi">500</span><span class="p">,</span>
+        <span class="n">title</span> <span class="o">=</span> <span class="s">u&quot;Equalizer Designer&quot;</span>
+    <span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">_create_plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s">&quot;line&quot;</span><span class="p">):</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">Plot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">plot_data</span><span class="p">)</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">type</span><span class="p">)</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">tools</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">PanTool</span><span class="p">(</span><span class="n">p</span><span class="p">))</span>
+        <span class="n">zoom</span> <span class="o">=</span> <span class="n">ZoomTool</span><span class="p">(</span><span class="n">component</span><span class="o">=</span><span class="n">p</span><span class="p">,</span> <span class="n">tool_mode</span><span class="o">=</span><span class="s">&quot;box&quot;</span><span class="p">,</span> <span class="n">always_on</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">overlays</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">zoom</span><span class="p">)</span>        
+        <span class="n">p</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">index_scale</span> <span class="o">=</span> <span class="s">&quot;log&quot;</span>
+        <span class="k">return</span> <span class="n">p</span>    
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">EqualizerDesigner</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_data</span> <span class="o">=</span> <span class="n">ArrayPlotData</span><span class="p">(</span><span class="n">f</span><span class="o">=</span><span class="n">FREQS</span><span class="p">,</span> <span class="n">gain</span><span class="o">=</span><span class="p">[],</span> <span class="n">phase</span><span class="o">=</span><span class="p">[])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_gain</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_plot</span><span class="p">((</span><span class="s">&quot;f&quot;</span><span class="p">,</span> <span class="s">&quot;gain&quot;</span><span class="p">),</span> <span class="s">&quot;Gain(dB)&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_phase</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_plot</span><span class="p">((</span><span class="s">&quot;f&quot;</span><span class="p">,</span> <span class="s">&quot;phase&quot;</span><span class="p">),</span> <span class="s">&quot;Phase(degree)&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">container</span> <span class="o">=</span> <span class="n">VPlotContainer</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">container</span><span class="o">.</span><span class="n">add</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">plot_phase</span> <span class="p">)</span>                
+        <span class="bp">self</span><span class="o">.</span><span class="n">container</span><span class="o">.</span><span class="n">add</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">plot_gain</span> <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_gain</span><span class="o">.</span><span class="n">padding_bottom</span> <span class="o">=</span> <span class="mi">20</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_phase</span><span class="o">.</span><span class="n">padding_top</span> <span class="o">=</span> <span class="mi">20</span>
+    
+    <span class="k">def</span> <span class="nf">_equalizers_default</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Equalizers</span><span class="p">()</span>
+        
+    <span class="nd">@on_trait_change</span><span class="p">(</span><span class="s">&quot;equalizers.h&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">redraw</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">gain</span> <span class="o">=</span> <span class="mi">20</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">equalizers</span><span class="o">.</span><span class="n">h</span><span class="p">))</span> 
+        <span class="n">phase</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">equalizers</span><span class="o">.</span><span class="n">h</span><span class="p">,</span> <span class="n">deg</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_data</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="s">&quot;gain&quot;</span><span class="p">,</span> <span class="n">gain</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_data</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="s">&quot;phase&quot;</span><span class="p">,</span> <span class="n">phase</span><span class="p">)</span>
+        
+    <span class="k">def</span> <span class="nf">_save_button_fired</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">dialog</span> <span class="o">=</span> <span class="n">FileDialog</span><span class="p">(</span><span class="n">action</span><span class="o">=</span><span class="s">&quot;save as&quot;</span><span class="p">,</span> <span class="n">wildcard</span><span class="o">=</span><span class="s">&#39;EQ files (*.eq)|*.eq&#39;</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">dialog</span><span class="o">.</span><span class="n">open</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">result</span> <span class="o">==</span> <span class="n">OK</span><span class="p">:</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="nb">file</span><span class="p">(</span><span class="n">dialog</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s">&quot;wb&quot;</span><span class="p">)</span>
+            <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">equalizers</span> <span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        
+    <span class="k">def</span> <span class="nf">_load_button_fired</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">dialog</span> <span class="o">=</span> <span class="n">FileDialog</span><span class="p">(</span><span class="n">action</span><span class="o">=</span><span class="s">&quot;open&quot;</span><span class="p">,</span> <span class="n">wildcard</span><span class="o">=</span><span class="s">&#39;EQ files (*.eq)|*.eq&#39;</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">dialog</span><span class="o">.</span><span class="n">open</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">result</span> <span class="o">==</span> <span class="n">OK</span><span class="p">:</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="nb">file</span><span class="p">(</span><span class="n">dialog</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s">&quot;rb&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">equalizers</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            
+    <span class="k">def</span> <span class="nf">_export_button_fired</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">dialog</span> <span class="o">=</span> <span class="n">FileDialog</span><span class="p">(</span><span class="n">action</span><span class="o">=</span><span class="s">&quot;save as&quot;</span><span class="p">,</span> <span class="n">wildcard</span><span class="o">=</span><span class="s">&#39;c files (*.c)|*.c&#39;</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">dialog</span><span class="o">.</span><span class="n">open</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">result</span> <span class="o">==</span> <span class="n">OK</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">equalizers</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="n">dialog</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+            
+<span class="n">win</span> <span class="o">=</span> <span class="n">EqualizerDesigner</span><span class="p">()</span>
+<span class="n">win</span><span class="o">.</span><span class="n">configure_traits</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h4>上一篇文章</h4>
+            <p class="topless"><a href="example_spectrum_fft_convolve_timeit.html"
+                                  title="上一篇文章">FFT卷积的速度比较</a></p>
+            <h4>下一篇文章</h4>
+            <p class="topless"><a href="example_simple_pendulum_period.html"
+                                  title="下一篇文章">单摆摆动周期的计算</a></p>
+          <div id="searchbox" style="display: none">
+            <h3>快速搜索</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="搜索" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              中文搜索请尽量用空格分开单个的单词，例如搜索"科学 计算"，而不是"科学计算"
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="example_simple_pendulum_period.html" title="单摆摆动周期的计算"
+             >下一篇</a></li>
+        <li class="right" >
+          <a href="example_spectrum_fft_convolve_timeit.html" title="FFT卷积的速度比较"
+             >上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li>
+          <li><a href="example_code_list.html" >源程序集</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+    &copy; 2009, <a href="http://hyry.dip.jp/blogt.py">HYRY Studio</a>
+      由 <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.4. 编译
+    </div>
+  </body>
+</html>

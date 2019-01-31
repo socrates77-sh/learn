@@ -1,0 +1,487 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>自适应滤波器和NLMS模拟 &mdash; 用Python做科学计算</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link type="text/css" href="_static/jquery-ui-1.7.2.custom.css" rel="stylesheet" />	
+    <link type="text/css" href="_static/comments.css" rel="stylesheet" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '#',
+        VERSION:     '1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/jquery-ui-1.7.2.custom.min.js"></script>
+    <script type="text/javascript" src="_static/pydoc.js"></script>
+    <link rel="top" title="用Python做科学计算" href="index.html" />
+    <link rel="下一篇" title="单摆和双摆模拟" href="double_pendulum.html" />
+    <link rel="上一篇" title="Ctypes和NumPy" href="ctypes_numpy.html" /> 
+
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-10837468-1");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="double_pendulum.html" title="单摆和双摆模拟"
+             accesskey="N">下一篇</a></li>
+        <li class="right" >
+          <a href="ctypes_numpy.html" title="Ctypes和NumPy"
+             accesskey="P">上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="nlms">
+<h1>自适应滤波器和NLMS模拟<a class="headerlink" href="#nlms" title="Permalink to this headline">¶</a></h1>
+<p>本章将简要介绍自适应滤波器的原理以及其最常用的算法NLMS，并给NLMS算法的两种实现方法：用纯Python编写，和用ctypes调用C语言编写。最后将对NLMS算法进行一些的实验。</p>
+<div class="section" id="id1">
+<h2>自适应滤波器简介<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>近年来，随着数字信号处理器的功能的不断增强，自适应信号处理 (adaptive signal process)活跃在噪声消除、回声控制、信号预测、声音定位等众多信号处理领域。</p>
+<p>尽管其应用领域十分广泛，但基本的系统构造大致只有如下几种分类。</p>
+<div class="section" id="id2">
+<h3>系统辨识<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p>所谓系统辨识(system identification)，就是通过对未知系统的输入输出进行观测，构造一个滤波器使得它在同样的输入的情况下，输出信号和未知系统相同。简而言之，就是通过观测未知系统对输入的反应，探知其内部情况。为了探知内情而使用的输入信号我们称之为参照信号。</p>
+<div class="figure" id="fig-nlmssystemidentification">
+<img alt="_images/NLMS_SystemIdentification.png" src="_images/NLMS_SystemIdentification.png" />
+<p class="caption">系统识别(System Identification)的框图</p>
+</div>
+<p>如上图所示参照信号 x(j)同时输入到未知系统和自适应滤波器H中，未知系统的输出为y(j)， 自适应滤波器的输出为u(j)，由于观测误差或者外部噪声的干扰，实际观测到的未知系统的输出为d(j)=y(j)+n(j)，n(j)被称为外部干扰。通过求的d(j)和u(j)之间的误差e(j)=d(j)-u(j)，我们可以知道自适应滤波器H和未知系统还有多少差别，通过这个误差我们更新H的内部参数，使得它更加靠近未知系统。</p>
+<p>上面各个公式中的j表示某一时刻，因为我们讨论的是数字信号处理，已经对所有的信号进行取样，因此可以把j简单的看作取样点的下标。</p>
+</div>
+<div class="section" id="id3">
+<h3>信号预测<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<p>所谓信号预测就是通过信号过去的值预测（计算）现在的值，下面是信号预测的系统框图。</p>
+<div class="figure" id="fig-nlmspredication">
+<img alt="_images/NLMS_predication.png" src="_images/NLMS_predication.png" />
+<p class="caption">信号预测(Predication)框图</p>
+</div>
+<p>x(j)是待预测的信号，假设我们无法完美地观测此信号，因此导入一个外部干扰n(j)，这样d(j)=x(j)+n(j)就是我们观测到的待预测信号。</p>
+<p>通过延迟器将d(j)进行延时得到d(j-D)，并把d(j-D)输入到自适应滤波器H中，得到其输出为u(j)，u(j)就是自适应滤波器通过待预测信号过去的值预测出的现在的值，计算观测值d(j)和预测值u(j)之间的误差e(j)=d(j)-u(j)，通过e(j)更新自适应滤波器H的内部系数使得其输出更加接近d(j)。</p>
+<p>如果x(j)存在白色噪声的成分和周期信号的成分，由于白色噪声是完全不自相关，无法预测的信号，因此通过过去的值x(j-D)所能预测的只能是其中的周期信号的成分。这样自适应滤波器H的输出信号u(j)就会与周期信号成分渐渐逼近，而e(j)则是剩下的不可预测的白色噪声的成分。因此自适应滤波器也可以运用于噪声消除。</p>
+</div>
+<div class="section" id="id4">
+<h3>信号均衡<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<div class="figure" id="fig-nlmsequalization">
+<img alt="_images/NLMS_equalization.png" src="_images/NLMS_equalization.png" />
+<p class="caption">信号均衡(Equalization)框图</p>
+</div>
+<p>当信号x(j)通过未知系统之后变成y(j)，未知系统对信号x(j)进行了某种改变，使得其波形产生歪曲。我们希望均衡器矫正这种歪曲，也就是通过y(j)重建原始信号x(j)，由于因果律还原原始信号x(j)是不可能的，我们只能还原其延时了的信号x(j-D)。x(j)和x(j-D)除了时间上的延迟之外，其它特性完全相同。</p>
+<p>这里我们将观测到的未知系统的输出y(j)+n(j)输入到自适应滤波器H中，通过H的系数更新使得其输出u(j)逐渐逼近原始信号的延时x(j-D)。这样我们就构建了一个滤波器H使得它与未知系统的卷积正好等于一个脉冲传递函数。也就是说H的频域特性恰好能抵消未知系统的所带来的改变。</p>
+</div>
+</div>
+<div class="section" id="id5">
+<h2>NLMS计算公式<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
+<p>自适应滤波器中最重要的一个环节就是其系数的更新算法，如果不对自适应滤波器的系数更新的话，那么它就只是一个普通的FIR滤波器了。系数更新算法有很多种类，最基本、常用、简单的一种方法叫做NLMS(归一化最小均方)，让我们先来看看它的数学公式表达：</p>
+<p>设置自适应滤波器系数 <img class="math" src="_images/math/32a7c07cb146b74e4b01e93aaa2fe06808e58855.png" alt="\mathbf{h}"/> 的所有初始值为0, <img class="math" src="_images/math/32a7c07cb146b74e4b01e93aaa2fe06808e58855.png" alt="\mathbf{h}"/> 的长度为I。</p>
+<div class="math">
+<p><img src="_images/math/7665d729de222230f977f99f9247158baeebc368.png" alt="\mathbf{h}(0)=0" /></p>
+</div><p>对每个取样值进行如下计算，其中n=0, 1, 2, ...</p>
+<div class="math">
+<p><img src="_images/math/8a19dae508bf1908e61517f347d3fd8608559a83.png" alt="\mathbf{x}(n) = \left[x(n), x(n-1), \dots, x(n-I+1)\right]^T" /></p>
+</div><div class="math">
+<p><img src="_images/math/5773c1e020a1de88d5957055ee23ed51b934b5b6.png" alt="e(n) = d(n)-\mathbf{h}^{H}(n)\mathbf{x}(n)" /></p>
+</div><div class="math">
+<p><img src="_images/math/cceedf6f5b3d8be6300fa7e9eb23a6b143ba011b.png" alt="\mathbf{h}(n+1) = \mathbf{h}(n)+\frac{\mu\,e(n)\mathbf{x}(n)}{\mathbf{x}^H(n)\mathbf{x}(n)}" /></p>
+</div><p>自适应滤波器系数 <img class="math" src="_images/math/32a7c07cb146b74e4b01e93aaa2fe06808e58855.png" alt="\mathbf{h}"/> 是一个长度为I的矢量，也就是一个长度为I的FIR滤波器。在时刻n，滤波器的每个系数对应的输入信号为 <img class="math" src="_images/math/5dd5002250a7cc583482afd0cf4b9917ee8068e0.png" alt="\mathbf{x}(n)"/> ，它也是一个长度为I的矢量。这两个矢量的点乘即为滤波器的输出和目标信号d(n)之间的差为e(n)，然后根据e(n)和 <img class="math" src="_images/math/5dd5002250a7cc583482afd0cf4b9917ee8068e0.png" alt="\mathbf{x}(n)"/> ， 更新滤波器的系数。</p>
+<p>数学公式总是令人难以理解的，下面我们以图示为例进行说明：</p>
+<div class="figure" id="fig-nlmsalgorithmdemo">
+<img alt="_images/NLMS_alogrithm_demo.png" src="_images/NLMS_alogrithm_demo.png" />
+<p class="caption">NLMS算法示意图</p>
+</div>
+<p>图中假设自适应滤波器h的长度为4，在时刻7滤波器的输出为:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">u</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span> <span class="o">=</span> <span class="n">h</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span> <span class="o">+</span> <span class="n">h</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">+</span> <span class="n">h</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span> <span class="o">+</span> <span class="n">h</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>滤波器的输入信号的平方和powerX为:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">powerX</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>未知系统的输出d[7]和滤波器的输出u[7]之间的差为:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">e</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span> <span class="o">-</span> <span class="n">u</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>使用u[7]和x[4]..x[7]对滤波器的系数更新:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">h</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="n">h</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">+</span> <span class="n">u</span> <span class="o">*</span> <span class="n">e</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">/</span><span class="n">powerX</span>
+<span class="n">h</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="n">h</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span> <span class="o">+</span> <span class="n">u</span> <span class="o">*</span> <span class="n">e</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="o">/</span><span class="n">powerX</span>
+<span class="n">h</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="n">h</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">+</span> <span class="n">u</span> <span class="o">*</span> <span class="n">e</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span><span class="o">/</span><span class="n">powerX</span>
+<span class="n">h</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="n">h</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span> <span class="o">+</span> <span class="n">u</span> <span class="o">*</span> <span class="n">e</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span><span class="o">/</span><span class="n">powerX</span>
+</pre></div>
+</div>
+<p>其中参数u成为更新系数，为0到1之间的一个实数，此值越大系数更新的速度越快。对于每个时刻i都需要进行上述的计算，因此滤波器的系数对于每个参照信号x的取样都更新一次。</p>
+</div>
+<div class="section" id="numpy">
+<h2>NumPy实现<a class="headerlink" href="#numpy" title="Permalink to this headline">¶</a></h2>
+<p>按照上面介绍的NLMS算法，我们很容易写出用NumPy实现的NLMS计算程序：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="c"># filename: nlms_numpy.py</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="c"># 用Numpy实现的NLMS算法</span>
+<span class="c"># x为参照信号，d为目标信号，h为自适应滤波器的初值</span>
+<span class="c"># step_size为更新系数</span>
+<span class="k">def</span> <span class="nf">nlms</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">step_size</span><span class="o">=</span><span class="mf">0.5</span><span class="p">):</span>
+   <span class="n">i</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>
+   <span class="n">size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+   <span class="c"># 计算输入到h中的参照信号的乘方he</span>
+   <span class="n">power</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">h</span><span class="p">):</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">h</span><span class="p">):</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="p">)</span>
+   <span class="n">u</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+
+   <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+       <span class="n">x_input</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">h</span><span class="p">):</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+       <span class="n">u</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">x_input</span> <span class="p">,</span> <span class="n">h</span><span class="p">)</span>
+       <span class="n">e</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">u</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+       <span class="n">h</span> <span class="o">+=</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">e</span> <span class="o">/</span> <span class="n">power</span> <span class="o">*</span> <span class="n">x_input</span>
+
+       <span class="n">power</span> <span class="o">-=</span> <span class="n">x_input</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">x_input</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="c"># 减去最早的取样</span>
+       <span class="n">i</span><span class="o">+=</span><span class="mi">1</span>
+       <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;=</span> <span class="n">size</span><span class="p">:</span> <span class="k">return</span> <span class="n">u</span>
+       <span class="n">power</span> <span class="o">+=</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="c"># 增加最新的取样</span>
+</pre></div>
+</div>
+<p>为了节省计算时间，我们用一个临时变量power保存输入到滤波器h中的参照信号x的能量。在对于x中的每个取样的循环中，power减去x中最早的一个取样值的乘方，增加最新的一个取样值的乘方。这样为了计算参照信号的能量，每次循环只需要计算两次乘法和两次加法即可。</p>
+<p>nlms函数的输入为参照信号x、目标信号d和自适应滤波器的系数h。因为在后面的模拟计算中，d是x和未知系统的脉冲响应的卷积而计算的来，它的长度会大于x的参数，因此循环体的循环次数以参照信号的长度为基准。</p>
+<p>为了对自适应滤波器的各种应用进行模拟，我们还需要如下的几个辅助函数，完整的程序请参考 <a class="reference external" href="example_nlms_test.html"><em>NLMS算法的模拟测试</em></a> 。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">make_path</span><span class="p">(</span><span class="n">delay</span><span class="p">,</span> <span class="n">length</span><span class="p">):</span>
+   <span class="n">path_length</span> <span class="o">=</span> <span class="n">length</span> <span class="o">-</span> <span class="n">delay</span>
+   <span class="n">h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+   <span class="n">h</span><span class="p">[</span><span class="n">delay</span><span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">(</span><span class="n">path_length</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="n">path_length</span><span class="p">)</span> <span class="p">)</span>
+   <span class="n">h</span> <span class="o">/=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">h</span><span class="o">*</span><span class="n">h</span><span class="p">))</span>
+   <span class="k">return</span> <span class="n">h</span>
+</pre></div>
+</div>
+<p>make_path产生一个长度为length，最小延时为delay的指数衰减的波形。这种波形和封闭空间的声音的传递函数有些类似之处，因此在计算机上进行声音的算法模拟时经常用这种波形作为系统的传递函数。:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">plot_converge</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&quot;&quot;</span><span class="p">):</span>
+    <span class="n">size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+    <span class="n">avg_number</span> <span class="o">=</span> <span class="mi">200</span>
+    <span class="n">e</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">y</span><span class="p">[:</span><span class="n">size</span><span class="p">]</span> <span class="o">-</span> <span class="n">u</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">tmp</span> <span class="o">=</span> <span class="n">e</span><span class="p">[:</span><span class="nb">int</span><span class="p">(</span><span class="n">size</span><span class="o">/</span><span class="n">avg_number</span><span class="p">)</span><span class="o">*</span><span class="n">avg_number</span><span class="p">]</span>
+    <span class="n">tmp</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">avg_number</span>
+    <span class="n">avg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">average</span><span class="p">(</span> <span class="n">tmp</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span> <span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">avg</span><span class="p">)),</span> <span class="mi">10</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">avg</span><span class="p">),</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">diff_db</span><span class="p">(</span><span class="n">h0</span><span class="p">,</span> <span class="n">h</span><span class="p">):</span>
+   <span class="k">return</span> <span class="mi">10</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">h0</span><span class="o">-</span><span class="n">h</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">h0</span><span class="o">-</span><span class="n">h</span><span class="p">))</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">h0</span><span class="o">*</span><span class="n">h0</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>plot_converge绘制信号y和信号u之间的误差，每avg_number个取样点就上一次误差的乘方的平均值。我们将用plot_converge函数绘制未知系统的输出y和自适应滤波器的输出u之间的误差。观察自适应滤波器是如何收敛的，以评价自适应滤波器的收敛特性。diff_db函数同样是用来评价自适应滤波器的收敛特性，不过他是直接计算未知系统的传递函数h0和自适应滤波器的传递函数h之间的误差。下面我们会看到这两个函数得到的收敛值是相同的。</p>
+<div class="section" id="id6">
+<h3>系统辨识模拟<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+<p>我们用下面的函数调用nlms算法对系统辨识应用进行模拟：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">sim_system_identify</span><span class="p">(</span><span class="n">nlms</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">h0</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">noise_scale</span><span class="p">):</span>
+       <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">h0</span><span class="p">)</span>
+       <span class="n">d</span> <span class="o">=</span> <span class="n">y</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">))</span> <span class="o">*</span> <span class="n">noise_scale</span> <span class="c"># 添加白色噪声的外部干扰</span>
+       <span class="n">h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">h0</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span> <span class="c"># 自适应滤波器的长度和未知系统长度相同，初始值为0</span>
+       <span class="n">u</span> <span class="o">=</span> <span class="n">nlms</span><span class="p">(</span> <span class="n">x</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">step_size</span> <span class="p">)</span>
+       <span class="k">return</span> <span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">h</span>
+</pre></div>
+</div>
+<div class="figure">
+<img alt="_images/NLMS_SystemIdentification.png" src="_images/NLMS_SystemIdentification.png" />
+<p class="caption">系统识别(System Identification)的框图</p>
+</div>
+<p>此函数的参数分别为：</p>
+<ul class="simple">
+<li><strong>nlms</strong> : nlms算法的实现函数</li>
+<li><strong>x</strong> : 参照信号</li>
+<li><strong>h0</strong> : 未知系统的传递函数，虽然是未知系统，但是计算机模拟时它是已知的</li>
+<li><strong>step_size</strong> : nlms算法的更新系数</li>
+<li><strong>noise_scale</strong> : 外部干扰的系数，此系数决定外部干扰的大小，0表示没有外部干扰</li>
+</ul>
+<p>函数的返回值分别为：</p>
+<ul class="simple">
+<li><strong>y</strong> : 未知系统的输出，不包括外部干扰</li>
+<li><strong>u</strong> : 自适应滤波器的输出</li>
+<li><strong>h</strong> : 自适应滤波器的最终的系数</li>
+</ul>
+<p>最后我们用下面的函数创建未知系统h0， 参照信号x，然后调用sim_system_identify函数得到结果并且绘图：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">system_identify_test1</span><span class="p">():</span>
+    <span class="n">h0</span> <span class="o">=</span> <span class="n">make_path</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">256</span><span class="p">)</span> <span class="c"># 随机产生一个未知系统的传递函数</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">(</span><span class="mi">10000</span><span class="p">)</span>  <span class="c"># 参照信号为白噪声</span>
+    <span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">sim_system_identify</span><span class="p">(</span><span class="n">nlms_numpy</span><span class="o">.</span><span class="n">nlms</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">h0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
+    <span class="k">print</span> <span class="n">diff_db</span><span class="p">(</span><span class="n">h0</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span> <span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">211</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">subplots_adjust</span><span class="p">(</span><span class="n">hspace</span><span class="o">=</span><span class="mf">0.4</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">h0</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">&quot;r&quot;</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">&quot;b&quot;</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">u&quot;未知系统和收敛后的滤波器的系数比较&quot;</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">212</span><span class="p">)</span>
+    <span class="n">plot_converge</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">u&quot;自适应滤波器收敛特性&quot;</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">&quot;Iterations (samples)&quot;</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">&quot;Converge Level (dB)&quot;</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="figure" id="fig-nlms01">
+<img alt="_images/NLMS_01.png" src="_images/NLMS_01.png" style="width: 14cm;" />
+<p class="caption">自适应滤波器收敛之后的系数和收敛速度</p>
+</div>
+<p>上部的图显示的是未知系统(红色)和自适应滤波器(蓝色)的传递函数的系数，我们看到自适应滤波器已经十分接近未知系统了。diff_db(h0, h)的输出为-25.35dB。下部的图通过绘制y和u之间的误差，显示了自适应滤波器的收敛过程。我们看到经过约3000点的计算之后，收敛过程已经饱和，最终的误差为-25dB左右，和diff_db计算的结果一致。</p>
+<p>从图中可以看到收敛过程的两个重要特性：收敛时间和收敛精度。参照信号的特性、外部干扰的大小和更新系数都会影响这两个特性。下面让我们看看参照信号为白色噪声、外部干扰的能量固定时，更新系数对它们影响：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">system_identify_test2</span><span class="p">():</span>
+    <span class="n">h0</span> <span class="o">=</span> <span class="n">make_path</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">256</span><span class="p">)</span> <span class="c"># 随机产生一个未知系统的传递函数</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">(</span><span class="mi">20000</span><span class="p">)</span>  <span class="c"># 参照信号为白噪声</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">step_size</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">):</span>
+        <span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">sim_system_identify</span><span class="p">(</span><span class="n">nlms_numpy</span><span class="o">.</span><span class="n">nlms</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">h0</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
+        <span class="n">plot_converge</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;μ=</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">step_size</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">u&quot;更新系数和收敛特性的关系&quot;</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">&quot;Iterations (samples)&quot;</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">&quot;Converge Level (dB)&quot;</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="figure" id="fig-nlms02">
+<img alt="_images/NLMS_02.png" src="_images/NLMS_02.png" style="width: 14cm;" />
+<p class="caption">更新系数和收敛速度的关系</p>
+</div>
+<p>下面是更新系数固定，外部干扰能量变化时的收敛特性：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">system_identify_test3</span><span class="p">():</span>
+    <span class="n">h0</span> <span class="o">=</span> <span class="n">make_path</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">256</span><span class="p">)</span> <span class="c"># 随机产生一个未知系统的传递函数</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">(</span><span class="mi">20000</span><span class="p">)</span>  <span class="c"># 参照信号为白噪声</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">noise_scale</span> <span class="ow">in</span> <span class="p">[</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">]:</span>
+        <span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">sim_system_identify</span><span class="p">(</span><span class="n">nlms_numpy</span><span class="o">.</span><span class="n">nlms</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">h0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">noise_scale</span><span class="p">)</span>
+        <span class="n">plot_converge</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;noise=</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">noise_scale</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">u&quot;外部干扰和收敛特性的关系&quot;</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">&quot;Iterations (samples)&quot;</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">&quot;Converge Level (dB)&quot;</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="figure" id="fig-nlms03">
+<img alt="_images/NLMS_03.png" src="_images/NLMS_03.png" style="width: 14cm;" />
+<p class="caption">外部干扰噪声和收敛速度的关系</p>
+</div>
+<p>从上面的图可以看出，当外部干扰的振幅增加一倍、能能量增加6dB时，收敛精度降低6dB。而由于更新系数相同，所以收敛过程中的收敛速度都是一样的。</p>
+</div>
+<div class="section" id="id7">
+<h3>信号均衡模拟<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
+<p>对于信号均衡的应用我们用如下的程序进行模拟：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">sim_signal_equation</span><span class="p">(</span><span class="n">nlms</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">h0</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">noise_scale</span><span class="p">):</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:</span><span class="o">-</span><span class="n">D</span><span class="p">]</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">D</span><span class="p">:]</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">h0</span><span class="p">)[:</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)]</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">h0</span><span class="p">)</span><span class="o">+</span><span class="mi">2</span><span class="o">*</span><span class="n">D</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">))</span> <span class="o">*</span> <span class="n">noise_scale</span>
+    <span class="n">u</span> <span class="o">=</span> <span class="n">nlms</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">step_size</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">h</span>
+</pre></div>
+</div>
+<div class="figure">
+<img alt="_images/NLMS_equalization.png" src="_images/NLMS_equalization.png" />
+<p class="caption">信号均衡(Equalization)框图</p>
+</div>
+<p>sim_signal_equation函数的参数：</p>
+<ul class="simple">
+<li><strong>nlms</strong> : nlms算法的实现函数</li>
+<li><strong>x</strong> : 未知系统的输入信号</li>
+<li><strong>h0</strong> : 未知系统的传递函数</li>
+<li><strong>D</strong> : 延迟器的延时参数</li>
+<li><strong>step_size</strong> : nlms算法的更新系数</li>
+<li><strong>noise_scale</strong> : 外部干扰的系数，此系数决定外部干扰的大小，0表示没有外部干扰</li>
+</ul>
+<p>在函数中的各个局部变量：</p>
+<ul class="simple">
+<li><strong>d</strong> : 输入信号经过延迟器之后的信号</li>
+<li><strong>y</strong> : 未知系统的输出</li>
+<li><strong>h</strong> : 自适应滤波器的系数，它的长度要足够长，程序中使用 2倍延时 + 2倍未知系统的传递函数的长度</li>
+</ul>
+<p>函数的返回值为自适应滤波器收敛后的系数，它能够均衡h0对输入信号所造成的影响。我们通过下面的函数产生数据、调用模拟函数以及绘制结果：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">signal_equation_test1</span><span class="p">():</span>
+    <span class="n">h0</span> <span class="o">=</span> <span class="n">make_path</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">64</span><span class="p">)</span>
+    <span class="n">D</span> <span class="o">=</span> <span class="mi">128</span>
+    <span class="n">length</span> <span class="o">=</span> <span class="mi">20000</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">(</span><span class="n">length</span><span class="o">+</span><span class="n">D</span><span class="p">)</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">sim_signal_equation</span><span class="p">(</span><span class="n">nlms_numpy</span><span class="o">.</span><span class="n">nlms</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">h0</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">h0</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;未知系统&quot;</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;自适应滤波器&quot;</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">h0</span><span class="p">,</span> <span class="n">h</span><span class="p">),</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;二者卷积&quot;</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">u&quot;信号均衡演示&quot;</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+    <span class="n">w0</span><span class="p">,</span> <span class="n">H0</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">signal</span><span class="o">.</span><span class="n">freqz</span><span class="p">(</span><span class="n">h0</span><span class="p">,</span> <span class="n">worN</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">)</span>
+    <span class="n">w</span><span class="p">,</span> <span class="n">H</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">signal</span><span class="o">.</span><span class="n">freqz</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">worN</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">w0</span><span class="p">,</span> <span class="mi">20</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">H0</span><span class="p">)),</span> <span class="n">w</span><span class="p">,</span> <span class="mi">20</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">H</span><span class="p">)))</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">u&quot;未知系统和自适应滤波器的振幅特性&quot;</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">u&quot;圆频率&quot;</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">u&quot;振幅(dB)&quot;</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>如果延迟器的延时D不够的话，会由于因果律使得自适应滤波器无法收敛。因此这里我们采用的D的长度为h0的长度的2倍。下图显示h0, h和它们的卷积。我们看到h0和h的卷积正好是一个脉冲，其延时为正好等于D(128)。</p>
+<div class="figure" id="fig-nmls04">
+<img alt="_images/NLMS_04.png" src="_images/NLMS_04.png" style="width: 14cm;" />
+<p class="caption">未知系统和自适应滤波器的级联(卷积)近似为标准延迟</p>
+</div>
+<p>下图显示未知系统的频率响应(蓝色)和自适应滤波器的频率响应(绿色)，我们看到二者正好相反，也就是说自适应滤波器均衡了未知系统对信号的影响。</p>
+<div class="figure" id="fig-nlms05">
+<img alt="_images/NLMS_05.png" src="_images/NLMS_05.png" style="width: 14cm;" />
+<p class="caption">未知系统和自适应滤波器的频率响应正好相反</p>
+</div>
+</div>
+<div class="section" id="id8">
+<h3>卷积逆运算<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
+<p>虽然卷积运算最终能归结为简单的加法和乘法运算，然而卷积的逆运算就不是很容易计算了。我们知道两个线性系统h1和h2的级联h3可以用它们的脉冲响应的卷积计算求得，而所谓卷积的逆运算可以想象为已知h3和h1，求一个h2使它和h1级联之后正好等于h3。</p>
+<p>根据卷积的计算公式可知，如果h1的长度为100，h3的长度为199，那么h2的长度则为100，因为h2的每个系数都是未知的，于是就有100个未知数，而这100个未知数需要满足199个线性方程：h3中的每个系数都有一个方程与之对应。由于方程数大于未知数的个数，显然对于任意的h1和h3并不能保证有一个h2使得它和h1的卷积正好等于h3。</p>
+<p>既然不能精确求解，那么卷积的逆运算就变成了一个误差最小化的优化问题。用自适应滤波器计算卷积的逆运算和计算信号均衡类似，将白色噪声x输入到h1中得到信号u，将x输入到h3中得到信号d，然后使用u作为参照信号，d作为目标信号进行NLMS计算，最终收敛后的自适应滤波器的系数就是h2。</p>
+<p>下面的程序模拟这一过程：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pylab</span> <span class="kn">as</span> <span class="nn">pl</span>
+<span class="kn">from</span> <span class="nn">nlms_numpy</span> <span class="kn">import</span> <span class="n">nlms</span>
+<span class="kn">import</span> <span class="nn">scipy.signal</span> <span class="kn">as</span> <span class="nn">signal</span>
+
+<span class="k">def</span> <span class="nf">inv_convolve</span><span class="p">(</span><span class="n">h1</span><span class="p">,</span> <span class="n">h3</span><span class="p">,</span> <span class="n">length</span><span class="p">):</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">(</span><span class="mi">10000</span><span class="p">)</span>
+    <span class="n">u</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">lfilter</span><span class="p">(</span><span class="n">h1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">lfilter</span><span class="p">(</span><span class="n">h3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">nlms</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">h</span>
+
+<span class="n">h1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromfile</span><span class="p">(</span><span class="s">&quot;h1.txt&quot;</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span>
+<span class="n">h1</span> <span class="o">/=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">h1</span><span class="p">)</span>
+<span class="n">h3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromfile</span><span class="p">(</span><span class="s">&quot;h3.txt&quot;</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span>
+<span class="n">h3</span> <span class="o">/=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">h3</span><span class="p">)</span>
+
+<span class="n">pl</span><span class="o">.</span><span class="n">rc</span><span class="p">(</span><span class="s">&#39;legend&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">411</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">h3</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&quot;h3&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">h1</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&quot;h1&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span><span class="o">.</span><span class="n">set_yticklabels</span><span class="p">([])</span> 
+<span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">length</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">([</span><span class="mi">128</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">512</span><span class="p">]):</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">412</span><span class="o">+</span><span class="n">idx</span><span class="p">)</span>
+    <span class="n">h2</span> <span class="o">=</span> <span class="n">inv_convolve</span><span class="p">(</span><span class="n">h1</span><span class="p">,</span> <span class="n">h3</span><span class="p">,</span> <span class="n">length</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">h1</span><span class="p">,</span> <span class="n">h2</span><span class="p">)[:</span><span class="nb">len</span><span class="p">(</span><span class="n">h3</span><span class="p">)],</span> <span class="n">label</span><span class="o">=</span><span class="s">&quot;h1*h2(</span><span class="si">%s</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="n">length</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span><span class="o">.</span><span class="n">set_yticklabels</span><span class="p">([])</span> 
+    <span class="n">pl</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">([])</span> 
+
+<span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>下面是程序的计算结果：</p>
+<div class="figure" id="fig-nlms06">
+<img alt="_images/NLMS_06.png" src="_images/NLMS_06.png" style="width: 14cm;" />
+<p class="caption">卷积逆运算演示</p>
+</div>
+<p>程序中的h1和h3从文本文件中读取而得，它们是ANC(能动噪声控制)系统中实际测量的脉冲响应。如果能找到一个h2满足卷积条件的话，就能够有效的进行噪声控制。</p>
+<p>程序计算出h2的长度分别为128, 256, 512时的结果，可以看出h2越长结果越精确。</p>
+</div>
+</div>
+<div class="section" id="dll">
+<h2>DLL函数的编写<a class="headerlink" href="#dll" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="ctypespython">
+<h2>ctypes的python接口<a class="headerlink" href="#ctypespython" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">首页目录</a></h3>
+            <ul>
+<li><a class="reference external" href="#">自适应滤波器和NLMS模拟</a><ul>
+<li><a class="reference external" href="#id1">自适应滤波器简介</a><ul>
+<li><a class="reference external" href="#id2">系统辨识</a></li>
+<li><a class="reference external" href="#id3">信号预测</a></li>
+<li><a class="reference external" href="#id4">信号均衡</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#id5">NLMS计算公式</a></li>
+<li><a class="reference external" href="#numpy">NumPy实现</a><ul>
+<li><a class="reference external" href="#id6">系统辨识模拟</a></li>
+<li><a class="reference external" href="#id7">信号均衡模拟</a></li>
+<li><a class="reference external" href="#id8">卷积逆运算</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#dll">DLL函数的编写</a></li>
+<li><a class="reference external" href="#ctypespython">ctypes的python接口</a></li>
+</ul>
+</li>
+</ul>
+
+            <h4>上一篇文章</h4>
+            <p class="topless"><a href="ctypes_numpy.html"
+                                  title="上一篇文章">Ctypes和NumPy</a></p>
+            <h4>下一篇文章</h4>
+            <p class="topless"><a href="double_pendulum.html"
+                                  title="下一篇文章">单摆和双摆模拟</a></p>
+          <div id="searchbox" style="display: none">
+            <h3>快速搜索</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="搜索" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              中文搜索请尽量用空格分开单个的单词，例如搜索"科学 计算"，而不是"科学计算"
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="double_pendulum.html" title="单摆和双摆模拟"
+             >下一篇</a></li>
+        <li class="right" >
+          <a href="ctypes_numpy.html" title="Ctypes和NumPy"
+             >上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+    &copy; 2009, <a href="http://hyry.dip.jp/blogt.py">HYRY Studio</a>
+      由 <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.4. 编译
+    </div>
+  </body>
+</html>

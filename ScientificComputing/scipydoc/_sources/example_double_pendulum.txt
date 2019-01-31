@@ -1,0 +1,24 @@
+#########
+双摆系统的动画模拟
+#########
+
+相关文档： :doc:`double_pendulum`
+
+.. image:: images/double_pendulum02.png
+   
+.. image:: images/double_pendulum03.png
+
+用odeint解双摆系统
+============
+
+文件名: double_pendulum_odeint.py
+
+.. literalinclude:: examples/double_pendulum_odeint.py
+
+摆动动画
+====
+
+文件名: double_pendulum_animation.py
+
+.. literalinclude:: examples/double_pendulum_animation.py
+

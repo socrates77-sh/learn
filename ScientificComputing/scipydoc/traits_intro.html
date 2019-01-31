@@ -1,0 +1,462 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Traits-为Python添加类型定义 &mdash; 用Python做科学计算</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link type="text/css" href="_static/jquery-ui-1.7.2.custom.css" rel="stylesheet" />	
+    <link type="text/css" href="_static/comments.css" rel="stylesheet" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '#',
+        VERSION:     '1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/jquery-ui-1.7.2.custom.min.js"></script>
+    <script type="text/javascript" src="_static/pydoc.js"></script>
+    <link rel="top" title="用Python做科学计算" href="index.html" />
+    <link rel="下一篇" title="TraitsUI-轻松制作用户界面" href="traitsUI_intro.html" />
+    <link rel="上一篇" title="matplotlib-绘制精美的图表" href="matplotlib_intro.html" /> 
+
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-10837468-1");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="traitsUI_intro.html" title="TraitsUI-轻松制作用户界面"
+             accesskey="N">下一篇</a></li>
+        <li class="right" >
+          <a href="matplotlib_intro.html" title="matplotlib-绘制精美的图表"
+             accesskey="P">上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="traits-python">
+<h1>Traits-为Python添加类型定义<a class="headerlink" href="#traits-python" title="Permalink to this headline">¶</a></h1>
+<p>Python作为一种动态编程语言，它的变量没有类型，这种灵活性给快速开发带来很多便利，不过它也不是没有缺点。Traits库的一个很重要的目的就是为了解决这些缺点所带来的问题。</p>
+<div class="section" id="id1">
+<h2>背景<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>Traits库最初是为了开发Chaco(一个2D绘图库)而设计的，绘图库中有很多绘图用的对象，每个对象都有很多例如线型、颜色、字体之类的属性。为了方便用户使用，每个属性可以允许多种形式的值。例如，颜色属性可以是</p>
+<ul class="simple">
+<li>'red'</li>
+<li>0xff0000</li>
+<li>(255, 0, 0)</li>
+</ul>
+<p>也就是说可以用字符串、整数、组元等类型的值表达颜色，这样的需求初看起来用Python的无类型变量是一个很好的选择，因为我们可以把各种各样的值赋值给颜色属性。但是颜色属性虽然可以接受多样的值，却不是能接受所有的值，比如&quot;abc&quot;、0.5等等就不能很好地表示颜色。而且虽然为了方便用户使用，对外的接口可以接受各种各样形式的值，但是在内部必须有一个统一的表达方式来简化程序的实现。</p>
+<p>用Trait属性可以很好地解决这样的问题:</p>
+<ul class="simple">
+<li>它可以接受能表示颜色的各种类型的值</li>
+<li>当给它赋值为不能表达颜色的值时，它能够立即捕捉到错误，并且提供一个有用的错误报告，告诉用户它能够接受什么样的值</li>
+<li>它提供一个内部的标准的颜色表达方式</li>
+</ul>
+<p>让我们来看一下使用traits属性表示颜色的例子:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">enthought.traits.api</span> <span class="kn">import</span> <span class="n">HasTraits</span><span class="p">,</span> <span class="n">Color</span>
+
+<span class="k">class</span> <span class="nc">Circle</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+    <span class="n">color</span> <span class="o">=</span> <span class="n">Color</span>
+</pre></div>
+</div>
+<p>这个程序从enthought.traits.api中导入我们需要使用的两个对象: HasTraits和Color。所有拥有trait属性的类都需要从HasTraits继承。由于Python的多继承特性，我们很容易将现有的类改为支持trait属性。Color是一个TraitFactory对象，我们在Circle类的定义中用它来声明一个color属性。</p>
+<p>熟悉Python的朋友可能会对这个程序觉得有些奇怪：按照标准的Python语法，直接在class下定义的属性color应该是属于Circle类的属性。而我们这里是希望给Circle类的实例一个color属性，是不是应该在初始化函数__init__中运行color = Color呢？答案是否定的，请记住trait属性像类的属性一样定义，像实例的属性一样使用，我们不管HasTraits是如何实现这一点的，先来看看如何使用trait属性:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">c</span> <span class="o">=</span> <span class="n">Circle</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Circle</span><span class="o">.</span><span class="n">color</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="nc">AttributeError</span>: <span class="n-Identifier">type object &#39;Circle&#39; has no attribute &#39;color&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">c</span><span class="o">.</span><span class="n">color</span>
+<span class="go">wx.Colour(255, 255, 255, 255)</span>
+</pre></div>
+</div>
+<p>我们看到Circle类没有color属性，而它的实例c则有一个color属性，其缺省值为wx.Colour(255, 255, 255, 255)。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">c</span><span class="o">.</span><span class="n">color</span> <span class="o">=</span> <span class="s">&quot;red&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">c</span><span class="o">.</span><span class="n">color</span>
+<span class="go">wx.Colour(255, 0, 0, 255)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">c</span><span class="o">.</span><span class="n">color</span> <span class="o">=</span> <span class="mh">0x00ff00</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">c</span><span class="o">.</span><span class="n">color</span>
+<span class="go">wx.Colour(0, 255, 0, 255)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">c</span><span class="o">.</span><span class="n">color</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">c</span><span class="o">.</span><span class="n">color</span>
+<span class="go">wx.Colour(0, 255, 255, 255)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">c</span><span class="o">.</span><span class="n">color</span> <span class="o">=</span> <span class="mf">0.5</span>
+<span class="gt">Traceback (most recent call last):</span>
+  File <span class="nb">&quot;c:\python25\lib\site-packages\Traits-3.1.0-py2.5-win32.egg\enthought\</span>
+<span class="nb">  traits\trait_handlers.py&quot;</span>, line <span class="m">175</span>, in <span class="n-Identifier">error value )</span>
+<span class="nc">TraitError</span>: <span class="n-Identifier">The &#39;color&#39; trait of a Circle instance must be a string of the form</span>
+<span class="go">(r,g,b) or (r,g,b,a) where r, g, b, and a are integers from 0 to 255, a wx.Colour</span>
+<span class="go">instance, an integer which in hex is of the form 0xRRGGBB, where RR is red, GG is</span>
+<span class="go">green, and BB is blue or &#39;aquamarine&#39; or &#39;black&#39; or &#39;blue violet&#39; or &#39;blue&#39; or</span>
+<span class="go">&#39;brown&#39; or &#39;cadet blue&#39; or &#39;coral&#39; or &#39;cornflower blue&#39; or &#39;cyan&#39; or ...此处略去N</span>
+<span class="go">多英文颜色名... or &#39;yellow&#39;, but a value of 0.5 &lt;type &#39;float&#39;&gt; was specified.</span>
+</pre></div>
+</div>
+<p>c.color支持&quot;red&quot;、0x00ff00和(0, 255, 255)等值。但它不支持0.5这样的浮点数，于是一个很详细的出错信息告诉我们它所有能支持的值。</p>
+<p>在开始下一节之前，最后来看一个很酷的东西:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">c</span><span class="o">.</span><span class="n">configure_traits</span><span class="p">()</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">c</span><span class="o">.</span><span class="n">color</span>
+<span class="go">wx.Colour(64, 34, 117, 255)</span>
+</pre></div>
+</div>
+<p>执行c.configure_traits()之后，出现如下的对话框以供我们修改颜色属性，任意选择一个颜色、按OK按钮，看到configure_traits函数返回True，而c.color已经变为我们所选择的颜色了。注意你需要在iPython -wthread或者spyder下运行此函数，否则会出现对话框不响应的问题。</p>
+<p></p>
+<div class="figure" id="fig-traitsintro01">
+<img alt="_images/traits_intro_01.png" src="_images/traits_intro_01.png" />
+<p class="caption">自动生成的修改颜色Trait属性的对话框</p>
+</div>
+</div>
+<div class="section" id="traits">
+<h2>Traits是什么<a class="headerlink" href="#traits" title="Permalink to this headline">¶</a></h2>
+<p>trait为Python对象的属性增加了类型定义的功能，此外还提供了如下的额外功能：</p>
+<ul class="simple">
+<li>初始化：每个trait属性都定义有自己的缺省值，这个缺省值用来初始化属性</li>
+<li>验证：基于trait的属性都有明确的类型定义，只有满足定义的值才能赋值给属性</li>
+<li>委托：trait属性的值可以委托给其他对象的属性</li>
+<li>监听：trait属性的值的改变可以触发指定的函数的运行</li>
+<li>可视化：拥有trait属性的对象可以很方便地提供一个用户界面交互式地改变trait属性的值</li>
+</ul>
+<p>下面这个简单的例子展示了trait所提供的这五项能力：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">enthought.traits.api</span> <span class="kn">import</span> <span class="n">Delegate</span><span class="p">,</span> <span class="n">HasTraits</span><span class="p">,</span> <span class="n">Instance</span><span class="p">,</span> <span class="n">Int</span><span class="p">,</span> <span class="n">Str</span>
+
+<span class="k">class</span> <span class="nc">Parent</span> <span class="p">(</span> <span class="n">HasTraits</span> <span class="p">):</span>
+    <span class="c"># 初始化: last_name被初始化为&#39;Zhang&#39;</span>
+    <span class="n">last_name</span> <span class="o">=</span> <span class="n">Str</span><span class="p">(</span> <span class="s">&#39;Zhang&#39;</span> <span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">Child</span> <span class="p">(</span> <span class="n">HasTraits</span> <span class="p">):</span>
+    <span class="n">age</span> <span class="o">=</span> <span class="n">Int</span>
+
+    <span class="c"># 验证: father属性的值必须是Parent类的实例</span>
+    <span class="n">father</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span> <span class="n">Parent</span> <span class="p">)</span>
+
+    <span class="c"># 委托: Child的实例的last_name属性委托给其father属性的last_name</span>
+    <span class="n">last_name</span> <span class="o">=</span> <span class="n">Delegate</span><span class="p">(</span> <span class="s">&#39;father&#39;</span> <span class="p">)</span>
+
+    <span class="c"># 监听: 当age属性的值被修改时，下面的函数将被运行</span>
+    <span class="k">def</span> <span class="nf">_age_changed</span> <span class="p">(</span> <span class="bp">self</span><span class="p">,</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span> <span class="p">):</span>
+        <span class="k">print</span> <span class="s">&#39;Age changed from </span><span class="si">%s</span><span class="s"> to </span><span class="si">%s</span><span class="s"> &#39;</span> <span class="o">%</span> <span class="p">(</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span> <span class="p">)</span>
+</pre></div>
+</div>
+<p>下面用这两个类创建立两个实例:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="n">Parent</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">c</span> <span class="o">=</span> <span class="n">Child</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>由于没有设置c的father属性，因此无法获得它的last_name属性:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">c</span><span class="o">.</span><span class="n">last_name</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="nc">AttributeError</span>: <span class="n-Identifier">&#39;NoneType&#39; object has no attribute &#39;last_name&#39;</span>
+</pre></div>
+</div>
+<p>设置father属性之后，我们就可以得到c的last_name了:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">c</span><span class="o">.</span><span class="n">father</span> <span class="o">=</span> <span class="n">p</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">c</span><span class="o">.</span><span class="n">last_name</span>
+<span class="go">&#39;Zhang&#39;</span>
+</pre></div>
+</div>
+<p>设置c的age属性将触发_age_changed方法的执行:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">c</span><span class="o">.</span><span class="n">age</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="go">Age changed from 0 to 4</span>
+</pre></div>
+</div>
+<p>调用configure_traits:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">c</span><span class="o">.</span><span class="n">configure_traits</span><span class="p">()</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+<p>弹出一个如下的对话框，用户可以通过它修改c的trait属性，</p>
+<div class="figure" id="fig-traitsintro02">
+<img alt="_images/traits_intro_02.png" src="_images/traits_intro_02.png" />
+<p class="caption">为Child类自动生成的属性修改对话框</p>
+</div>
+<p>可以看到属性按照其英文名排序，垂直排为一列。由于father属性是Parent类的实例，所以它给我们一个按钮，点此按钮出现下面的设置father对象的tratis属性的对话框</p>
+<div class="figure" id="fig-traitsintro03">
+<img alt="_images/traits_intro_03.png" src="_images/traits_intro_03.png" />
+<p class="caption">点击Child对话框中的Father按钮之后，弹出编辑father属性的对话框</p>
+</div>
+<p>在上面这个对话框中修改father的Last name，可以看到child的Last name属性也随之发生变化。</p>
+<p>我们可以调用print_traits方法输出所有的trait属性与其值:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">c</span><span class="o">.</span><span class="n">print_traits</span><span class="p">()</span>
+<span class="go">age:       4</span>
+<span class="go">father:    &lt;__main__.Parent object at 0x13B49120&gt;</span>
+<span class="go">last_name: u&#39;Zhang&#39;</span>
+</pre></div>
+</div>
+<p>调用get方法获得一个描述对象所有trait属性的dict:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">c</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+<span class="go">{&#39;age&#39;: 4, &#39;last_name&#39;: u&#39;Zhang&#39;, &#39;father&#39;: &lt;__main__.Parent object at 0x13B49120&gt;}</span>
+</pre></div>
+</div>
+<p>此外还可以调用set方法设置trait属性的值，set方法可以同时配置多个trait的属性:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">c</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">age</span> <span class="o">=</span> <span class="mi">6</span><span class="p">)</span>
+<span class="go">Age changed from 4 to 6</span>
+<span class="go">&lt;__main__.Child object at 0x13B494B0&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="trait">
+<h2>动态添加Trait属性<a class="headerlink" href="#trait" title="Permalink to this headline">¶</a></h2>
+<p>前面介绍的方法都是在类的定义中声明Trait属性，在类的实例中使用Trait属性。由于Python是动态语言，因此Traits库也提供了为某个特定的实例添加Trait属性的方法。</p>
+<p>下面的例子，直接产生HasTraits类的一个实例a, 然后调用其add_trait方法动态地为a添加一个名为x的Trait属性，其类型为Float，初始值为3.0。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">enthought.traits.api</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">a</span> <span class="o">=</span> <span class="n">HasTraits</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">a</span><span class="o">.</span><span class="n">add_trait</span><span class="p">(</span><span class="s">&quot;x&quot;</span><span class="p">,</span> <span class="n">Float</span><span class="p">(</span><span class="mf">3.0</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">a</span><span class="o">.</span><span class="n">x</span>
+<span class="go">3.0</span>
+</pre></div>
+</div>
+<p>接下来再创建一个HasTraits类的实例b，用add_trait方法为b添加一个属性a，指定其类型为HasTraits类的实例。然后把实例a赋值给实例b的属性a：b.a。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">b</span> <span class="o">=</span> <span class="n">HasTraits</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">b</span><span class="o">.</span><span class="n">add_trait</span><span class="p">(</span><span class="s">&quot;a&quot;</span><span class="p">,</span> <span class="n">Instance</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">b</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">a</span>
+</pre></div>
+</div>
+<p>然后为实例b添加一个类型为Delegate(代理)的属性y，它是b的属性a所表示的实例的属性x的代理，即b.y是b.a.x的代理。注意我们在用Delegate声明代理时，第一个参数b的一个属性名&quot;a&quot;，第二个参数是是此属性的属性名&quot;x&quot;，modify=True表示可以通过b.y修改b.a.x的值。我们看到当将b.y的值改为10的时候，a.x的值也同时改变了。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">b</span><span class="o">.</span><span class="n">add_trait</span><span class="p">(</span><span class="s">&quot;y&quot;</span><span class="p">,</span> <span class="n">Delegate</span><span class="p">(</span><span class="s">&quot;a&quot;</span><span class="p">,</span> <span class="s">&quot;x&quot;</span><span class="p">,</span> <span class="n">modify</span><span class="o">=</span><span class="bp">True</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">b</span><span class="o">.</span><span class="n">y</span>
+<span class="go">3.0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">b</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">a</span><span class="o">.</span><span class="n">x</span>
+<span class="go">10.0</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="property">
+<h2>Property属性<a class="headerlink" href="#property" title="Permalink to this headline">¶</a></h2>
+<p>标准的Python提供了Property功能，Property看起来像对象的一个成员变量，但是在获取它的值或者给它赋值的时候实际上是调用了相应的函数。Traits也提供了类似的功能。让我们先来看一个例子：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="c"># filename: traits_property.py</span>
+<span class="kn">from</span> <span class="nn">enthought.traits.api</span> <span class="kn">import</span> <span class="n">HasTraits</span><span class="p">,</span> <span class="n">Float</span><span class="p">,</span> <span class="n">Property</span><span class="p">,</span> <span class="n">cached_property</span>
+
+<span class="k">class</span> <span class="nc">Rectangle</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+    <span class="n">width</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span> 
+    <span class="n">height</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)</span>
+
+    <span class="c">#area是一个属性，当width,height的值变化时，它对应的_get_area函数将被调用</span>
+    <span class="n">area</span> <span class="o">=</span> <span class="n">Property</span><span class="p">(</span><span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;width&#39;</span><span class="p">,</span> <span class="s">&#39;height&#39;</span><span class="p">])</span> 
+
+    <span class="c"># 通过cached_property decorator缓存_get_area函数的输出</span>
+    <span class="nd">@cached_property</span> 
+    <span class="k">def</span> <span class="nf">_get_area</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        area的get函数，注意此函数名和对应的Proerty名的关系</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">print</span> <span class="s">&#39;recalculating&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span>
+</pre></div>
+</div>
+<p>在Rectangle类定义中，使用Property()定义了一个area属性。Traits所提供的Property和标准Python的有所不同，Traits中根据属性名直接决定了它的访问函数，当用户读取area值时，将得到_get_area函数的返回值；而设置area的值时，_set_area函数将被调用。此外，通过关键字参数depends_on，指定当width和height属性变化时自动计算area属性。</p>
+<p>在_get_area函数用&#64;cached_property进行修饰，使得_get_area函数的返回值将被缓存，除非width和height的值发生变化，否则将一直使用缓存的值。下面我们来看看Rectangle的用法。在traits_property.py的文件夹下，启动IPython -wthread：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">run</span> <span class="n">traits_property</span><span class="o">.</span><span class="n">py</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">r</span> <span class="o">=</span> <span class="n">Rectangle</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">r</span><span class="o">.</span><span class="n">area</span>  <span class="c"># &lt;-- 第一次取得area，需要进行运算</span>
+<span class="go">recalculating</span>
+<span class="go">2.0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">r</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">r</span><span class="o">.</span><span class="n">area</span> <span class="c"># &lt;--修改width之后，取得area，需要进行计算</span>
+<span class="go">recalculating</span>
+<span class="go">20.0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">r</span><span class="o">.</span><span class="n">area</span> <span class="c"># &lt;--width和height都没有发生变化，因此直接返回缓存值，没有重新计算</span>
+<span class="go">20.0</span>
+</pre></div>
+</div>
+<p>我们看到通过depends_on和&#64;cached_property，系统可以跟踪area属性的状态，判断是否需要调用_get_area函数重新计算area的值。注意在运行r.width=10时，并没有立即运行_get_area函数，这是因为系统知道没有任何物体在监听r.area属性，因此它只是保存一个需要重新计算的标志。等到真正需要获取area的值时，再调用_get_area函数。</p>
+<p>如果我们调用r.edit_traits()，就会看到depends_on的强大功能了。为了更加有趣一些，这里连续调用两次edit_traits，弹出两个编辑界面：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">r</span><span class="o">.</span><span class="n">edit_traits</span><span class="p">()</span>
+<span class="go">&lt;enthought.traits.ui.ui.UI object at 0x02FCD420&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">r</span><span class="o">.</span><span class="n">edit_traits</span><span class="p">()</span>
+<span class="go">&lt;enthought.traits.ui.ui.UI object at 0x02FD68A0&gt;</span>
+</pre></div>
+</div>
+<div class="figure" id="fig-traitsintro04">
+<img alt="_images/traits_intro_04.png" src="_images/traits_intro_04.png" />
+<p class="caption">修改两个对话框中的任意个Height或者Width属性都会重新计算Area，并同时更新对话框显示</p>
+</div>
+<p>然后修改任何一个界面中的width或者height属性，你可以注意到在输入数值的同时，两个界面中的Area，Height和Width等各个文本框同时更新，每次键盘按键都会调用_get_area函数。此时在IPython窗口修改width的值的话，也会调用_get_area函数：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">r</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="mi">25</span>
+<span class="go">recalculating</span>
+</pre></div>
+</div>
+<p>当打开界面之后，界面对象开始监听对象r的各个属性，因此当我们修改r.width之后，系统设置r.area的标志为需要重新计算，然后发现r.area的值有对象在监听，因此直接调用_get_area函数更新其值，并且通知所有的监听对象，因此界面就一齐更新了。</p>
+<p>让我们来看看在traits的内部，是如何处理属性值的改变引起界面变化的：</p>
+<div class="highlight-python"><pre># 获得与area属性对应的Trait，此对象保存了area属性运作需要的所有信息
+&gt;&gt;&gt; t = r.trait("area")
+&gt;&gt;&gt; type(t)
+&lt;class 'enthought.traits.traits.CTrait'&gt; # &lt;-- 它是一个CTrait对象
+
+# _notifiers函数返回所有的通知对象，当aera属性改变时，这里对象将被通知。
+&gt;&gt;&gt; t._notifiers(True)
+[&lt;enthought.traits.trait_notifiers.FastUITraitChangeNotifyWrapper instance at 0x00FFB760&gt;,
+ &lt;enthought.traits.trait_notifiers.FastUITraitChangeNotifyWrapper instance at 0x02FA7FD0&gt;]</pre>
+</div>
+<p>我们弹出了两个界面，因此所获得的通知对象有两个。如果你再运行一次r.edit_traits()的话，这个列表将变成3个元素。</p>
+<p>关于Property更详细的内容将在 <a class="reference external" href="traits_manual_index.html"><em>Traits使用手册</em></a> 中详细介绍。</p>
+</div>
+<div class="section" id="id2">
+<h2>Trait属性监听<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>HasTraits类的所有对象的所有trait属性都自动支持监听功能。当某个trait属性值发生变化时，HasTraits对象会通知所有监听此属性的函数。</p>
+<p>监听函数分为静态和动态两种。让我们来看下面这个例子：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="c"># filename: traits_listener.py</span>
+<span class="kn">from</span> <span class="nn">enthought.traits.api</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="k">class</span> <span class="nc">Child</span> <span class="p">(</span> <span class="n">HasTraits</span> <span class="p">):</span>          
+    <span class="n">name</span> <span class="o">=</span> <span class="n">Str</span>
+    <span class="n">age</span> <span class="o">=</span> <span class="n">Int</span>
+    <span class="n">doing</span> <span class="o">=</span> <span class="n">Str</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">&lt;</span><span class="si">%x</span><span class="s">&gt;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+
+    <span class="c"># 通知: 当age属性的值被修改时，下面的函数将被运行</span>
+    <span class="k">def</span> <span class="nf">_age_changed</span> <span class="p">(</span> <span class="bp">self</span><span class="p">,</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span> <span class="p">):</span>
+        <span class="k">print</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">.age changed: form </span><span class="si">%s</span><span class="s"> to </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_anytrait_changed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">):</span>
+        <span class="k">print</span> <span class="s">&quot;anytrait changed: </span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s"> from </span><span class="si">%s</span><span class="s"> to </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">log_trait_changed</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">):</span>
+    <span class="k">print</span> <span class="s">&quot;log: </span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s"> changed from </span><span class="si">%s</span><span class="s"> to </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">Child</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">&quot;HaiYue&quot;</span><span class="p">,</span> <span class="n">age</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="n">Child</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">&quot;KaiYu&quot;</span><span class="p">,</span> <span class="n">age</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">h</span><span class="o">.</span><span class="n">on_trait_change</span><span class="p">(</span><span class="n">log_trait_changed</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&quot;doing&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Child类有一个age属性，当其值发生变化时，其对应的静态监听函数 _age_changed 将被调用，而 _anytrait_changed则是一个特殊的静态监听函数，HasTraits对象的任何trait属性值的改变都会调用此函数。</p>
+<p>log_trait_changed是一个普通函数。通过h.on_trait_change调用动态地将其与h的doing属性联系起来，即当h对象的doing属性改变时，log_trait_changed函数将被调用。</p>
+<p>在IPython中运行上面的程序：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">run</span> <span class="n">traits_listener</span><span class="o">.</span><span class="n">py</span>
+<span class="go">anytrait changed: &lt;201ba80&gt;.age from 0 to 4</span>
+<span class="go">&lt;201ba80&gt;.age changed: form 0 to 4</span>
+<span class="go">anytrait changed: HaiYue&lt;201ba80&gt;.name from  to HaiYue</span>
+<span class="go">anytrait changed: &lt;201bae0&gt;.age from 0 to 1</span>
+<span class="go">&lt;201bae0&gt;.age changed: form 0 to 1</span>
+<span class="go">anytrait changed: KaiYu&lt;201bae0&gt;.name from  to KaiYu</span>
+</pre></div>
+</div>
+<p>然后分别改变h和k这两个对象的各个属性：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">h</span><span class="o">.</span><span class="n">age</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="go">anytrait changed: HaiYue&lt;5d87e70&gt;.age from 4 to 5</span>
+<span class="go">HaiYue&lt;5d87e70&gt;.age changed: form 4 to 5</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">h</span><span class="o">.</span><span class="n">doing</span> <span class="o">=</span> <span class="s">&quot;sleeping&quot;</span>
+<span class="go">anytrait changed: HaiYue&lt;5d87e70&gt;.doing from  to sleeping</span>
+<span class="go">log: HaiYue&lt;5d87e70&gt;.doing changed from  to sleeping</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">k</span><span class="o">.</span><span class="n">doing</span> <span class="o">=</span> <span class="s">&quot;playing&quot;</span>
+<span class="go">anytrait changed: KaiYu&lt;5d874e0&gt;.doing from  to playing</span>
+</pre></div>
+</div>
+<div class="figure" id="fig-traitslistener">
+<img alt="_images/traits_listener.png" src="_images/traits_listener.png" />
+<p class="caption">Trait属性的监听函数的调用顺序</p>
+</div>
+<p>静态监听函数的参数有如下几种形式：</p>
+<ul class="simple">
+<li>_age_changed(self)</li>
+<li>_age_changed(self, new)</li>
+<li>_age_changed(self, old, new)</li>
+<li>_age_changed(self, name, old, new)</li>
+</ul>
+<p>而动态监听函数的参数有如下几种：</p>
+<ul class="simple">
+<li>observer()</li>
+<li>ovserver(new)</li>
+<li>ovserver(name, new)</li>
+<li>ovserver(obj, name, new)</li>
+<li>ovserver(obj, name, old, new)</li>
+</ul>
+<p>其中obj表示属性发生变化的对象，name为发生改变的属性名，old为改变前的值，new为现在值。</p>
+<p>动态监听函数不但可是普通函数，还可以是某个对象的方法。</p>
+<p>当多个trait属性都需要同一个静态监听函数时，用固定函数名就比较麻烦了：你需要写多个_xxx_changed函数，其中再调用某个函数进行同样的处理。Trait库提供的解决方案是：用&#64;on_trait_changed对监听函数进行修饰：</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">首页目录</a></h3>
+            <ul>
+<li><a class="reference external" href="#">Traits-为Python添加类型定义</a><ul>
+<li><a class="reference external" href="#id1">背景</a></li>
+<li><a class="reference external" href="#traits">Traits是什么</a></li>
+<li><a class="reference external" href="#trait">动态添加Trait属性</a></li>
+<li><a class="reference external" href="#property">Property属性</a></li>
+<li><a class="reference external" href="#id2">Trait属性监听</a></li>
+</ul>
+</li>
+</ul>
+
+            <h4>上一篇文章</h4>
+            <p class="topless"><a href="matplotlib_intro.html"
+                                  title="上一篇文章">matplotlib-绘制精美的图表</a></p>
+            <h4>下一篇文章</h4>
+            <p class="topless"><a href="traitsUI_intro.html"
+                                  title="下一篇文章">TraitsUI-轻松制作用户界面</a></p>
+          <div id="searchbox" style="display: none">
+            <h3>快速搜索</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="搜索" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              中文搜索请尽量用空格分开单个的单词，例如搜索"科学 计算"，而不是"科学计算"
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="traitsUI_intro.html" title="TraitsUI-轻松制作用户界面"
+             >下一篇</a></li>
+        <li class="right" >
+          <a href="matplotlib_intro.html" title="matplotlib-绘制精美的图表"
+             >上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+    &copy; 2009, <a href="http://hyry.dip.jp/blogt.py">HYRY Studio</a>
+      由 <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.4. 编译
+    </div>
+  </body>
+</html>

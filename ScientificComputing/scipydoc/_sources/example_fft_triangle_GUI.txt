@@ -1,0 +1,23 @@
+#########
+三角波的FFT演示
+#########
+
+相关文档： :doc:`fft_study`
+
+本程序演示各种三角波形的FFT频谱，用户可以方便地修改三角波的各个参数，并立即看到其FFT频谱的变化。
+
+.. raw:: html
+   
+    <OBJECT CLASSID="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" WIDTH="589" HEIGHT="447" CODEBASE="http://active.macromedia.com/flash5/cabs/swflash.cab#version=7,0,0,0">
+    <PARAM NAME="movie" VALUE="_images/fft_study_04.swf">
+    <PARAM NAME="play" VALUE="true">
+    <PARAM NAME="loop" VALUE="false">
+    <PARAM NAME="wmode" VALUE="transparent">
+    <PARAM NAME="quality" VALUE="high">
+    <EMBED SRC="_images/fft_study_04.swf" width="589" HEIGHT="447" quality="high" loop="false" wmode="transparent" TYPE="application/x-shockwave-flash" PLUGINSPAGE="http://www.macromedia.com/shockwave/download/index.cgi?P1_Prod_Version=ShockwaveFlash">
+    </EMBED>
+    </OBJECT>
+    <img src="_images/fft_study_04.swf" style="visibility:hidden"/>
+    
+.. literalinclude:: examples/fft_triangle_GUI.py
+

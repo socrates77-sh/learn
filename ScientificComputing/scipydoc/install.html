@@ -1,0 +1,319 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>软件包的安装和介绍 &mdash; 用Python做科学计算</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link type="text/css" href="_static/jquery-ui-1.7.2.custom.css" rel="stylesheet" />	
+    <link type="text/css" href="_static/comments.css" rel="stylesheet" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '#',
+        VERSION:     '1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/jquery-ui-1.7.2.custom.min.js"></script>
+    <script type="text/javascript" src="_static/pydoc.js"></script>
+    <link rel="top" title="用Python做科学计算" href="index.html" />
+    <link rel="下一篇" title="NumPy-快速处理数据" href="numpy_intro.html" />
+    <link rel="上一篇" title="用Python做科学计算" href="index.html" /> 
+
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-10837468-1");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="numpy_intro.html" title="NumPy-快速处理数据"
+             accesskey="N">下一篇</a></li>
+        <li class="right" >
+          <a href="index.html" title="用Python做科学计算"
+             accesskey="P">上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="id1">
+<h1>软件包的安装和介绍<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id2">
+<h2>安装软件包<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id3">
+<h3>安装<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<p>和Matlab不同，Python的科学软件包由众多的社区维护和发布，因此要一一将其收集齐安装到你的电脑里是一件很费时间的事情。幸好这些工作已经有人帮我们整理好了。只需要下载一个文件，一次安装就能拥有众多的函数库可供使用。</p>
+<p>这里介绍两个科学计算Python合集的下载和安装过程。</p>
+<div class="section" id="python-x-y">
+<h4>Python(x,y)<a class="headerlink" href="#python-x-y" title="Permalink to this headline">¶</a></h4>
+<p><a class="reference external" href="http://www.pythonxy.com">http://www.pythonxy.com</a> 发布的Python(x,y)将近400M，收集了众多的函数库以及文档、教程。并且提供了一个方便的启动界面：</p>
+<div class="figure" id="fig-pythonxyhome">
+<img alt="_images/pythonxy_home.png" src="_images/pythonxy_home.png" />
+<p class="caption">Python(x,y)的启动画面</p>
+</div>
+<ul class="simple">
+<li>Shortcuts：启动各种应用程序</li>
+<li>Documentation：打开各个软件包的文档</li>
+<li>About：查看所安装的程序库的版本信息</li>
+</ul>
+</div>
+<div class="section" id="enthought-python-distribution-epd">
+<h4>Enthought Python Distribution (EPD)<a class="headerlink" href="#enthought-python-distribution-epd" title="Permalink to this headline">¶</a></h4>
+<p>下载地址：http://www.enthought.com/products/getepd.php
+EPD是一个商业的Python发行版本，同样包括了众多的科学软件包，而且作为教学使用是免费的，大小约为250M。</p>
+</div>
+</div>
+<div class="section" id="id4">
+<h3>工具<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<p>安装好了之后先看看下面这些常用的工具，在以后的学习过程中会经常用到。</p>
+<div class="section" id="ipython">
+<h4>iPython<a class="headerlink" href="#ipython" title="Permalink to this headline">¶</a></h4>
+<p>ipython 是一个 python 的交互式 shell，比默认的 python shell 好用得多，支持变量自动补全，自动缩近，支持 bash shell 命令，内置了许多很有用的功能和函数。</p>
+<p>如果你安装了Python(x,y)的话，可以从Python(x,y)的启动界面中运行iPython。</p>
+<div class="figure" id="fig-ipythonstart">
+<img alt="_images/iPython_start.png" src="_images/iPython_start.png" />
+<p class="caption">通过Python(x,y) Home启动IPython的各种选项</p>
+</div>
+<p>从下拉选择框中选择你想运行的iPython，然后点击后面的①或者②按钮启动iPython。下拉选择框中的IPython(x,y)、IPython(Qt)、IPython(wxPython)和IPython(mlab)等几个选项都是启动iPython，只不过它们的启动方式不同。而Python选项则只启动单纯的Python Shell。</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="44%" />
+<col width="38%" />
+<col width="18%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">选项</th>
+<th class="head">参数</th>
+<th class="head">含义</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>IPython(x,y)</td>
+<td>-pylab -p xy</td>
+<td>&nbsp;</td>
+</tr>
+<tr><td>IPython(Qt)</td>
+<td>-q4thread</td>
+<td>&nbsp;</td>
+</tr>
+<tr><td>IPython(wxPython)</td>
+<td>-wthread</td>
+<td>&nbsp;</td>
+</tr>
+<tr><td>IPython(mlab)</td>
+<td>-wthread</td>
+<td>&nbsp;</td>
+</tr>
+</tbody>
+</table>
+<p>点击①按钮将用一个叫做Console的软件启动Shell，此软件在窗口中显示Shell，并且支持多标签。点击②按钮用Windows自带的Cmd启动Shell。</p>
+<p>如果你用python(x,y)的启动界面通过IPython(x,y)运行iPython的话，那么在iPython打开之后自动运行一个default.py脚本。此脚本缺省执行以下的函数库导入:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">import</span> <span class="nn">scipy</span>
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="o">*</span>
+</pre></div>
+</div>
+<p>为了和numpy, scipy等社区的推荐的标准导入方式一致，请点击按钮③，然后在打开的文件夹中添加一个名为numpy.py的文件，编辑此文件，添加以下几行推荐的导入:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">scipy</span> <span class="kn">as</span> <span class="nn">sp</span>
+<span class="kn">import</span> <span class="nn">pylab</span> <span class="kn">as</span> <span class="nn">pl</span>
+</pre></div>
+</div>
+<p>此后运行IPython(x,y)的时候请记着要选择numpy.py为启动脚本。</p>
+<p>如果要使用pylab，TraitsUI等在shell中和图形界面进行交互的话，需要选择带-wthread参数的选项(-pylab也可以)。<a href="#fig-ipythonsample">下图</a>是一个用pylab绘制sin波形图的例子：</p>
+<div class="figure" id="fig-ipythonsample">
+<img alt="_images/iPython_sample.png" src="_images/iPython_sample.png" />
+<p class="caption">使用IPython交互式地绘制正弦波</p>
+</div>
+<p>在iPython的交互中可以方便地使用如下功能：</p>
+<ul class="simple">
+<li>自动补全：输入一部分文字之后按tab键，iPython将列出所有以输入补全信息。</li>
+<li>查看文档：输入需要查看文档的函数，然后在后面添加?或者??，?表示查看函数的文档，??表示查看其Python源代码，如果函数不是Python写的，则查看不到。</li>
+<li>执行cmd命令：ls-列出当前目录下的所有文件，cd-显示或者更改当前路径</li>
+<li>执行Python程序：用run <a href="#id5"><span class="problematic" id="id6">*</span></a>.py命令，在IPython中运行指定的py文件。如果加-i参数的话，则在IPython的命名空间中执行。也就是说在文件中没有定义名称会直接使用在IPython中的。</li>
+<li>执行剪切板中的程序：你可以从本书中复制代码，然后在IPython命令窗口中执行paste命令运行复制的代码。如果执行paste foo的话，将把剪切板中的内容复制到变量foo中。变量foo是一个IPython提供的SList列表类型，它提供了很多操作所复制的内容的方法。</li>
+<li>执行系统命令：在要执行的系统名字之前添加一个!号。例如执行!test.py的话，那么将让系统运行test.py文件。和run命令不同的是，test.py完全在另外的进程中运行。</li>
+</ul>
+</div>
+<div class="section" id="spyder">
+<h4>spyder<a class="headerlink" href="#spyder" title="Permalink to this headline">¶</a></h4>
+<p>spyder是Python(x,y)的作者为它开发的一个简单的Python开发环境。和其它Python IDE相比它最大的优点就是模仿MATLAB的workspace功能，可以很方便地观察和修改数组的值。</p>
+<p>spyder的项目地址： <a class="reference external" href="http://code.google.com/p/spyderlib">http://code.google.com/p/spyderlib</a></p>
+<p><a href="#fig-spyder01">下图</a>是spyder的界面截图：</p>
+<div class="figure" id="fig-spyder01">
+<img alt="_images/spyder_01.png" src="_images/spyder_01.png" />
+<p class="caption">在Spyder中执行图像处理的程序</p>
+</div>
+<p><a href="#fig-spyder02">下图</a>是Workspace的截图，列出了其中的变量名以及类型和大小等信息。鼠标右键可以显示出操作指定变量的菜单：</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">Workspace缺省配置不显示大写字母开头的变量，可以在Workspace菜单中修改这项配置。</p>
+</div>
+<div class="figure" id="fig-spyder02">
+<img alt="_images/spyder_02.png" src="_images/spyder_02.png" />
+<p class="caption">使用Workspace查看变量内容</p>
+</div>
+<p>选择Plot选项，将出现如<a href="#fig-spyder03">下图</a>所示的绘图窗口：</p>
+<div class="figure" id="fig-spyder03">
+<img alt="_images/spyder_03.png" src="_images/spyder_03.png" />
+<p class="caption">在Workspace中将数组绘制成曲线图</p>
+</div>
+<p>如果Edit选项的话，将出现如<a href="#fig-spyder04">下图</a>所示的编辑器对数组进行操作：</p>
+<div class="figure" id="fig-spyder04">
+<img alt="_images/spyder_04.png" src="_images/spyder_04.png" />
+<p class="caption">使用数组编辑器查看和编辑数组内容</p>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="id7">
+<h2>函数库介绍<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h2>
+<p>Python的科学计算方面的内容由许多库构成，在基础篇中让我们首先来了解一下编写科学计算软件时经常使用的一些库。</p>
+<div class="section" id="id8">
+<h3>数值计算库<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
+<p><strong>NumPy</strong>为Python提供了快速的多维数组处理的能力，而<strong>SciPy</strong>则在NumPy基础上添加了众多的科学计算所需的各种工具包，有了这两个库，Python就有几乎和Matlab一样的处理数据和计算的能力了。</p>
+<p>NumPy和SciPy官方网址： <a class="reference external" href="http://www.scipy.org">http://www.scipy.org</a></p>
+<p>NumPy为Python带来了真正的多维数组功能，并且提供了丰富的函数库处理这些数组。它将常用的数学函数都进行数组化，使得这些数学函数能够直接对数组进行操作，将本来需要在Python级别进行的循环，放到C语言的运算中，明显地提高了程序的运算速度。</p>
+<p>SciPy的核心计算部分都是一些久经考验的Fortran数值计算库，例如：</p>
+<ul class="simple">
+<li>线性代数使用LAPACK库</li>
+<li>快速傅立叶变换使用FFTPACK库</li>
+<li>常微分方程求解使用ODEPACK库</li>
+<li>非线性方程组求解以及最小值求解等使用MINPACK库</li>
+</ul>
+</div>
+<div class="section" id="id9">
+<h3>符号计算库<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h3>
+<p><strong>SymPy</strong>是一套进行符号数学运算的Python函数库，虽然它目前还没有到达1.0版本，但是已经足够好用，可以帮助我们进行公式推导，进行符号求解。</p>
+<p>SymPy官方网址： <a class="reference external" href="http://code.google.com/p/sympy">http://code.google.com/p/sympy</a></p>
+</div>
+<div class="section" id="id10">
+<h3>界面设计<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h3>
+<p>制作界面一直都是一件十分复杂的工作，使用<strong>Traits</strong>库，你将再也不会在界面设计上耗费大量精力，从而能把注意力集中到如何处理数据上去。</p>
+<p>Traits官方网址： <a class="reference external" href="http://code.enthought.com/projects/traits">http://code.enthought.com/projects/traits</a></p>
+<p>Traits库分为Traits和TraitsUI两大部分，Traits为Python添加了类型定义的功能，使用它定义的traits属性具有初始化、校验、代理、事件等诸多功能。</p>
+<p>TraitsUI库基于Traits库，使用MVC结构快速地定义用户界面，在最简单的情况下，你甚至不需要写一句关于界面的代码，就可以通过traits属性定义获得一个可以工作的用户界面。使用TraitsUI库编写的程序自动支持wxPython和pyQt两个经典的界面库。</p>
+</div>
+<div class="section" id="id11">
+<h3>绘图与可视化<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h3>
+<p><strong>Chaco</strong>和<strong>matplotlib</strong>是很优秀的2D绘图库，Chaco库和Traits库紧密相连，方便制作动态交互式的图表功能。而matplotlib库则能够快速地绘制精美的图表、以多种格式输出，并且带有简单的3D绘图的功能。</p>
+<p>Chaco官方网址： <a class="reference external" href="http://code.enthought.com/projects/chaco">http://code.enthought.com/projects/chaco</a></p>
+<p>matplotlib官方网址： <a class="reference external" href="http://matplotlib.sourceforge.net">http://matplotlib.sourceforge.net</a></p>
+<p><strong>TVTK</strong>库在标准的VTK库之上用Traits库进行封装，如果要在Python下使用VTK，用TVTK是再好不过的选择。<strong>Mayavi2</strong>则在TVTK的基础上再添加了一套面向应用的方便工具，它既可以单独作为3D可视化程序使用，也可以快速地嵌入到用户的程序中去。</p>
+<p>Mayavi2官方网址： <a class="reference external" href="http://code.enthought.com/projects/mayavi">http://code.enthought.com/projects/mayavi</a></p>
+<div class="topic">
+<p class="topic-title first">VTK(Visualization Toolkit)</p>
+<p>视觉化工具函式库（VTK， Visualization Toolkit）是一个开放源码，跨平台、支援平行处理（VTK曾用于处理大小近乎1个Petabyte的资料，其平台为美国Los Alamos国家实验室所有的具1024个处理器之大型系统）的图形应用函式库。2005年实曾被美国陆军研究实验室用于即时模拟俄罗斯制反导弹战车ZSU23-4受到平面波攻击的情形，其计算节点高达2.5兆个之多。 -- 摘自维基百科</p>
+</div>
+<p>此外，使用<strong>Visual</strong>库能够快速、方便地制作3D动画演示，使你的数据结果更有说服力。</p>
+<p>Visual官方网址： <a class="reference external" href="http://vpython.org">http://vpython.org</a></p>
+</div>
+<div class="section" id="id12">
+<h3>图像处理和计算机视觉<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h3>
+<p><strong>OpenCV</strong>是由英特尔公司发起并参与开发，以BSD许可证授权发行，可以在商业和研究领域中免费使用。OpenCV可用于开发实时的图像处理、计算机视觉以及模式识别程序。OpenCV提供的Python API方便我们快速实现算法，查看结果并且和其它的库进行数据交换。</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">首页目录</a></h3>
+            <ul>
+<li><a class="reference external" href="#">软件包的安装和介绍</a><ul>
+<li><a class="reference external" href="#id2">安装软件包</a><ul>
+<li><a class="reference external" href="#id3">安装</a><ul>
+<li><a class="reference external" href="#python-x-y">Python(x,y)</a></li>
+<li><a class="reference external" href="#enthought-python-distribution-epd">Enthought Python Distribution (EPD)</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#id4">工具</a><ul>
+<li><a class="reference external" href="#ipython">iPython</a></li>
+<li><a class="reference external" href="#spyder">spyder</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference external" href="#id7">函数库介绍</a><ul>
+<li><a class="reference external" href="#id8">数值计算库</a></li>
+<li><a class="reference external" href="#id9">符号计算库</a></li>
+<li><a class="reference external" href="#id10">界面设计</a></li>
+<li><a class="reference external" href="#id11">绘图与可视化</a></li>
+<li><a class="reference external" href="#id12">图像处理和计算机视觉</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            <h4>上一篇文章</h4>
+            <p class="topless"><a href="index.html"
+                                  title="上一篇文章">用Python做科学计算</a></p>
+            <h4>下一篇文章</h4>
+            <p class="topless"><a href="numpy_intro.html"
+                                  title="下一篇文章">NumPy-快速处理数据</a></p>
+          <div id="searchbox" style="display: none">
+            <h3>快速搜索</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="搜索" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              中文搜索请尽量用空格分开单个的单词，例如搜索"科学 计算"，而不是"科学计算"
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="numpy_intro.html" title="NumPy-快速处理数据"
+             >下一篇</a></li>
+        <li class="right" >
+          <a href="index.html" title="用Python做科学计算"
+             >上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+    &copy; 2009, <a href="http://hyry.dip.jp/blogt.py">HYRY Studio</a>
+      由 <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.4. 编译
+    </div>
+  </body>
+</html>

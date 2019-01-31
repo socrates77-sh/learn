@@ -1,0 +1,26 @@
+####
+最近更新
+####
+
+* 2010/01/15: :ref:`将Mayavi嵌入到界面中 <sec-mayavi-embed>`
+
+* 2010/01/14: :ref:`模拟IIR滤波器的频带转换 <sec-iirbandtrans>`
+
+* 2010/01/12: 修改Sphinx模板，添加支持中文搜索的插件，中文分词库采用
+
+    smallseg： http://code.google.com/p/smallseg
+
+* 2010/01/07: :ref:`巴特沃斯低通滤波器 <sec-filter-butter>` ； :ref:`双线性变换 <sec-filter-bilinear>`
+
+* 2010/01/05: :ref:`用Sympy计算球体体积 <sec-sympy-sphere>` ； :doc:`numpy_intro` 添加少许新内容；修改章节名
+
+* 2010/01/04: :ref:`L-System分形 <sec-lsystem>`
+
+* 2010/01/03: :ref:`迭代函数系统设计器 <sec-ifs-designer>`
+
+* 2010/01/02: :ref:`迭代函数系统(IFS) <sec-ifs>`
+
+* 2009/12/30 : :ref:`Matplotlib的Axis对象 <sec-matplotlib-axis>`
+
+* 2009/12/29 : :ref:`绘制Mandelbrot集合 <sec-mandelbrot>`
+

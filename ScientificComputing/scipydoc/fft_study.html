@@ -1,0 +1,884 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>FFT演示程序 &mdash; 用Python做科学计算</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link type="text/css" href="_static/jquery-ui-1.7.2.custom.css" rel="stylesheet" />	
+    <link type="text/css" href="_static/comments.css" rel="stylesheet" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '#',
+        VERSION:     '1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/jquery-ui-1.7.2.custom.min.js"></script>
+    <script type="text/javascript" src="_static/pydoc.js"></script>
+    <link rel="top" title="用Python做科学计算" href="index.html" />
+    <link rel="下一篇" title="频域信号处理" href="frequency_process.html" />
+    <link rel="上一篇" title="数字信号系统" href="filters.html" /> 
+
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-10837468-1");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="frequency_process.html" title="频域信号处理"
+             accesskey="N">下一篇</a></li>
+        <li class="right" >
+          <a href="filters.html" title="数字信号系统"
+             accesskey="P">上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="fft">
+<h1>FFT演示程序<a class="headerlink" href="#fft" title="Permalink to this headline">¶</a></h1>
+<p>本章详细介绍如何综合利用之前所学习的numpy，traits，traitsUI和Chaco等多个库，编写一个FFT演示程序。此程序可以帮助你理解FFT是如何将时域信号转换为频域信号的，在开始正式的程序编写之前，让我们来复习一下有关FFT变换的知识，如果你没有学习过FFT，现在就是一个不错的学习机会。</p>
+<div class="section" id="id1">
+<h2>FFT知识复习<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>FFT变换是针对一组数值进行运算的，这组数的长度N必须是2的整数次幂，例如64, 128, 256等等； 数值可以是实数也可以是复数，通常我们的时域信号都是实数，因此下面都以实数为例。我们可以把这一组实数想像成对某个连续信号按照一定取样周期进行取样而得来，如果对这组N个实数值进行FFT变换，将得到一个有N个复数的数组，我们称此复数数组为频域信号，此复数数组符合如下规律：</p>
+<ul class="simple">
+<li>下标为0和N/2的两个复数的虚数部分为0，</li>
+<li>下标为i和N-i的两个复数共轭，也就是其虚数部分数值相同、符号相反。</li>
+</ul>
+<p>下面的例子演示了这一个规律，先以rand随机产生有8个元素的实数数组x，然后用fft对其运算之后，观察其结果为8个复数，并且满足上面两个条件：</p>
+<div class="highlight-python"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10</pre></div></td><td class="code"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span>
+<span class="go">array([ 0.15562099,  0.56862756,  0.54371949,  0.06354358,  0.60678158,</span>
+<span class="go">        0.78360968,  0.90116887,  0.1588846 ])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">xf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">xf</span>
+<span class="go">array([ 3.78195634+0.j        , -0.53575962+0.57688097j,</span>
+<span class="go">       -0.68248579-1.12980906j, -0.36656155-0.13801778j,</span>
+<span class="go">        0.63262552+0.j        , -0.36656155+0.13801778j,</span>
+<span class="go">       -0.68248579+1.12980906j, -0.53575962-0.57688097j])</span>
+</pre></div>
+</td></tr></table></div>
+<p>FFT变换的结果可以通过IFFT变换（逆FFT变换）还原为原来的值：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">ifft</span><span class="p">(</span><span class="n">xf</span><span class="p">)</span>
+<span class="go">array([ 0.15562099 +0.00000000e+00j,  0.56862756 +1.91940002e-16j,</span>
+<span class="go">        0.54371949 +1.24900090e-16j,  0.06354358 -2.33573365e-16j,</span>
+<span class="go">        0.60678158 +0.00000000e+00j,  0.78360968 +2.75206729e-16j,</span>
+<span class="go">        0.90116887 -1.24900090e-16j,  0.15888460 -2.33573365e-16j])</span>
+</pre></div>
+</div>
+<p>注意ifft的运算结果实际上是和x相同的，由于浮点数的运算误差，出现了一些非常小的虚数部分。</p>
+<p>FFT变换和IFFT变换并没有增加或者减少信号的数量，如果你仔细数一下的话，x中有8个实数数值，而xf中其实也只有8个有效的值。</p>
+<div class="topic">
+<p class="topic-title first">计算FFT结果中的有用的数值</p>
+<p>由于虚数部共轭和虚数部为0等规律，真正有用的信息保存在下标从0到N/2的N/2+1个虚数中， 又由于下标为0和N/2的值虚数部分为0，因此只有N个有效的实数值。</p>
+</div>
+<p>下面让我们来看看FFT变换之后的那些复数都代表什么意思。</p>
+<ul class="simple">
+<li>首先下标为0的实数表示了时域信号中的直流成分的多少</li>
+<li>下标为i的复数a+b*j表示时域信号中周期为N/i个取样值的正弦波和余弦波的成分的多少， 其中a表示cos波形的成分，b表示sin波形的成分</li>
+</ul>
+<p>让我们通过几个例子来说明一下，下面是对一个直流信号进行FFT变换：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span>
+<span class="go">array([ 1.,  1.,  1.,  1.,  1.,  1.,  1.,  1.])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="go">array([ 1.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,  0.+0.j,</span>
+<span class="go">        0.+0.j])</span>
+</pre></div>
+</div>
+<p>所谓直流信号，就是其值不随时间变化，因此我们创建一个值全为1的数组x，我们看到它的FFT结果除了下标为0的数值不为0以外，其余的都为0。(为了计算各个成分的能量多少，需要将FFT的结果除以FFT的长度)，这表示我们的时域信号是直流的，并且其成分为1。</p>
+<p>下面我们产生一个周期为8个取样的正弦波，然后观察其FFT的结果：</p>
+<div class="highlight-python"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10</pre></div></td><td class="code"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">8</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">y</span><span class="p">)</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+<span class="go">array([  1.42979161e-18 +0.00000000e+00j,</span>
+<span class="go">        -4.44089210e-16 -5.00000000e-01j,</span>
+<span class="go">         1.53075794e-17 -1.38777878e-17j,</span>
+<span class="go">         3.87737802e-17 -1.11022302e-16j,</span>
+<span class="go">         2.91853672e-17 +0.00000000e+00j,</span>
+<span class="go">         0.00000000e+00 -9.71445147e-17j,</span>
+<span class="go">         1.53075794e-17 +1.38777878e-17j,   3.44085112e-16 +5.00000000e-01j])</span>
+</pre></div>
+</td></tr></table></div>
+<div class="topic">
+<p class="topic-title first">如何用linspace创建取样点x</p>
+<p>要计算周期为8个取样的正弦波，就需要把0-2*pi的区间等分为8分，如果用np.linspace(0, 2*np.pi, 8)的话，产生的值为：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span>
+<span class="go">array([ 0.        ,  0.8975979 ,  1.7951958 ,  2.6927937 ,  3.5903916 ,</span>
+<span class="go">    4.48798951,  5.38558741,  6.28318531])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mf">0.8975979</span>
+<span class="go">7.0000000079986666</span>
+</pre></div>
+</div>
+<p>可以看出上面用linspace只等分为7份，如果要正确使用np.linspace的话， 可以如下调用，产生9个点，并且设置endpoint=False，最终结果不包括最后的那个点：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="go">array([ 0.        ,  0.6981317 ,  1.3962634 ,  2.0943951 ,  2.7925268 ,</span>
+<span class="go">        3.4906585 ,  4.1887902 ,  4.88692191,  5.58505361])</span>
+</pre></div>
+</div>
+</div>
+<p>让我们再来看看对正弦波的FFT的计算结果吧。可以看到下标为1的复数的虚数部分为-0.5，而我们产生的正弦波的放大系数(振幅)为1，它们之间的关系是-0.5*（-2）=1。再来看一下余弦波形:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">x</span><span class="p">))</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="go">array([ -4.30631550e-17 +0.00000000e+00j,</span>
+<span class="go">         5.00000000e-01 -2.52659764e-16j,</span>
+<span class="go">         1.53075794e-17 +0.00000000e+00j,</span>
+<span class="go">         1.11022302e-16 +1.97148613e-16j,</span>
+<span class="go">         1.24479962e-17 +0.00000000e+00j,</span>
+<span class="go">        -1.11022302e-16 +1.91429446e-16j,</span>
+<span class="go">         1.53075794e-17 +0.00000000e+00j,   5.00000000e-01 -1.35918295e-16j])</span>
+</pre></div>
+</div>
+<p>只有下标为1的复数的实数部分有有效数值0.5，和余弦波的放大系数1之间的关系是0.5*2=1。再来看2个例子：</p>
+<div class="highlight-python"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16</pre></div></td><td class="code"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="p">))</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="go">array([  6.12303177e-17 +0.00000000e+00j,</span>
+<span class="go">         6.12303177e-17 +6.12303177e-17j,</span>
+<span class="go">        -1.83690953e-16 -1.00000000e+00j,</span>
+<span class="go">         6.12303177e-17 -6.12303177e-17j,</span>
+<span class="go">         6.12303177e-17 +0.00000000e+00j,</span>
+<span class="go">         6.12303177e-17 +6.12303177e-17j,</span>
+<span class="go">        -1.83690953e-16 +1.00000000e+00j,   6.12303177e-17 -6.12303177e-17j])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="mf">0.8</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="p">))</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="go">array([ -2.44921271e-17 +0.00000000e+00j,</span>
+<span class="go">        -3.46370983e-17 +2.46519033e-32j,</span>
+<span class="go">         4.00000000e-01 -9.79685083e-17j,</span>
+<span class="go">         3.46370983e-17 -3.08148791e-32j,</span>
+<span class="go">         2.44921271e-17 +0.00000000e+00j,</span>
+<span class="go">         3.46370983e-17 -2.46519033e-32j,</span>
+<span class="go">         4.00000000e-01 +9.79685083e-17j,  -3.46370983e-17 +3.08148791e-32j])</span>
+</pre></div>
+</td></tr></table></div>
+<p>上面产生的是周期为4个取样(N/2)的正弦和余弦信号，其FFT的有效成分在下标为2的复数中，其中正弦波的放大系数为2,因此频域虚数部分的值为-1；余弦波的放大系数为0.8，因此其对应的值为0.4。</p>
+<p>同频率的正弦波和余弦波通过不同的系数叠加，可以产生同频率的各种相位的余弦波，因此我们可以这样来理解频域中的复数:</p>
+<ul class="simple">
+<li>复数的模（绝对值）代表了此频率的余弦波的振幅</li>
+<li>复数的辐角代表了此频率的余弦波的相位</li>
+</ul>
+<p>让我们来看最后一个例子：</p>
+<div class="highlight-python"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15</pre></div></td><td class="code"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">128</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y</span> <span class="o">=</span> <span class="mf">0.3</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="o">+</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">4</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.8</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="mi">3</span><span class="o">*</span><span class="n">x</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">yf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">y</span><span class="p">)</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">yf</span><span class="p">[:</span><span class="mi">4</span><span class="p">]</span>
+<span class="go">array([  1.00830802e-17 +0.00000000e+00j,</span>
+<span class="go">         1.50000000e-01 +6.27820821e-18j,</span>
+<span class="go">         1.76776695e-01 +1.76776695e-01j,   2.00000000e-01 -3.46410162e-01j])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">yf</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<span class="go">4.1854721366992471e-017</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">yf</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">rad2deg</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">yf</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+<span class="go">(0.15000000000000008, 2.3980988870246962e-015)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">yf</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">rad2deg</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">yf</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span>
+<span class="go">(0.25000000000000011, 44.999999999999993)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">yf</span><span class="p">[</span><span class="mi">3</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">rad2deg</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">yf</span><span class="p">[</span><span class="mi">3</span><span class="p">]))</span>
+<span class="go">(0.39999999999999991, -60.000000000000085)</span>
+</pre></div>
+</td></tr></table></div>
+<p>在这个例子中我们产生了三个不同频率的余弦波，并且给他们不同的振幅和相位：</p>
+<ul class="simple">
+<li>周期为128/1.0点的余弦波的相位为0， 振幅为0.3</li>
+<li>周期为64/2.0点的余弦波的相位为45度， 振幅为0.5</li>
+<li>周期为128/3.0点的余弦波的相位为-60度，振幅为0.8</li>
+</ul>
+<p>对照yf[1], yf[2], yf[3]的复数振幅和辐角，我想你应该对FFT结果中的每个数值所表示的意思有很清楚的理解了吧。</p>
+</div>
+<div class="section" id="id2">
+<h2>合成时域信号<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>前面说过通过ifft函数可以将频域信号转换回时域信号，这种转换是精确的。下面我们要写一个小程序，完成类似的事情，不过可以由用户选择只转换一部分频率回到时域信号，这样转换的结果和原始的时域信号会有误差，我们通过观察可以发现使用的频率信息越多，则此误差越小，直观地看到如何通过多个余弦波逐步逼近任意的曲线信号的:</p>
+<div class="highlight-python"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46</pre></div></td><td class="code"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="c"># 本程序演示如何用多个正弦波合成三角波</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pylab</span> <span class="kn">as</span> <span class="nn">pl</span>
+
+<span class="c"># 取FFT计算的结果freqs中的前n项进行合成，返回合成结果，计算loops个周期的波形</span>
+<span class="k">def</span> <span class="nf">fft_combine</span><span class="p">(</span><span class="n">freqs</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">loops</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="n">length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">freqs</span><span class="p">)</span> <span class="o">*</span> <span class="n">loops</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">length</span><span class="p">)</span>
+    <span class="n">index</span> <span class="o">=</span> <span class="n">loops</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">/</span> <span class="n">length</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">freqs</span><span class="p">[:</span><span class="n">n</span><span class="p">]):</span>
+        <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span> <span class="n">p</span> <span class="o">*=</span> <span class="mi">2</span> <span class="c"># 除去直流成分之外，其余的系数都*2</span>
+        <span class="n">data</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">k</span><span class="o">*</span><span class="n">index</span><span class="p">)</span> <span class="c"># 余弦成分的系数为实数部</span>
+        <span class="n">data</span> <span class="o">-=</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">k</span><span class="o">*</span><span class="n">index</span><span class="p">)</span> <span class="c"># 正弦成分的系数为负的虚数部</span>
+    <span class="k">return</span> <span class="n">index</span><span class="p">,</span> <span class="n">data</span>    
+
+<span class="c"># 产生size点取样的三角波，其周期为1</span>
+<span class="k">def</span> <span class="nf">triangle_wave</span><span class="p">(</span><span class="n">size</span><span class="p">):</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">size</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">x</span><span class="o">&lt;</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">x</span><span class="o">&gt;=</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">1</span><span class="o">-</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span>
+
+<span class="n">fft_size</span> <span class="o">=</span> <span class="mi">256</span>
+
+<span class="c"># 计算三角波和其FFT</span>
+<span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">triangle_wave</span><span class="p">(</span><span class="n">fft_size</span><span class="p">)</span>
+<span class="n">fy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="o">/</span> <span class="n">fft_size</span>
+
+<span class="c"># 绘制三角波的FFT的前20项的振幅，由于不含下标为偶数的值均为0， 因此取</span>
+<span class="c"># log之后无穷小，无法绘图，用np.clip函数设置数组值的上下限，保证绘图正确</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="mi">20</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">fy</span><span class="p">[:</span><span class="mi">20</span><span class="p">])),</span> <span class="o">-</span><span class="mi">120</span><span class="p">,</span> <span class="mi">120</span><span class="p">),</span> <span class="s">&quot;o&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">&quot;frequency bin&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">&quot;power(dB)&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">&quot;FFT result of triangle wave&quot;</span><span class="p">)</span>
+
+<span class="c"># 绘制原始的三角波和用正弦波逐级合成的结果，使用取样点为x轴坐标</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&quot;original triangle&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">7</span><span class="p">,</span><span class="mi">9</span><span class="p">]:</span>
+    <span class="n">index</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">fft_combine</span><span class="p">(</span><span class="n">fy</span><span class="p">,</span> <span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>  <span class="c"># 计算两个周期的合成波形</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="s">&quot;N=</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">i</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">&quot;partial Fourier series of triangle wave&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</td></tr></table></div>
+<div class="figure">
+<img alt="_images/fft_study_01.png" src="_images/fft_study_01.png" style="width: 14cm;" />
+<p class="caption">三角波的频谱</p>
+</div>
+<div class="figure" id="fig-fftstudy02">
+<img alt="_images/fft_study_02.png" src="_images/fft_study_02.png" style="width: 14cm;" />
+<p class="caption">部分频谱重建的三角波</p>
+</div>
+<p>第18行的triangle_wave函数产生一个周期的三角波形，注意我们使用np.where函数计算区间函数的值。triangle函数返回两个数组，分别表示x轴和y轴的值。注意后面的计算和绘图不使用x轴坐标，而是直接用取样次数作为x轴坐标。</p>
+<p>第7行的fft_combine的函数使用fft的结果freqs中的前n个数据重新合成时域信号，由于合成所使用的信号都是正弦波这样的周期信号，所以我们可以通过第三个参数loops指定计算几个周期。</p>
+<p>通过这个例子，我们可以看出使用的频率越多，最终合成的波形越接近原始的三角波。</p>
+<div class="topic">
+<p class="topic-title first">合成方波</p>
+<p>由于方波的波形中存在跳变，因此用有限个正弦波合成的方波在跳变出现抖动现象，如<a href="#fig-fftstudy03">下图</a>所示，用正弦波合成的方波的收敛速度比三角波慢得多：</p>
+<p>计算方波的波形可以采用如下的函数：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">square_wave</span><span class="p">(</span><span class="n">size</span><span class="p">):</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">size</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">x</span><span class="o">&lt;</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span>
+</pre></div>
+</div>
+</div>
+<div class="figure" id="fig-fftstudy03">
+<img alt="_images/fft_study_03.png" src="_images/fft_study_03.png" style="width: 14cm;" />
+<p class="caption">正弦波合成方波在跳变处出现都抖动</p>
+</div>
+</div>
+<div class="section" id="id3">
+<h2>三角波FFT演示程序<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<p>我们希望制作一个用户友好的界面，交互式地观察各种三角波的频谱以及其正弦合成的近似波形。 制作界面是一件很费工的事情，幸好我们有TraitsUI库的帮忙，不到200行程序就可以制作出如下的效果了:</p>
+<OBJECT CLASSID="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" WIDTH="589" HEIGHT="447" CODEBASE="http://active.macromedia.com/flash5/cabs/swflash.cab#version=7,0,0,0">
+<PARAM NAME="movie" VALUE="_images/fft_study_04.swf">
+<PARAM NAME="play" VALUE="true">
+<PARAM NAME="loop" VALUE="false">
+<PARAM NAME="wmode" VALUE="transparent">
+<PARAM NAME="quality" VALUE="high">
+<EMBED SRC="_images/fft_study_04.swf" width="589" HEIGHT="447" quality="high" loop="false" wmode="transparent" TYPE="application/x-shockwave-flash" PLUGINSPAGE="http://www.macromedia.com/shockwave/download/index.cgi?P1_Prod_Version=ShockwaveFlash">
+</EMBED>
+</OBJECT>
+<img src="_images/fft_study_04.swf" style="visibility:hidden"/><p>程序中已经给出了详细的注释，相信大家能够读懂并掌握这类程序的写法，其中需要注意的几点:</p>
+<ul>
+<li><p class="first">16行，用ScrubberEditor创建一个自定义样式的拖动调整值的控件，77-80行设置Item的editor = scrubber，这样就用我们自定义的控件修改trait属性了，如果不指定editor的话，Range类型的trait属性将以一个滚动条做为编辑器。</p>
+</li>
+<li><p class="first">用Range traits可以指定一个带范围的属性，它可以设置上限下限，上下限可以用整数或者浮点数直接指定，也可以用另外一个trait属性指定(用字符串指定trait属性名)，但是几种类型不能混用，因此程序中专门设计了两个常数的trait属性(36, 37行)，它们的作用只是用来指定其它trait属性的上下限。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">low</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">0.02</span><span class="p">)</span>
+<span class="n">hi</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">190行的triangle_func函数返回一个用frompyfunc创建的ufunc函数，150行用此函数计算三角波，但是用frompyfunc创建的ufunc函数返回的数组的元素的类型(dtype)为object，因此需要用cast[&quot;float64&quot;]函数强制将其转换为类型为float64的数组。</p>
+</li>
+<li><p class="first">处理trait属性的改变事件最简单的方式就是用固定的函数名: _trait属性名_changed，但是当多个trait属性需要共用某一个处理函数时，用&#64;on_trait_change更加简洁。</p>
+</li>
+</ul>
+<p>下面是完整的程序:</p>
+<div class="highlight-python"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>  1
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+ 10
+ 11
+ 12
+ 13
+ 14
+ 15
+ 16
+ 17
+ 18
+ 19
+ 20
+ 21
+ 22
+ 23
+ 24
+ 25
+ 26
+ 27
+ 28
+ 29
+ 30
+ 31
+ 32
+ 33
+ 34
+ 35
+ 36
+ 37
+ 38
+ 39
+ 40
+ 41
+ 42
+ 43
+ 44
+ 45
+ 46
+ 47
+ 48
+ 49
+ 50
+ 51
+ 52
+ 53
+ 54
+ 55
+ 56
+ 57
+ 58
+ 59
+ 60
+ 61
+ 62
+ 63
+ 64
+ 65
+ 66
+ 67
+ 68
+ 69
+ 70
+ 71
+ 72
+ 73
+ 74
+ 75
+ 76
+ 77
+ 78
+ 79
+ 80
+ 81
+ 82
+ 83
+ 84
+ 85
+ 86
+ 87
+ 88
+ 89
+ 90
+ 91
+ 92
+ 93
+ 94
+ 95
+ 96
+ 97
+ 98
+ 99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146
+147
+148
+149
+150
+151
+152
+153
+154
+155
+156
+157
+158
+159
+160
+161
+162
+163
+164
+165
+166
+167
+168
+169
+170
+171
+172
+173
+174
+175
+176
+177
+178
+179
+180
+181
+182
+183
+184
+185
+186
+187
+188
+189
+190
+191
+192
+193
+194
+195
+196
+197
+198
+199
+200
+201
+202
+203
+204
+205
+206
+207
+208</pre></div></td><td class="code"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="kn">from</span> <span class="nn">enthought.traits.api</span> <span class="kn">import</span> \
+    <span class="n">Str</span><span class="p">,</span> <span class="n">Float</span><span class="p">,</span> <span class="n">HasTraits</span><span class="p">,</span> <span class="n">Property</span><span class="p">,</span> <span class="n">cached_property</span><span class="p">,</span> <span class="n">Range</span><span class="p">,</span> <span class="n">Instance</span><span class="p">,</span> <span class="n">on_trait_change</span><span class="p">,</span> <span class="n">Enum</span>
+
+<span class="kn">from</span> <span class="nn">enthought.chaco.api</span> <span class="kn">import</span> <span class="n">Plot</span><span class="p">,</span> <span class="n">AbstractPlotData</span><span class="p">,</span> <span class="n">ArrayPlotData</span><span class="p">,</span> <span class="n">VPlotContainer</span>
+
+<span class="kn">from</span> <span class="nn">enthought.traits.ui.api</span> <span class="kn">import</span> \
+    <span class="n">Item</span><span class="p">,</span> <span class="n">View</span><span class="p">,</span> <span class="n">VGroup</span><span class="p">,</span> <span class="n">HSplit</span><span class="p">,</span> <span class="n">ScrubberEditor</span><span class="p">,</span> <span class="n">VSplit</span>
+
+<span class="kn">from</span> <span class="nn">enthought.enable.api</span> <span class="kn">import</span> <span class="n">Component</span><span class="p">,</span> <span class="n">ComponentEditor</span>
+<span class="kn">from</span> <span class="nn">enthought.chaco.tools.api</span> <span class="kn">import</span> <span class="n">PanTool</span><span class="p">,</span> <span class="n">ZoomTool</span> 
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="c"># 鼠标拖动修改值的控件的样式</span>
+<span class="n">scrubber</span> <span class="o">=</span> <span class="n">ScrubberEditor</span><span class="p">(</span>
+    <span class="n">hover_color</span>  <span class="o">=</span> <span class="mh">0xFFFFFF</span><span class="p">,</span> 
+    <span class="n">active_color</span> <span class="o">=</span> <span class="mh">0xA0CD9E</span><span class="p">,</span> 
+    <span class="n">border_color</span> <span class="o">=</span> <span class="mh">0x808080</span>
+<span class="p">)</span>
+
+<span class="c"># 取FFT计算的结果freqs中的前n项进行合成，返回合成结果，计算loops个周期的波形</span>
+<span class="k">def</span> <span class="nf">fft_combine</span><span class="p">(</span><span class="n">freqs</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">loops</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="n">length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">freqs</span><span class="p">)</span> <span class="o">*</span> <span class="n">loops</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">length</span><span class="p">)</span>
+    <span class="n">index</span> <span class="o">=</span> <span class="n">loops</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">/</span> <span class="n">length</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">freqs</span><span class="p">[:</span><span class="n">n</span><span class="p">]):</span>
+        <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span> <span class="n">p</span> <span class="o">*=</span> <span class="mi">2</span> <span class="c"># 除去直流成分之外，其余的系数都*2</span>
+        <span class="n">data</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">k</span><span class="o">*</span><span class="n">index</span><span class="p">)</span> <span class="c"># 余弦成分的系数为实数部</span>
+        <span class="n">data</span> <span class="o">-=</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">k</span><span class="o">*</span><span class="n">index</span><span class="p">)</span> <span class="c"># 正弦成分的系数为负的虚数部</span>
+    <span class="k">return</span> <span class="n">index</span><span class="p">,</span> <span class="n">data</span>    
+
+<span class="k">class</span> <span class="nc">TriangleWave</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+    <span class="c"># 指定三角波的最窄和最宽范围，由于Range似乎不能将常数和traits名混用</span>
+    <span class="c"># 所以定义这两个不变的trait属性</span>
+    <span class="n">low</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">0.02</span><span class="p">)</span>
+    <span class="n">hi</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+
+    <span class="c"># 三角波形的宽度</span>
+    <span class="n">wave_width</span> <span class="o">=</span> <span class="n">Range</span><span class="p">(</span><span class="s">&quot;low&quot;</span><span class="p">,</span> <span class="s">&quot;hi&quot;</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span>
+
+    <span class="c"># 三角波的顶点C的x轴坐标</span>
+    <span class="n">length_c</span> <span class="o">=</span> <span class="n">Range</span><span class="p">(</span><span class="s">&quot;low&quot;</span><span class="p">,</span> <span class="s">&quot;wave_width&quot;</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span>
+
+    <span class="c"># 三角波的定点的y轴坐标</span>
+    <span class="n">height_c</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+
+    <span class="c"># FFT计算所使用的取样点数，这里用一个Enum类型的属性以供用户从列表中选择</span>
+    <span class="n">fftsize</span> <span class="o">=</span> <span class="n">Enum</span><span class="p">(</span> <span class="p">[(</span><span class="mi">2</span><span class="o">**</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">12</span><span class="p">)])</span>
+
+    <span class="c"># FFT频谱图的x轴上限值</span>
+    <span class="n">fft_graph_up_limit</span> <span class="o">=</span> <span class="n">Range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">400</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
+
+    <span class="c"># 用于显示FFT的结果</span>
+    <span class="n">peak_list</span> <span class="o">=</span> <span class="n">Str</span>
+
+    <span class="c"># 采用多少个频率合成三角波</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="n">Range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+
+    <span class="c"># 保存绘图数据的对象</span>
+    <span class="n">plot_data</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">AbstractPlotData</span><span class="p">)</span>    
+
+    <span class="c"># 绘制波形图的容器</span>
+    <span class="n">plot_wave</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">Component</span><span class="p">)</span>
+
+    <span class="c"># 绘制FFT频谱图的容器</span>
+    <span class="n">plot_fft</span>  <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">Component</span><span class="p">)</span>
+
+    <span class="c"># 包括两个绘图的容器</span>
+    <span class="n">container</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">Component</span><span class="p">)</span>
+
+    <span class="c"># 设置用户界面的视图， 注意一定要指定窗口的大小，这样绘图容器才能正常初始化</span>
+    <span class="n">view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span>
+        <span class="n">HSplit</span><span class="p">(</span>
+            <span class="n">VSplit</span><span class="p">(</span>
+                <span class="n">VGroup</span><span class="p">(</span>
+                    <span class="n">Item</span><span class="p">(</span><span class="s">&quot;wave_width&quot;</span><span class="p">,</span> <span class="n">editor</span> <span class="o">=</span> <span class="n">scrubber</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;波形宽度&quot;</span><span class="p">),</span>
+                    <span class="n">Item</span><span class="p">(</span><span class="s">&quot;length_c&quot;</span><span class="p">,</span> <span class="n">editor</span> <span class="o">=</span> <span class="n">scrubber</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;最高点x坐标&quot;</span><span class="p">),</span>
+                    <span class="n">Item</span><span class="p">(</span><span class="s">&quot;height_c&quot;</span><span class="p">,</span> <span class="n">editor</span> <span class="o">=</span> <span class="n">scrubber</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;最高点y坐标&quot;</span><span class="p">),</span>
+                    <span class="n">Item</span><span class="p">(</span><span class="s">&quot;fft_graph_up_limit&quot;</span><span class="p">,</span> <span class="n">editor</span> <span class="o">=</span> <span class="n">scrubber</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;频谱图范围&quot;</span><span class="p">),</span>
+                    <span class="n">Item</span><span class="p">(</span><span class="s">&quot;fftsize&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;FFT点数&quot;</span><span class="p">),</span>
+                    <span class="n">Item</span><span class="p">(</span><span class="s">&quot;N&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;合成波频率数&quot;</span><span class="p">)</span>
+                <span class="p">),</span>
+                <span class="n">Item</span><span class="p">(</span><span class="s">&quot;peak_list&quot;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s">&quot;custom&quot;</span><span class="p">,</span> <span class="n">show_label</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">250</span><span class="p">)</span>
+            <span class="p">),</span>
+            <span class="n">VGroup</span><span class="p">(</span>
+                <span class="n">Item</span><span class="p">(</span><span class="s">&quot;container&quot;</span><span class="p">,</span> <span class="n">editor</span><span class="o">=</span><span class="n">ComponentEditor</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">600</span><span class="p">,</span><span class="mi">300</span><span class="p">)),</span> <span class="n">show_label</span> <span class="o">=</span> <span class="bp">False</span><span class="p">),</span>
+                <span class="n">orientation</span> <span class="o">=</span> <span class="s">&quot;vertical&quot;</span>
+            <span class="p">)</span>
+        <span class="p">),</span>
+        <span class="n">resizable</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span>
+        <span class="n">width</span> <span class="o">=</span> <span class="mi">800</span><span class="p">,</span>
+        <span class="n">height</span> <span class="o">=</span> <span class="mi">600</span><span class="p">,</span>
+        <span class="n">title</span> <span class="o">=</span> <span class="s">u&quot;三角波FFT演示&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c"># 创建绘图的辅助函数，创建波形图和频谱图有很多类似的地方，因此单独用一个函数以</span>
+    <span class="c"># 减少重复代码</span>
+    <span class="k">def</span> <span class="nf">_create_plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s">&quot;line&quot;</span><span class="p">):</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">Plot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">plot_data</span><span class="p">)</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">type</span><span class="p">)</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">tools</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">PanTool</span><span class="p">(</span><span class="n">p</span><span class="p">))</span>
+        <span class="n">zoom</span> <span class="o">=</span> <span class="n">ZoomTool</span><span class="p">(</span><span class="n">component</span><span class="o">=</span><span class="n">p</span><span class="p">,</span> <span class="n">tool_mode</span><span class="o">=</span><span class="s">&quot;box&quot;</span><span class="p">,</span> <span class="n">always_on</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">overlays</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">zoom</span><span class="p">)</span>        
+        <span class="n">p</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="k">return</span> <span class="n">p</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c"># 首先需要调用父类的初始化函数</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">TriangleWave</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+
+        <span class="c"># 创建绘图数据集，暂时没有数据因此都赋值为空，只是创建几个名字，以供Plot引用</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_data</span> <span class="o">=</span> <span class="n">ArrayPlotData</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="p">[],</span> <span class="n">y</span><span class="o">=</span><span class="p">[],</span> <span class="n">f</span><span class="o">=</span><span class="p">[],</span> <span class="n">p</span><span class="o">=</span><span class="p">[],</span> <span class="n">x2</span><span class="o">=</span><span class="p">[],</span> <span class="n">y2</span><span class="o">=</span><span class="p">[])</span> 
+
+        <span class="c"># 创建一个垂直排列的绘图容器，它将频谱图和波形图上下排列</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">container</span> <span class="o">=</span> <span class="n">VPlotContainer</span><span class="p">()</span>
+
+        <span class="c"># 创建波形图，波形图绘制两条曲线： 原始波形(x,y)和合成波形(x2,y2)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_wave</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_plot</span><span class="p">((</span><span class="s">&quot;x&quot;</span><span class="p">,</span><span class="s">&quot;y&quot;</span><span class="p">),</span> <span class="s">&quot;Triangle Wave&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_wave</span><span class="o">.</span><span class="n">plot</span><span class="p">((</span><span class="s">&quot;x2&quot;</span><span class="p">,</span><span class="s">&quot;y2&quot;</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="s">&quot;red&quot;</span><span class="p">)</span>
+
+        <span class="c"># 创建频谱图，使用数据集中的f和p</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_fft</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_plot</span><span class="p">((</span><span class="s">&quot;f&quot;</span><span class="p">,</span><span class="s">&quot;p&quot;</span><span class="p">),</span> <span class="s">&quot;FFT&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s">&quot;scatter&quot;</span><span class="p">)</span>
+
+        <span class="c"># 将两个绘图容器添加到垂直容器中</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">container</span><span class="o">.</span><span class="n">add</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">plot_wave</span> <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">container</span><span class="o">.</span><span class="n">add</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">plot_fft</span> <span class="p">)</span>
+
+        <span class="c"># 设置</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_wave</span><span class="o">.</span><span class="n">x_axis</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="s">&quot;Samples&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_fft</span><span class="o">.</span><span class="n">x_axis</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="s">&quot;Frequency pins&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_fft</span><span class="o">.</span><span class="n">y_axis</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="s">&quot;(dB)&quot;</span>
+
+        <span class="c"># 改变fftsize为1024，因为Enum的默认缺省值为枚举列表中的第一个值</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fftsize</span> <span class="o">=</span> <span class="mi">1024</span>
+
+    <span class="c"># FFT频谱图的x轴上限值的改变事件处理函数，将最新的值赋值给频谱图的响应属性</span>
+    <span class="k">def</span> <span class="nf">_fft_graph_up_limit_changed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_fft</span><span class="o">.</span><span class="n">x_axis</span><span class="o">.</span><span class="n">mapper</span><span class="o">.</span><span class="n">range</span><span class="o">.</span><span class="n">high</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fft_graph_up_limit</span>
+
+    <span class="k">def</span> <span class="nf">_N_changed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_sin_combine</span><span class="p">()</span>
+
+    <span class="c"># 多个trait属性的改变事件处理函数相同时，可以用@on_trait_change指定</span>
+    <span class="nd">@on_trait_change</span><span class="p">(</span><span class="s">&quot;wave_width, length_c, height_c, fftsize&quot;</span><span class="p">)</span>        
+    <span class="k">def</span> <span class="nf">update_plot</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c"># 计算三角波</span>
+        <span class="k">global</span> <span class="n">y_data</span>
+        <span class="n">x_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">fftsize</span><span class="p">)</span>
+        <span class="n">func</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">triangle_func</span><span class="p">()</span>
+        <span class="c"># 将func函数的返回值强制转换成float64</span>
+        <span class="n">y_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cast</span><span class="p">[</span><span class="s">&quot;float64&quot;</span><span class="p">](</span><span class="n">func</span><span class="p">(</span><span class="n">x_data</span><span class="p">))</span>
+
+        <span class="c"># 计算频谱</span>
+        <span class="n">fft_parameters</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">y_data</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_data</span><span class="p">)</span>
+
+        <span class="c"># 计算各个频率的振幅</span>
+        <span class="n">fft_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="mi">20</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">fft_parameters</span><span class="p">))[:</span><span class="bp">self</span><span class="o">.</span><span class="n">fftsize</span><span class="o">/</span><span class="mi">2</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span> <span class="o">-</span><span class="mi">120</span><span class="p">,</span> <span class="mi">120</span><span class="p">)</span>
+
+        <span class="c"># 将计算的结果写进数据集</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_data</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="s">&quot;x&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fftsize</span><span class="p">))</span> <span class="c"># x坐标为取样点</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_data</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="s">&quot;y&quot;</span><span class="p">,</span> <span class="n">y_data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_data</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="s">&quot;f&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">fft_data</span><span class="p">)))</span> <span class="c"># x坐标为频率编号</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_data</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="s">&quot;p&quot;</span><span class="p">,</span> <span class="n">fft_data</span><span class="p">)</span>
+
+        <span class="c"># 合成波的x坐标为取样点，显示2个周期</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_data</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="s">&quot;x2&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">fftsize</span><span class="p">))</span> 
+
+        <span class="c"># 更新频谱图x轴上限</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fft_graph_up_limit_changed</span><span class="p">()</span>
+
+        <span class="c"># 将振幅大于-80dB的频率输出</span>
+        <span class="n">peak_index</span> <span class="o">=</span> <span class="p">(</span><span class="n">fft_data</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">80</span><span class="p">)</span>
+        <span class="n">peak_value</span> <span class="o">=</span> <span class="n">fft_data</span><span class="p">[</span><span class="n">peak_index</span><span class="p">][:</span><span class="mi">20</span><span class="p">]</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">f</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">peak_index</span><span class="p">),</span> <span class="n">peak_value</span><span class="p">):</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> : </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">peak_list</span> <span class="o">=</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+
+        <span class="c"># 保存现在的fft计算结果，并计算正弦合成波</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fft_parameters</span> <span class="o">=</span> <span class="n">fft_parameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_sin_combine</span><span class="p">()</span>
+
+    <span class="c"># 计算正弦合成波，计算2个周期</span>
+    <span class="k">def</span> <span class="nf">plot_sin_combine</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">index</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">fft_combine</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fft_parameters</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">N</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_data</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="s">&quot;y2&quot;</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>               
+
+    <span class="c"># 返回一个ufunc计算指定参数的三角波</span>
+    <span class="k">def</span> <span class="nf">triangle_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wave_width</span>
+        <span class="n">c0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">length_c</span>
+        <span class="n">hc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">height_c</span>
+
+        <span class="k">def</span> <span class="nf">trifunc</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">-</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="c"># 三角波的周期为1，因此只取x坐标的小数部分进行计算</span>
+            <span class="k">if</span> <span class="n">x</span> <span class="o">&gt;=</span> <span class="n">c</span><span class="p">:</span> <span class="n">r</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="k">elif</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="n">c0</span><span class="p">:</span> <span class="n">r</span> <span class="o">=</span> <span class="n">x</span> <span class="o">/</span> <span class="n">c0</span> <span class="o">*</span> <span class="n">hc</span>
+            <span class="k">else</span><span class="p">:</span> <span class="n">r</span> <span class="o">=</span> <span class="p">(</span><span class="n">c</span><span class="o">-</span><span class="n">x</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">c</span><span class="o">-</span><span class="n">c0</span><span class="p">)</span> <span class="o">*</span> <span class="n">hc</span>
+            <span class="k">return</span> <span class="n">r</span>
+
+        <span class="c"># 用trifunc函数创建一个ufunc函数，可以直接对数组进行计算, 不过通过此函数</span>
+        <span class="c"># 计算得到的是一个Object数组，需要进行类型转换</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">frompyfunc</span><span class="p">(</span><span class="n">trifunc</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>    
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">triangle</span> <span class="o">=</span> <span class="n">TriangleWave</span><span class="p">()</span>
+    <span class="n">triangle</span><span class="o">.</span><span class="n">configure_traits</span><span class="p">()</span>
+</pre></div>
+</td></tr></table></div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">首页目录</a></h3>
+            <ul>
+<li><a class="reference external" href="#">FFT演示程序</a><ul>
+<li><a class="reference external" href="#id1">FFT知识复习</a></li>
+<li><a class="reference external" href="#id2">合成时域信号</a></li>
+<li><a class="reference external" href="#id3">三角波FFT演示程序</a></li>
+</ul>
+</li>
+</ul>
+
+            <h4>上一篇文章</h4>
+            <p class="topless"><a href="filters.html"
+                                  title="上一篇文章">数字信号系统</a></p>
+            <h4>下一篇文章</h4>
+            <p class="topless"><a href="frequency_process.html"
+                                  title="下一篇文章">频域信号处理</a></p>
+          <div id="searchbox" style="display: none">
+            <h3>快速搜索</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="搜索" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              中文搜索请尽量用空格分开单个的单词，例如搜索"科学 计算"，而不是"科学计算"
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="frequency_process.html" title="频域信号处理"
+             >下一篇</a></li>
+        <li class="right" >
+          <a href="filters.html" title="数字信号系统"
+             >上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+    &copy; 2009, <a href="http://hyry.dip.jp/blogt.py">HYRY Studio</a>
+      由 <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.4. 编译
+    </div>
+  </body>
+</html>

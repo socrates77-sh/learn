@@ -1,0 +1,114 @@
+####
+笔记
+####
+
+这里是准备写入本书、但还需要整理的一些内容。
+
+Traits
+======
+
+Traits属性在类级别声明，在实例级别使用，其实现和类的__new__方法有关。
+
+Str Trait接收str或者unicode，用以解决wxPython等界面库中的一些关于字符串编码的麻烦。
+
+Matplotlib
+==========
+
+pylab集合了常用的数组处理、计算和绘图相关的函数，而matplotlib.pyplot则只是关于绘图的API。
+
+绘图中所有的元素都被称为artists，分为基本元件，和集合组件。
+
+matplotlib.get_configdir()得到用户matplotlibrc配置文件的地址，在此文件中的配置将覆盖全局配置文件中的配置。全局配置文件的地址通过matplotlib.matplotlib_fname()得到。matplotlib.rcParams是读取配置文件之后得到的配置字典。调用绘图函数是都会参照此字典中的配置，因此如果在运行绘图命令之前修改此配置字典的内容的话，可以修改此后所有的绘图是的缺省配置。
+
+subplot(211) 为了输入便捷，如果传进来的是一个3位数整数，那么百位数表示分几行，十位数表示分几列，个位数表示当前的格子位置。sharex参数可以指定和当前子图(axe)共享X轴范围的axe，sharex参数用来指定Y轴共享。
+
+figure.patch是图对象的背景容器，它包含多个子图(axe)。figure.axes可以获得figure包括的所有axe，figure.canvas...
+
+from matplotlib.artist import getp
+getp(o)可以获得对象o的所有属性，getp(o, "linestyle")可以获得o的linestyle属性。
+
+matplotlib.mlab.csv2rec可以直接将CSV转换为numpy的结构数组。
+
+Line2D.set_data(), Line2D.get_data()
+
+IPython
+=======
+
+%colors命令修改颜色配置
+paste命令可以把剪切板中的文字直接贴入IPython运行
+run -i ...py 运行..py文件，并且直接使用ipython中的变量
+
+包络检波
+====
+
+用Hilbert变换进行包络检波
+
+::
+
+    import scipy.fftpack as fftpack
+    t = np.arange(0, 10, 1/1000.0)
+    x = np.sin(100*t) * np.sin(5*t)
+    y = fftpack.hilbert(x)
+    pl.plot(t,x*x+y*y)
+    pl.plot(t, x)
+    pl.show()
+
+IVTK
+====
+
+IVTK使得用Python开发VTK程序更加简单。它为我们提供了如下三个基本元素：
+
+* **Scene** : 这是一个PyFace的Scene控件，为所有的3D物体提供一个展示的场景。
+
+* **命令行** : 使用PyCrust提供了一个Python命令行空间，用户可以在此处直接输入Python语句操作场景中的物体。
+
+* **流水线浏览器** : 通过流水线浏览器可以直接观察到TVTK的流水线的各个组成部分，并且配置其各种属性。
+
+在 TVTK介绍 中已经介绍过如何在程序中使用ivtk。如果你想在IPython中(需要-wthread启动选项)中交互式地使用ivtk的话，可以通过viewer()函数调用它，下面是一个例子：
+
+    >>> from enthought.tvtk.tools import ivtk
+    >>> from enthought.tvtk.pyface import actors
+    >>> v = ivtk.viewer()
+    >>> v.scene.add_actors(actors.cylinder_actor())
+    
+.. _fig-tvtkandvtk02:
+    
+.. figure:: images/tvtk_and_vtk_02.png       
+    
+    使用ivtk提供的流水线浏览器
+    
+这段程序通过ivtk.viewer函数产生一个ivtk窗口，然后调用其scene的add_actors方法添加一个圆柱actor。pyface.actors为我们提供了一些帮助函数用以快速产生各种基本形状的Actor。
+
+Sphinx支持中文链接
+============
+
+C:\Python26\Lib\site-packages\docutils\nodes.py
+
+::
+
+    def make_id(string):
+        id = string.encode("utf8") # 修改此处
+        return str(id)
+        
+C:\Python26\Lib\site-packages\docutils\writers\html4css1\__init__.py
+
+::
+
+    parts.append('%s="%s"' % (name.lower(),
+                              self.attval(value.decode("utf8")))) # 修改此处
+                              
+C:\Python26\Lib\site-packages\sphinx\writers\html.py
+
+::
+
+    def depart_title(self, node):
+        close_tag = self.context[-1]
+        if (self.add_permalinks and self.builder.add_permalinks and
+            node.parent.hasattr('ids') and node.parent['ids']):
+            aname = node.parent['ids'][0].decode("utf8") # 修改此处
+
+latex定义粗体
+=========
+
+setromanfont[BoldFont={...}]{...}
+

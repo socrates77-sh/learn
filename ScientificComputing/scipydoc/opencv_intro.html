@@ -1,0 +1,186 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>OpenCV-图像处理和计算机视觉 &mdash; 用Python做科学计算</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link type="text/css" href="_static/jquery-ui-1.7.2.custom.css" rel="stylesheet" />	
+    <link type="text/css" href="_static/comments.css" rel="stylesheet" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '#',
+        VERSION:     '1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/jquery-ui-1.7.2.custom.min.js"></script>
+    <script type="text/javascript" src="_static/pydoc.js"></script>
+    <link rel="top" title="用Python做科学计算" href="index.html" />
+    <link rel="下一篇" title="Traits使用手册" href="traits_manual_index.html" />
+    <link rel="上一篇" title="Visual-制作3D演示动画" href="vpython_intro.html" /> 
+
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-10837468-1");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="traits_manual_index.html" title="Traits使用手册"
+             accesskey="N">下一篇</a></li>
+        <li class="right" >
+          <a href="vpython_intro.html" title="Visual-制作3D演示动画"
+             accesskey="P">上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="opencv">
+<h1>OpenCV-图像处理和计算机视觉<a class="headerlink" href="#opencv" title="Permalink to this headline">¶</a></h1>
+<p>OpenCV是Intel公司开发的开源计算机视觉库。它用C语言高速地实现了许多图像处理和计算机视觉方面的通用算法，并且通过SWIG提供了Python的调用接口。本章介绍用Python调用OpenCV库，实现一些简单的图像处理和计算机视觉算法。</p>
+<p>OpenCV提供的Python调用接口和C语言的API基本上是一致的，这个接口对于动态语言Python来说有些累赘。不过由于Python程序和C语言程序差别不大，用Python调用OpenCV，能够帮助我们测试API函数和快速实现算法。</p>
+<div class="section" id="id1">
+<h2>读写图像和视频文件<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>让我们从显示一幅图像开始进入OpenCV：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="kn">from</span> <span class="nn">opencv.highgui</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="n">img</span> <span class="o">=</span> <span class="n">cvLoadImage</span><span class="p">(</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="p">)</span>
+<span class="n">cvNamedWindow</span><span class="p">(</span><span class="s">&quot;Example1&quot;</span><span class="p">,</span> <span class="n">CV_WINDOW_AUTOSIZE</span><span class="p">)</span>
+<span class="n">cvShowImage</span><span class="p">(</span><span class="s">&quot;Example1&quot;</span><span class="p">,</span> <span class="n">img</span><span class="p">)</span>
+<span class="n">cvWaitKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>OpenCV的库可以分为5个主要组成部分，下图显示了其中的4个：</p>
+<div class="figure" id="fig-opencvintro01">
+<img alt="_images/opencv_intro_01.png" src="_images/opencv_intro_01.png" />
+<p class="caption">OpenCV的5个主要组成部分</p>
+</div>
+<ul class="simple">
+<li><strong>CV</strong> : 包括了基本的图像处理和高级的计算机视觉算法，在Python中，opencv.cv模块与之对应</li>
+<li><strong>ML</strong> : 机器学习库，包括许多统计分类器，opencv.ml模块与之对应</li>
+<li><strong>HighGUI</strong> : 提供各种图像、视频、数据的输入输出和简单的GUI开发，opencv.highgui模块与之对应</li>
+<li><strong>CXCore</strong> : 上述三个库都是以CXCore提供的基本数据结构和函数为基础，主模块opencv与之对应</li>
+<li><strong>CvAux</strong> : 包括一些实验性的算法</li>
+</ul>
+<p>显示图像的例子中，只用到数据输入和界面显示两个功能，他们都在highgui库中，因此需要从库中载入这些函数，由于opencv的所有API函数都以cv开头，因此不怕他们和别的库命名冲突：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">opencv.highgui</span> <span class="kn">import</span> <span class="o">*</span>
+</pre></div>
+</div>
+<p>下面调用cvLoadImage从文件中读入图片信息，其返回的是一个opencv.cv.cvMat对象，cvMat是OpenCV中描述矩阵(或者说多维数组)的数据结构，许多图像处理操作都是针对cvMat对象进行的：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">img</span> <span class="o">=</span> <span class="n">cvLoadImage</span><span class="p">(</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="p">)</span>
+</pre></div>
+</div>
+<p>下面调用cvNamedWindow函数创建一个窗口，其名字为&quot;Example1&quot;，大小设置为CV_WINDOW_AUTOSIZE，表示它随着其内容自动改变大小：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">cvNamedWindow</span><span class="p">(</span><span class="s">&quot;Example1&quot;</span><span class="p">,</span> <span class="n">CV_WINDOW_AUTOSIZE</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>然后调用cvShowImage函数，将img表示的图像显示在&quot;Example1&quot;窗口。由于OpenCV库大部分代码都是使用C语言编写的，因此它采用“对象.方法()”的方式，而是使用函数的方式。而且highgui提供的仅是简便的GUI功能，因此这里直接用字符串&quot;Example1&quot;表示要显示图片的窗口，而不是用某个表示窗口的对象。</p>
+<p>最后调用cvWaitKey，等待用户按键输入，如果其参数为正值，那么等待指定的毫秒数后继续运行；如果其值为0，表示永久等待：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">cvWaitKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>如果在IPython中运行上面程序之后，IPython等待用户按键输入，按任意键之后，IPython进入可输入命令的状态，并且显示图片的窗口并没有关闭，这样就可以在IPython中直接输入opencv的函数调用，查看其结果。下面的先从opencv.cv载入所有图像处理相关的函数，</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">opencv.cv</span> <span class="kn">import</span> <span class="o">*</span>
+</pre></div>
+</div>
+<p>然后调用cvSmooth函数对img进行高斯模糊，cvSmooth函数的第一个参数指定原始图像，第二个参数指定输出图像，这里都用img，因此高斯模糊的结果覆盖原始图像，第三个参数指定采用高斯模糊算法，第四个参数是高斯模糊的参数：以像素点为单位的模糊范围：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">cvSmooth</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">img</span><span class="p">,</span> <span class="n">CV_GAUSSIAN</span><span class="p">,</span> <span class="mi">11</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>最后调用cvShowImage更新窗口中的图片：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">cvShowImage</span><span class="p">(</span><span class="s">&quot;Example1&quot;</span><span class="p">,</span> <span class="n">img</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>下面是图像处理的结果，左图为原始图像，右图为模糊后的图像：</p>
+<div class="figure" id="fig-opencvintro02">
+<img alt="_images/opencv_intro_02.png" src="_images/opencv_intro_02.png" style="width: 14cm;" />
+<p class="caption">调用cvSmooth对图像进行高斯模糊处理</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">首页目录</a></h3>
+            <ul>
+<li><a class="reference external" href="#">OpenCV-图像处理和计算机视觉</a><ul>
+<li><a class="reference external" href="#id1">读写图像和视频文件</a></li>
+</ul>
+</li>
+</ul>
+
+            <h4>上一篇文章</h4>
+            <p class="topless"><a href="vpython_intro.html"
+                                  title="上一篇文章">Visual-制作3D演示动画</a></p>
+            <h4>下一篇文章</h4>
+            <p class="topless"><a href="traits_manual_index.html"
+                                  title="下一篇文章">Traits使用手册</a></p>
+          <div id="searchbox" style="display: none">
+            <h3>快速搜索</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="搜索" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              中文搜索请尽量用空格分开单个的单词，例如搜索"科学 计算"，而不是"科学计算"
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="traits_manual_index.html" title="Traits使用手册"
+             >下一篇</a></li>
+        <li class="right" >
+          <a href="vpython_intro.html" title="Visual-制作3D演示动画"
+             >上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+    &copy; 2009, <a href="http://hyry.dip.jp/blogt.py">HYRY Studio</a>
+      由 <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.4. 编译
+    </div>
+  </body>
+</html>

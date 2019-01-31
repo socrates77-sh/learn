@@ -1,0 +1,953 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>关于本书的编写 &mdash; 用Python做科学计算</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link type="text/css" href="_static/jquery-ui-1.7.2.custom.css" rel="stylesheet" />	
+    <link type="text/css" href="_static/comments.css" rel="stylesheet" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '#',
+        VERSION:     '1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/jquery-ui-1.7.2.custom.min.js"></script>
+    <script type="text/javascript" src="_static/pydoc.js"></script>
+    <link rel="top" title="用Python做科学计算" href="index.html" />
+    <link rel="下一篇" title="最近更新" href="update_list.html" />
+    <link rel="上一篇" title="分形与混沌" href="fractal_chaos.html" /> 
+
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-10837468-1");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="update_list.html" title="最近更新"
+             accesskey="N">下一篇</a></li>
+        <li class="right" >
+          <a href="fractal_chaos.html" title="分形与混沌"
+             accesskey="P">上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="id1">
+<h1>关于本书的编写<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<p>为了编写此书，我评价了许多写书的软件，最终决定使用Sphinx和reStructuredText作为写书的工具。随着章节的逐渐增加，我越来越觉得当初的选择是正确的。</p>
+<div class="section" id="id2">
+<h2>本书的编写工具<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>本书采用<a class="reference external" href="http://docutils.sourceforge.net/rst.html">reStructuredText</a>(rst) 格式的文本编写，然后用<a class="reference external" href="http://sphinx.pocoo.org">Sphinx</a>将reStructuredText文件自动转换为html格式的文件。采用<a class="reference external" href="http://webpages.charter.net/edreamleo/front.html">Leo</a>管理和组织所有的文档。用<a class="reference external" href="http://www.tug.org/protext">proTeXt</a>将latex格式的数学公式转换为PNG图片。</p>
+<ul>
+<li><p class="first"><strong>reStructuredText</strong> : 一种结构化文本格式，它提供了对写书所需的各种元素的支持。例如章节、链接、格式、图片以及语法高亮等等。</p>
+</li>
+<li><p class="first"><strong>Sphinx</strong> : 将一系列reStructuredText文本转换成各种不同的输出格式，并自动制作交叉引用（cross-references)、索引等。也就是说，如果某目录中有一系列的reStructuredText格式的文档， Sphinx可以制作一份组织得非常完美的HTML文件。</p>
+</li>
+<li><p class="first"><strong>Leo</strong> : 以树状结构管理文本、代码的编辑器，可以用它来进行数据组织和项目管理。我使用它管理构成本书的所有rst文档、python程序以及图片和笔记。下面是使用Leo编写本书时的一个例子：</p>
+<blockquote>
+<div class="figure" id="fig-pydoctools01">
+<img alt="_images/pydoc_tools_01.png" src="_images/pydoc_tools_01.png" />
+<p class="caption">编写本书所使用的Leo编辑器的界面</p>
+</div>
+</blockquote>
+</li>
+<li><p class="first"><strong>PicPick</strong>, <strong>Greenshot</strong> : 界面截图工具。</p>
+</li>
+</ul>
+</div>
+<div class="section" id="id3">
+<h2>问题与解决方案<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<p>在使用上述工具编写本书时，为了达到完美的效果，我对这些工具做了一些配置和修改的工作。</p>
+<div class="section" id="id4">
+<h3>代码中的注释<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<p>Sphinx使用Pygments进行代码高亮的处理，在Pygments的缺省样式中，代码注释部分是采用斜体字表示的，斜体的汉字看起来十分别扭，因此需要将缺省样式的斜体改为正体。在conf.py文件中有如下配置：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># The name of the Pygments (syntax highlighting) style to use.</span>
+<span class="n">pygments_style</span> <span class="o">=</span> <span class="s">&#39;sphinx&#39;</span>
+</pre></div>
+</div>
+<p>它指定pygments使用sphinx样式对代码进行高亮处理，我没有弄明白如何添加自己定义的样式，因此直接手工修改定义此样式的文件：</p>
+<div class="highlight-none"><div class="highlight"><pre>%Python安装目录%\Lib\site-packages\sphinx\highlighting.py
+</pre></div>
+</div>
+<p>将其中的Comment的样式改为noitalic：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="o">...</span>
+<span class="n">styles</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
+    <span class="n">Generic</span><span class="o">.</span><span class="n">Output</span><span class="p">:</span> <span class="s">&#39;#333&#39;</span><span class="p">,</span>
+    <span class="n">Comment</span><span class="p">:</span> <span class="s">&#39;noitalic #408090&#39;</span><span class="p">,</span>
+    <span class="n">Number</span><span class="p">:</span> <span class="s">&#39;#208050&#39;</span><span class="p">,</span>
+<span class="p">})</span>
+<span class="o">...</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id5">
+<h3>修改Sphinx的主题<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<p>为了给文档添加评论功能，必须添加一部分javascript代码，因此需要修改Shpinx的主题。</p>
+<ul>
+<li><p class="first">首先编辑conf.py文件中如下的两个配置：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># The theme to use for HTML and HTML Help pages.  Major themes that come with</span>
+<span class="c"># Sphinx are currently &#39;default&#39; and &#39;sphinxdoc&#39;.</span>
+<span class="n">html_theme</span> <span class="o">=</span> <span class="s">&#39;pydoc&#39;</span>
+
+<span class="c"># Add any paths that contain custom themes here, relative to this directory.</span>
+<span class="n">html_theme_path</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;./theme&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">然后在conf.py文件所在的目录下创建一个子目录theme，将sphinx安装目录下的themes\sphinxdoc文件夹复制到theme文件夹下，并重命名为pydoc，目录结构如下图所示：</p>
+<blockquote>
+<div class="figure" id="fig-pydoctools02">
+<img alt="_images/pydoc_tools_02.png" src="_images/pydoc_tools_02.png" />
+<p class="caption">theme文件夹的结构</p>
+</div>
+</blockquote>
+</li>
+<li><p class="first">编辑layout.html文件。此文件是一个模板，Sphinx最终使用此模板生成每个rst文件所对应的html文件。因此我在其中添加了对我自己的css和js文件的引用:</p>
+</li>
+</ul>
+<div class="highlight-html"><div class="highlight"><pre><span class="nt">&lt;link</span> <span class="na">type=</span><span class="s">&quot;text/css&quot;</span> <span class="na">href=</span><span class="s">&quot;_static/jquery-ui-1.7.2.custom.css&quot;</span> <span class="na">rel=</span><span class="s">&quot;stylesheet&quot;</span> <span class="nt">/&gt;</span>
+<span class="nt">&lt;link</span> <span class="na">type=</span><span class="s">&quot;text/css&quot;</span> <span class="na">href=</span><span class="s">&quot;_static/comments.css&quot;</span> <span class="na">rel=</span><span class="s">&quot;stylesheet&quot;</span> <span class="nt">/&gt;</span>
+<span class="nt">&lt;script </span><span class="na">type=</span><span class="s">&quot;text/javascript&quot;</span> <span class="na">src=</span><span class="s">&quot;_static/jquery-ui-1.7.2.custom.min.js&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
+<span class="nt">&lt;script </span><span class="na">type=</span><span class="s">&quot;text/javascript&quot;</span> <span class="na">src=</span><span class="s">&quot;_static/pydoc.js&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
+</pre></div>
+</div>
+<ul>
+<li><p class="first">在theme\pydoc\static目录下添加相应的css和js文件。为了固定html页面左侧的目录栏，可以配置theme\pydoc\theme.conf中的stickysidebar=True，不过好像IE7.0下无法正常显示，因此在css文件中添加如下代码，除了IE6.0以外其它的浏览器(Firefox,IE7, Chrome)都能够正常固定目录栏：</p>
+<blockquote>
+<div class="highlight-css"><div class="highlight"><pre><span class="nt">div</span><span class="nc">.sphinxsidebar</span><span class="p">{</span>
+    <span class="k">position</span> <span class="o">:</span> <span class="k">fixed</span><span class="p">;</span>
+    <span class="k">left</span> <span class="o">:</span> <span class="m">0px</span><span class="p">;</span>
+    <span class="k">top</span> <span class="o">:</span> <span class="m">30px</span><span class="p">;</span>
+    <span class="k">margin-left</span> <span class="o">:</span> <span class="m">0px</span> <span class="cp">!important</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</blockquote>
+</li>
+</ul>
+</div>
+<div class="section" id="id6">
+<h3>关闭引号自动转换<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+<p>在输出html的时候，如果使用Sphinx缺省的配置，会对引号进行自动转换：将标准的单引号和双引号转换为unicode中的全角引号。为了关闭此项功能，需要编辑 conf.py，进行如下设置：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">html_use_smartypants</span> <span class="o">=</span> <span class="bp">False</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="latex">
+<h3>用latex编写数学公式<a class="headerlink" href="#latex" title="Permalink to this headline">¶</a></h3>
+<p>Sphinx支持将latex编写的数学公式转换为png图片。为了在windows下使用latex，我下载了<a class="reference external" href="http://www.tug.org/protext">proTeXt</a>，这个tex软件包的大小有700M左右，安装之后占用1.3G。为了告诉Sphinx工具latex的安装位置，如下修改make.bat文件：</p>
+<div class="highlight-bat"><div class="highlight"><pre><span class="nv">%SPHINXBUILD%</span> -D pngmath_latex<span class="o">=</span><span class="s2">&quot;..\latex.exe&quot;</span> -b  html <span class="nv">%ALLSPHINXOPTS%</span> build<span class="n">/html</span>
+</pre></div>
+</div>
+<p>然后就可以如下使用latex:</p>
+<div class="highlight-latex"><div class="highlight"><pre>X<span class="nb">_</span>k =  <span class="k">\sum</span><span class="nb">_{</span>n=0<span class="nb">}^{</span>N-1<span class="nb">}</span> x<span class="nb">_</span>n e<span class="nb">^{</span>-<span class="nb">{</span>i 2<span class="k">\pi</span> k <span class="k">\frac</span><span class="nb">{</span>n<span class="nb">}{</span>N<span class="nb">}}}</span> <span class="k">\qquad</span> k = 0,<span class="k">\dots</span>,N-1.
+</pre></div>
+</div>
+<p>得到的输出图片如下：</p>
+<div class="math">
+<p><img src="_images/math/9be61712bda4b8b4ade767aeb1dc9bcd96be909f.png" alt="X_k = \sum_{n=0}^{N-1} x_n e^{-{i 2\pi k \frac{n}{N}}} \qquad k = 0,\dots,N-1." /></p>
+</div></div>
+<div class="section" id="id8">
+<h3>Leo的配置<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
+<p>Leo的缺省配置用起来很不习惯：它的树状目录在上方，而且字体很小。下面是对Leo的一些修改和配置：</p>
+<ul>
+<li><p class="first">Leo现在可以使用tk和qt两个库。使用tk库的界面用起来不习惯，因此通过在启动Leo时添加参数强制使用qt库的界面：launchLeo.py --gui=qt 。</p>
+</li>
+<li><p class="first">我个人很喜欢微软雅黑的汉字字体，但是由于雅黑字体的英文不是等宽的，因此用它来编辑代码的话就很不爽了。于是上网找到了一个雅黑和Consolas的复合字体：</p>
+<blockquote>
+<p>YaHei Mono字体下载地址： <a class="reference external" href="http://hyry.dip.jp/files/yahei_mono.7z">http://hyry.dip.jp/files/yahei_mono.7z</a></p>
+</blockquote>
+</li>
+<li><p class="first">复制一份leo\config\leoSettings.leo到同一目录，改名为myLeoSettings.leo。用Leo编辑此文件，在目录树中找到节点：qtGui plugin--&gt;&#64;data qt-gui-plugin-style-sheet，修改此样式表中的字体的定义，使用新安装的Yahei Mono字体。</p>
+<blockquote>
+<div class="highlight-css"><div class="highlight"><pre><span class="nt">QTextEdit</span><span class="nf">#richTextEdit</span> <span class="p">{</span>
+    <span class="o">...</span>
+    <span class="k">font-family</span><span class="o">:</span> <span class="n">Yahei</span> <span class="n">Mono</span><span class="p">;</span>
+    <span class="k">font-size</span><span class="o">:</span> <span class="m">17px</span><span class="p">;</span>
+    <span class="o">...</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</blockquote>
+</li>
+<li><p class="first">修改&#64;settings--&gt;Window--&gt;&#64;string initial_split_orientation节点和&#64;settings--&gt;Window--&gt;Options for new windows--&gt;&#64;strings[vertical,horizontal] initial_splitter_orientation节点的值为horizontal。这样目录树和编辑框就是左右分栏的了。</p>
+</li>
+<li><p class="first">在Leo中用&#64;auto-rst输出rst文件时，会自动的将目录树中的节点名转换为rst文件中的标题。在rst中标题都是由下划线标出的。下划线的长度要求和文本的长度一致。由于Leo采用unicode表示文本，因此汉字的长度为1，但是rst编译器似乎要求汉字的长度为2，因此对于 <strong>Leo的配置</strong> 这样的标题，rst要求用9个下划线符号标识，而Leo只用6个，造成在编译时出现许多警告信息，为了解决这个问题，编辑leo\core\leoRst.py文件中的underline函数如下，并且将其后的所有len(s)都改为len(ss)：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">underline</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">s</span><span class="p">,</span><span class="n">p</span><span class="p">):</span>
+    <span class="o">...</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">ss</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&quot;gbk&quot;</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">ss</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&quot;shiftjis&quot;</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">ss</span> <span class="o">=</span> <span class="n">s</span>
+
+    <span class="n">trace</span> <span class="o">=</span> <span class="bp">False</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">g</span><span class="o">.</span><span class="n">unitTesting</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="matplotlib">
+<h3>让Matplotlib显示中文<a class="headerlink" href="#matplotlib" title="Permalink to this headline">¶</a></h3>
+<p>将中文字体文件复制到：</p>
+<div class="highlight-none"><div class="highlight"><pre>%PythonPath%\Lib\site-packages\matplotlib\mpl-data\fonts\ttf\
+</pre></div>
+</div>
+<p>下，这里以上一节介绍的Yahei Mono字体为例。</p>
+<p id="chinese-in-matplotlib">找到Matplotlib的配置文件matplotlibrc，全局配置文件的路径：</p>
+<div class="highlight-none"><div class="highlight"><pre>%PythonPath%\Lib\site-packages\matplotlib\mpl-data\matplotlibrc
+</pre></div>
+</div>
+<p>用户配置文件路径：</p>
+<div class="highlight-none"><div class="highlight"><pre>c:\Documents and Settings\%UserName%\.matplotlib\matplotlibrc
+</pre></div>
+</div>
+<p>用文本编辑器打开此文件，进行如下编辑：</p>
+<ul class="simple">
+<li>找到设置font.family的行，改为font.family : monospace，注意去掉前面的#号。</li>
+<li>在下面添加一行：font.monospace : Yahei Mono。</li>
+</ul>
+<p>在matplotlib中使用中文字符串时记住要用unicode格式，例如：u&quot;测试中文显示&quot;。</p>
+</div>
+<div class="section" id="id9">
+<h3>用Matplotlib生成图片<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h3>
+<p>matplotlib提供了一个Sphinx的扩展插件，可以使用..plot命令自动生成图片。可是这个插件生成的图片的路径和本书所采用的路径不符合，无法在HTML文件中显示最终生成的图。因此我直接复制下面两个文件：</p>
+<div class="highlight-none"><div class="highlight"><pre>c:\Python26\Lib\site-packages\matplotlib\sphinxext\plot_directive.py
+c:\Python26\Lib\site-packages\matplotlib\sphinxext\only_directives.py
+</pre></div>
+</div>
+<p>到sourceexts下，命名为plot_directive.py。然后编辑conf.py，修改下面两行：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="s">&#39;exts&#39;</span><span class="p">))</span>
+<span class="n">extensions</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;sphinx.ext.autodoc&#39;</span><span class="p">,</span> <span class="s">&#39;sphinx.ext.doctest&#39;</span><span class="p">,</span>
+    <span class="s">&#39;sphinx.ext.pngmath&#39;</span><span class="p">,</span> <span class="s">&#39;plot_directive&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>这样就可以载入extsplot_directive.py扩展插件了。然后编辑plot_directive.py文件，使得它的输出符合本书的路径，并且除去大图和PDF输出。</p>
+<p>在rst文件中使用：</p>
+<div class="highlight-python"><pre>.. plot:: examples/matplotlib_hist.py
+   :include-source:</pre>
+</div>
+<p>就得到如下的结果：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span> <span class="n">x</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">r&#39;Normal: $\mu=</span><span class="si">%.2f</span><span class="s">, \sigma=</span><span class="si">%.2f</span><span class="s">$&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="n">x</span><span class="o">.</span><span class="n">std</span><span class="p">()))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<img alt="_images/matplotlib_hist.png" src="_images/matplotlib_hist.png" />
+</div>
+<div class="section" id="graphviz">
+<h3>用Graphviz绘图<a class="headerlink" href="#graphviz" title="Permalink to this headline">¶</a></h3>
+<p>Sphinx可以调用Graphviz绘制流程图，首先下载Graphviz的Windows安装包进行安装，假设安装目录为c:\graphviz。</p>
+<p>Graphviz的下载地址： <a class="reference external" href="http://www.graphviz.org">http://www.graphviz.org</a></p>
+<p>编辑conf.py配置文件，在 extensions 列表定义的最后添加一项：'sphinx.ext.graphviz'。</p>
+<p>如下编辑make.bat文件，配置dot.exe的执行路径：</p>
+<div class="highlight-python"><pre>set SPHINXBUILD=sphinx-build -D graphviz_dot=c:\graphviz\bin\dot.exe</pre>
+</div>
+<p>在rst文档中，用如下格式绘制Graphviz图：</p>
+<div class="highlight-python"><pre>.. graphviz::
+
+    digraph GraphvizDemo{
+        node [fontname="Yahei Mono" shape="rect"];
+        edge [fontname="Yahei Mono" fontsize=10];
+
+        node1[label="开始"];
+        node2[label="正常"];
+
+        node1-&gt;node2[label="测试"];
+    }</pre>
+</div>
+<p>输出图为:</p>
+<p class="graphviz">
+<img src="_images/graphviz-691597b9de6125817b93aaad942bf30f1e3d5346.png" alt="digraph GraphvizDemo{
+    node [fontname=&quot;Yahei Mono&quot; shape=&quot;rect&quot;];
+    edge [fontname=&quot;Yahei Mono&quot; fontsize=10];
+
+    node1[label=&quot;开始&quot;];
+    node2[label=&quot;正常&quot;];
+
+    node1-&gt;node2[label=&quot;测试&quot;];
+}" />
+</p>
+</div>
+<div class="section" id="chm">
+<h3>制作CHM文档<a class="headerlink" href="#chm" title="Permalink to this headline">¶</a></h3>
+<p>Sphinx支持输出为CHM文档格式，只需要运行make htmlhelp即可。但是此命令输出的目录文件(扩展名为.hhc)，却不支持中文。为了解决这个问题，我进行了如下修改：</p>
+<ul>
+<li><p class="first">sphinx的安装目录下找到buildershtmlhelp.py，将其复制一份，改名为htmlhelpcn.py。输出CHM文档的程序都在这里面。</p>
+</li>
+<li><p class="first">修改builders__init__.py文件，在其最后的BUILTIN_BUILDERS字典定义中添加一行：</p>
+<blockquote>
+<div class="highlight-none"><div class="highlight"><pre>&#39;htmlhelpcn&#39;:  (&#39;htmlhelpcn&#39;, &#39;HTMLHelpBuilder&#39;)
+</pre></div>
+</div>
+</blockquote>
+</li>
+<li><p class="first">修改make.bat文件，在其中添加：</p>
+<blockquote>
+<div class="highlight-bat"><div class="highlight"><pre><span class="k">if</span> <span class="s2">&quot;%1&quot;</span> <span class="o">==</span> <span class="s2">&quot;htmlhelpcn&quot;</span> (
+    <span class="nv">%SPHINXBUILD%</span> -b htmlhelpcn <span class="nv">%ALLSPHINXOPTS%</span> build<span class="n">/htmlhelpcn</span>
+    <span class="k">echo</span>.
+    <span class="k">echo</span>.Build finished; now you can run HTML Help Workshop with the ^
+.hhp project file in build<span class="n">/htmlhelpcn.</span>
+    <span class="k">goto</span> <span class="nl">end</span>
+)
+</pre></div>
+</div>
+</blockquote>
+</li>
+<li><p class="first">编辑htmlhelpcn.py文件，找到project_template字符串的定义，修改其中的Language定义为Language=0x804。</p>
+</li>
+<li><p class="first">反复运行make.bat htmlhelpcn命令，根据输出的错误提示修改htmlhelpcn.py，将其中几处编码错误的地方都添加.encode(&quot;gb2312&quot;)。其中有一处：</p>
+<blockquote>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;ascii&#39;</span><span class="p">,</span> <span class="s">&#39;xmlcharrefreplace&#39;</span><span class="p">))</span>
+
+<span class="c"># 改为--&gt;</span>
+
+<span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;gb2312&#39;</span><span class="p">))</span>
+</pre></div>
+</div>
+</blockquote>
+</li>
+<li><p class="first">如果在rst文档中给图片添加了中文说明的话，有可能输出的CHM文件中看不到图片。</p>
+</li>
+<li><p class="first">make.bat htmlhelpcn正常运行之后，运行下面的命令输出制作CHM文件：</p>
+<blockquote>
+<div class="highlight-none"><div class="highlight"><pre>&quot;C:\Program Files\HTML Help Workshop\hhc.exe&quot; htmlhelpcn\scipydoc.hhp
+</pre></div>
+</div>
+</blockquote>
+</li>
+</ul>
+</div>
+<div class="section" id="chmflash">
+<h3>CHM中嵌入Flash动画<a class="headerlink" href="#chmflash" title="Permalink to this headline">¶</a></h3>
+<p>用如下的reStructuredText的 raw 指令可以在html中嵌入Flash动画：</p>
+<div class="highlight-html"><div class="highlight"><pre><span class="nt">&lt;OBJECT</span> <span class="na">CLASSID=</span><span class="s">&quot;clsid:D27CDB6E-AE6D-11cf-96B8-444553540000&quot;</span> <span class="na">WIDTH=</span><span class="s">&quot;589&quot;</span> <span class="na">HEIGHT=</span><span class="s">&quot;447&quot;</span>
+  <span class="na">CODEBASE=</span><span class="s">&quot;http://active.macromedia.com/flash5/cabs/swflash.cab#version=7,0,0,0&quot;</span><span class="nt">&gt;</span>
+<span class="nt">&lt;PARAM</span> <span class="na">NAME=</span><span class="s">&quot;movie&quot;</span> <span class="na">VALUE=</span><span class="s">&quot;_images/fft_study_04.swf&quot;</span><span class="nt">&gt;</span>
+<span class="nt">&lt;PARAM</span> <span class="na">NAME=</span><span class="s">&quot;play&quot;</span> <span class="na">VALUE=</span><span class="s">&quot;true&quot;</span><span class="nt">&gt;</span>
+<span class="nt">&lt;PARAM</span> <span class="na">NAME=</span><span class="s">&quot;loop&quot;</span> <span class="na">VALUE=</span><span class="s">&quot;false&quot;</span><span class="nt">&gt;</span>
+<span class="nt">&lt;PARAM</span> <span class="na">NAME=</span><span class="s">&quot;wmode&quot;</span> <span class="na">VALUE=</span><span class="s">&quot;transparent&quot;</span><span class="nt">&gt;</span>
+<span class="nt">&lt;PARAM</span> <span class="na">NAME=</span><span class="s">&quot;quality&quot;</span> <span class="na">VALUE=</span><span class="s">&quot;high&quot;</span><span class="nt">&gt;</span>
+<span class="nt">&lt;EMBED</span> <span class="na">SRC=</span><span class="s">&quot;_images/fft_study_04.swf&quot;</span> <span class="na">width=</span><span class="s">&quot;589&quot;</span> <span class="na">HEIGHT=</span><span class="s">&quot;447&quot;</span> <span class="na">quality=</span><span class="s">&quot;high&quot;</span>
+ <span class="na">loop=</span><span class="s">&quot;false&quot;</span> <span class="na">wmode=</span><span class="s">&quot;transparent&quot;</span> <span class="na">TYPE=</span><span class="s">&quot;application/x-shockwave-flash&quot;</span>
+ <span class="na">PLUGINSPAGE=</span>
+ &quot;http://www.macromedia.com/shockwave/download/index.cgi?P1_Prod_Version=ShockwaveFlash&quot;&gt;
+<span class="nt">&lt;/EMBED&gt;</span>
+<span class="nt">&lt;/OBJECT&gt;</span>
+</pre></div>
+</div>
+<p>由于Html Help Workshop不会将swf文件打包进CHM，因此CHM中看不到flash动画，只需要在嵌入flash动画的html之后添加一条：</p>
+<div class="highlight-html"><div class="highlight"><pre><span class="nt">&lt;img</span> <span class="na">src=</span><span class="s">&quot;_images/fft_study_04.swf&quot;</span> <span class="na">style=</span><span class="s">&quot;visibility:hidden&quot;</span><span class="nt">/&gt;</span>
+</pre></div>
+</div>
+<p>这样Html Help Workshop就会把fft_study_04.swf文件添加进去，由于使用隐藏的CSS，页面中也不会把它当作图片显示出来。</p>
+</div>
+<div class="section" id="pdf">
+<h3>制作PDF文档<a class="headerlink" href="#pdf" title="Permalink to this headline">¶</a></h3>
+<p>调用make latex命令可以输出为latex格式的文件，然后调用 xelatex scipydoc.tex 即可将其转换为PDF文件，xelatex是proTeXt自带的命令。制作PDF文档时同样有中文无法显示的问题，按照以下步骤解决：</p>
+<ul class="simple">
+<li>编辑文档的配置文件conf.py，在最后的 Options for LaTeX output 定义处，添加如下代码，这段文字将添加到最终输出的tex文件中，这里的Yahei Mono可以修改为你想要的中文字体名：</li>
+</ul>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">latex_preamble</span> <span class="o">=</span> <span class="s">r&quot;&quot;&quot;</span>
+<span class="s">    \usepackage{float}</span>
+<span class="s">    \textwidth 6.5in</span>
+<span class="s">    \oddsidemargin -0.2in</span>
+<span class="s">    \evensidemargin -0.2in</span>
+<span class="s">    \usepackage{ccaption}</span>
+<span class="s">    \usepackage{fontspec,xunicode,xltxtra}</span>
+<span class="s">    \setsansfont{Microsoft YaHei}</span>
+<span class="s">    \setromanfont{Microsoft YaHei}</span>
+<span class="s">    \setmainfont{Microsoft YaHei}</span>
+<span class="s">    \setmonofont{Yahei Mono}</span>
+<span class="s">    \XeTeXlinebreaklocale &quot;zh&quot;</span>
+<span class="s">    \XeTeXlinebreakskip = 0pt plus 1pt</span>
+<span class="s">    \renewcommand{\baselinestretch}{1.3}</span>
+<span class="s">    \setcounter{tocdepth}{3}</span>
+<span class="s">    \captiontitlefont{\small\sffamily}</span>
+<span class="s">    \captiondelim{ - }</span>
+<span class="s">    \renewcommand\today{\number\year年\number\month月\number\day日}</span>
+<span class="s">    \makeatletter</span>
+<span class="s">    \renewcommand*\l@subsection{\@dottedtocline{2}{2.0em}{4.0em}}</span>
+<span class="s">    \renewcommand*\l@subsubsection{\@dottedtocline{3}{3em}{5em}}</span>
+<span class="s">    \makeatother</span>
+<span class="s">    \titleformat{\chapter}[display]</span>
+<span class="s">    {\bfseries\Huge}</span>
+<span class="s">    {\filleft \Huge 第 \hspace{2 mm} \thechapter \hspace{4 mm} 章}</span>
+<span class="s">    {4ex}</span>
+<span class="s">    {\titlerule</span>
+<span class="s">    \vspace{2ex}%</span>
+<span class="s">    \filright}</span>
+<span class="s">    [\vspace{2ex}%</span>
+<span class="s">    \titlerule]</span>
+<span class="s">    %\definecolor{VerbatimBorderColor}{rgb}{0.2,0.2,0.2}</span>
+<span class="s">    \definecolor{VerbatimColor}{rgb}{0.95,0.95,0.95}</span>
+<span class="s">&quot;&quot;&quot;</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&quot;utf-8&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>通过renewcommand命令将输出的PDF文档中的一部分英文修改为中文。</p>
+<p>不知何故，在latex_preamble中添加修改插图标题前缀的命令没有作用，因此通过下面的命令在正文中添加转换前缀的renewcommand：</p>
+<div class="highlight-none"><div class="highlight"><pre>.. raw:: latex
+
+    \renewcommand\partname{部分}
+    \renewcommand{\chaptermark}[1]{\markboth{第 \thechapter\ 章 \hspace{4mm} #1}{}}
+    \fancyhead[LE,RO]{用Python做科学计算}
+    \renewcommand{\figurename}{\textsc{图}}
+</pre></div>
+</div>
+<ul>
+<li><p class="first">调整conf.py中的其它选项：</p>
+<blockquote>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">latex_paper_size</span> <span class="o">=</span> <span class="s">&#39;a4&#39;</span>
+<span class="n">latex_font_size</span> <span class="o">=</span> <span class="s">&#39;11pt&#39;</span>
+<span class="n">latex_use_modindex</span> <span class="o">=</span> <span class="bp">False</span>
+</pre></div>
+</div>
+</blockquote>
+</li>
+<li><p class="first">运行下面的命令输出PDF文档，使用nonstopmode，即使出现错误也不暂停运行。</p>
+<blockquote>
+<div class="highlight-none"><div class="highlight"><pre>xelatex -interaction=nonstopmode scipydoc.tex
+</pre></div>
+</div>
+</blockquote>
+</li>
+</ul>
+<p>还有一些latex配置没有找到如何使用reStructuredText进行设置，因此写了一个Python的小程序读取输出的tex文件，替换其中的一些latex命令：</p>
+<ul class="simple">
+<li>将begin{figure}[htbp]改为begin{figure}[H}，这样能保证图和文字保持tex中的前后关系，而不会对图进行自动排版</li>
+<li>在\tableofcontents之前添加\renewcommand\contentsname{目 录}，将目录标题的英文改为中文，此段配置在latex_preamble中定义无效</li>
+</ul>
+</div>
+<div class="section" id="id10">
+<h3>添加PDF封面<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h3>
+<p>使用作图软件设计封面图片之后，使用图片转PDF工具将其转换为一个只有一页的PDF文档cover.pdf：</p>
+<p>图片转PDF工具下载地址： <a class="reference external" href="http://www.softinterface.com">http://www.softinterface.com</a></p>
+<p>然后使用PDF合并工具将cover.pdf和正文的PDF文件进行合并。我在网络上找了很久，终于找到了下面这个能够维持内部链接和书签的免费的合并工具：</p>
+<p>PDF工具PDFsam下载地址： <a class="reference external" href="http://www.pdfsam.org">http://www.pdfsam.org</a></p>
+<p>PDFsam提供了界面和命令行方式，界面方式很容易使用，但是为了一个批处理产生最终PDF文档我需要使用命令行方式，下面是使用命令行进行PDF文档合并的批处理程序：</p>
+<div class="highlight-none"><div class="highlight"><pre>set MERGE=java -jar &quot;c:\Program Files\pdfsam\lib\pdfsam-console-2.2.0e.jar&quot;
+%MERGE% -f cover.pdf -f scipydoc.pdf -o %CD%\scipydoc2.pdf concat
+</pre></div>
+</div>
+<ul class="simple">
+<li>-f参数指定输入的PDF文件名</li>
+<li>-o参数指定输出的PDF文件名，注意必须使用绝对路径，因此这里使用%CD%将相对路径转换为绝对路径。</li>
+</ul>
+</div>
+<div class="section" id="id11">
+<h3>输出打包的批处理<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h3>
+<p>下面是同时输出zip, chm, pdf文件的批处理命令：</p>
+<div class="highlight-bat"><div class="highlight"><pre>rename html scipydoc
+<span class="s2">&quot;c:\Program Files\7-Zip\7z.exe&quot;</span> a scipydoc.zip scipydoc
+rename scipydoc html
+
+<span class="s2">&quot;C:\Program Files\HTML Help Workshop\hhc.exe&quot;</span> htmlhelpcn\scipydoc.hhp
+copy htmlhelpcn\scipydoc.chm . <span class="n">/y</span>
+
+<span class="k">cd</span> latex
+xelatex -interaction<span class="o">=</span>nonstopmode scipydoc.tex
+<span class="k">cd</span> ..
+copy latex\scipydoc.pdf . <span class="n">/y</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="html">
+<h3>HTML的中文搜索<a class="headerlink" href="#html" title="Permalink to this headline">¶</a></h3>
+<p>由于Sphinx不懂中文分词，因此它所生成的搜索索引文件searchindex.js中的中文单词分的不正确。为了修正这个问题，我写了一个Sphinx扩展chinese_search.py，使用中文分词库smallseg生成索引文件中的中文单词。</p>
+<p>smallseg中文分词库地址: <a class="reference external" href="http://code.google.com/p/smallseg">http://code.google.com/p/smallseg</a></p>
+<p>下面是这个扩展的完整源程序：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">os</span> <span class="kn">import</span> <span class="n">path</span>
+
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">cPickle</span> <span class="kn">as</span> <span class="nn">pickle</span>
+
+<span class="kn">from</span> <span class="nn">docutils.nodes</span> <span class="kn">import</span> <span class="n">comment</span><span class="p">,</span> <span class="n">Text</span><span class="p">,</span> <span class="n">NodeVisitor</span><span class="p">,</span> <span class="n">SkipNode</span>
+
+<span class="kn">from</span> <span class="nn">sphinx.util.stemmer</span> <span class="kn">import</span> <span class="n">PorterStemmer</span>
+<span class="kn">from</span> <span class="nn">sphinx.util</span> <span class="kn">import</span> <span class="n">jsdump</span><span class="p">,</span> <span class="n">rpartition</span>
+
+<span class="kn">from</span> <span class="nn">smallseg</span> <span class="kn">import</span> <span class="n">SEG</span>
+
+<span class="n">DEBUG</span> <span class="o">=</span> <span class="bp">False</span>
+
+<span class="n">word_re</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;\w+(?u)&#39;</span><span class="p">)</span>
+
+<span class="n">stopwords</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">a  and  are  as  at</span>
+<span class="s">be  but  by</span>
+<span class="s">for</span>
+<span class="s">if  in  into  is  it</span>
+<span class="s">near  no  not</span>
+<span class="s">of  on  or</span>
+<span class="s">such</span>
+<span class="s">that  the  their  then  there  these  they  this  to</span>
+<span class="s">was  will  with</span>
+<span class="s">&quot;&quot;&quot;</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+
+<span class="k">if</span> <span class="n">DEBUG</span><span class="p">:</span>
+    <span class="n">testfile</span> <span class="o">=</span> <span class="nb">file</span><span class="p">(</span><span class="s">&quot;testfile.txt&quot;</span><span class="p">,</span> <span class="s">&quot;wb&quot;</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">_JavaScriptIndex</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The search index as javascript file that calls a function</span>
+<span class="sd">    on the documentation search object to register the index.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">PREFIX</span> <span class="o">=</span> <span class="s">&#39;Search.setIndex(&#39;</span>
+    <span class="n">SUFFIX</span> <span class="o">=</span> <span class="s">&#39;)&#39;</span>
+
+    <span class="k">def</span> <span class="nf">dumps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">PREFIX</span> <span class="o">+</span> <span class="n">jsdump</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">SUFFIX</span>
+
+    <span class="k">def</span> <span class="nf">loads</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">):</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">PREFIX</span><span class="p">):</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SUFFIX</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">data</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">s</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">PREFIX</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> \
+           <span class="n">s</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SUFFIX</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;invalid data&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">jsdump</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">dump</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">f</span><span class="p">):</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+
+
+<span class="n">js_index</span> <span class="o">=</span> <span class="n">_JavaScriptIndex</span><span class="p">()</span>
+
+
+<span class="k">class</span> <span class="nc">Stemmer</span><span class="p">(</span><span class="n">PorterStemmer</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    All those porter stemmer implementations look hideous.</span>
+<span class="sd">    make at least the stem method nicer.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">stem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">word</span><span class="p">):</span>
+        <span class="n">word</span> <span class="o">=</span> <span class="n">word</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">word</span>
+        <span class="c">#return PorterStemmer.stem(self, word, 0, len(word) - 1)</span>
+
+
+<span class="k">class</span> <span class="nc">WordCollector</span><span class="p">(</span><span class="n">NodeVisitor</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A special visitor that collects words for the `IndexBuilder`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">document</span><span class="p">):</span>
+        <span class="n">NodeVisitor</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">document</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">found_words</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="nf">dispatch_visit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">__class__</span> <span class="ow">is</span> <span class="n">comment</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SkipNode</span>
+        <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">__class__</span> <span class="ow">is</span> <span class="n">Text</span><span class="p">:</span>
+            <span class="n">words</span> <span class="o">=</span> <span class="n">seg</span><span class="o">.</span><span class="n">cut</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">astext</span><span class="p">()</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&quot;utf8&quot;</span><span class="p">))</span>
+            <span class="n">words</span><span class="o">.</span><span class="n">reverse</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">found_words</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">words</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">IndexBuilder</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Helper class that creates a searchindex based on the doctrees</span>
+<span class="sd">    passed to the `feed` method.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">formats</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s">&#39;jsdump&#39;</span><span class="p">:</span>   <span class="n">jsdump</span><span class="p">,</span>
+        <span class="s">&#39;pickle&#39;</span><span class="p">:</span>   <span class="n">pickle</span>
+    <span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">env</span> <span class="o">=</span> <span class="n">env</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stemmer</span> <span class="o">=</span> <span class="n">Stemmer</span><span class="p">()</span>
+        <span class="c"># filename -&gt; title</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_titles</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="c"># stemmed word -&gt; set(filenames)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mapping</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="c"># desctypes -&gt; index</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_desctypes</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stream</span><span class="p">,</span> <span class="n">format</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Reconstruct from frozen data.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">format</span><span class="p">,</span> <span class="nb">basestring</span><span class="p">):</span>
+            <span class="n">format</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">formats</span><span class="p">[</span><span class="n">format</span><span class="p">]</span>
+        <span class="n">frozen</span> <span class="o">=</span> <span class="n">format</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">stream</span><span class="p">)</span>
+        <span class="c"># if an old index is present, we treat it as not existing.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">frozen</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;old format&#39;</span><span class="p">)</span>
+        <span class="n">index2fn</span> <span class="o">=</span> <span class="n">frozen</span><span class="p">[</span><span class="s">&#39;filenames&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_titles</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">index2fn</span><span class="p">,</span> <span class="n">frozen</span><span class="p">[</span><span class="s">&#39;titles&#39;</span><span class="p">]))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mapping</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">frozen</span><span class="p">[</span><span class="s">&#39;terms&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_mapping</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="n">index2fn</span><span class="p">[</span><span class="n">v</span><span class="p">]])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_mapping</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">index2fn</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">v</span><span class="p">)</span>
+        <span class="c"># no need to load keywords/desctypes</span>
+
+    <span class="k">def</span> <span class="nf">dump</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stream</span><span class="p">,</span> <span class="n">format</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Dump the frozen index to a stream.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">format</span><span class="p">,</span> <span class="nb">basestring</span><span class="p">):</span>
+            <span class="n">format</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">formats</span><span class="p">[</span><span class="n">format</span><span class="p">]</span>
+        <span class="n">format</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">freeze</span><span class="p">(),</span> <span class="n">stream</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_modules</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn2index</span><span class="p">):</span>
+        <span class="n">rv</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">modules</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">fn2index</span><span class="p">:</span>
+                <span class="n">rv</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">fn2index</span><span class="p">[</span><span class="n">doc</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">rv</span>
+
+    <span class="k">def</span> <span class="nf">get_descrefs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn2index</span><span class="p">):</span>
+        <span class="n">rv</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">dt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_desctypes</span>
+        <span class="k">for</span> <span class="n">fullname</span><span class="p">,</span> <span class="p">(</span><span class="n">doc</span><span class="p">,</span> <span class="n">desctype</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">descrefs</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">doc</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fn2index</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">prefix</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="n">rpartition</span><span class="p">(</span><span class="n">fullname</span><span class="p">,</span> <span class="s">&#39;.&#39;</span><span class="p">)</span>
+            <span class="n">pdict</span> <span class="o">=</span> <span class="n">rv</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="p">{})</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">i</span> <span class="o">=</span> <span class="n">dt</span><span class="p">[</span><span class="n">desctype</span><span class="p">]</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="n">i</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">dt</span><span class="p">)</span>
+                <span class="n">dt</span><span class="p">[</span><span class="n">desctype</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span>
+            <span class="n">pdict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">fn2index</span><span class="p">[</span><span class="n">doc</span><span class="p">],</span> <span class="n">i</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">rv</span>
+
+    <span class="k">def</span> <span class="nf">get_terms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn2index</span><span class="p">):</span>
+        <span class="n">rv</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mapping</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">fn</span><span class="p">,</span> <span class="o">=</span> <span class="n">v</span>
+                <span class="k">if</span> <span class="n">fn</span> <span class="ow">in</span> <span class="n">fn2index</span><span class="p">:</span>
+                    <span class="n">rv</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">fn2index</span><span class="p">[</span><span class="n">fn</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">rv</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">fn2index</span><span class="p">[</span><span class="n">fn</span><span class="p">]</span> <span class="k">for</span> <span class="n">fn</span> <span class="ow">in</span> <span class="n">v</span> <span class="k">if</span> <span class="n">fn</span> <span class="ow">in</span> <span class="n">fn2index</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">rv</span>
+
+    <span class="k">def</span> <span class="nf">freeze</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a usable data structure for serializing.&quot;&quot;&quot;</span>
+        <span class="n">filenames</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_titles</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="n">titles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_titles</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+        <span class="n">fn2index</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">((</span><span class="n">f</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">filenames</span><span class="p">))</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="n">filenames</span><span class="o">=</span><span class="n">filenames</span><span class="p">,</span>
+            <span class="n">titles</span><span class="o">=</span><span class="n">titles</span><span class="p">,</span>
+            <span class="n">terms</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_terms</span><span class="p">(</span><span class="n">fn2index</span><span class="p">),</span>
+            <span class="n">descrefs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_descrefs</span><span class="p">(</span><span class="n">fn2index</span><span class="p">),</span>
+            <span class="n">modules</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_modules</span><span class="p">(</span><span class="n">fn2index</span><span class="p">),</span>
+            <span class="n">desctypes</span><span class="o">=</span><span class="nb">dict</span><span class="p">((</span><span class="n">v</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_desctypes</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">prune</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filenames</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Remove data for all filenames not in the list.&quot;&quot;&quot;</span>
+        <span class="n">new_titles</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">filenames</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">filename</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_titles</span><span class="p">:</span>
+                <span class="n">new_titles</span><span class="p">[</span><span class="n">filename</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_titles</span><span class="p">[</span><span class="n">filename</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_titles</span> <span class="o">=</span> <span class="n">new_titles</span>
+        <span class="k">for</span> <span class="n">wordnames</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mapping</span><span class="o">.</span><span class="n">itervalues</span><span class="p">():</span>
+            <span class="n">wordnames</span><span class="o">.</span><span class="n">intersection_update</span><span class="p">(</span><span class="n">filenames</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">feed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">doctree</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Feed a doctree to the index.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_titles</span><span class="p">[</span><span class="n">filename</span><span class="p">]</span> <span class="o">=</span> <span class="n">title</span>
+
+        <span class="n">visitor</span> <span class="o">=</span> <span class="n">WordCollector</span><span class="p">(</span><span class="n">doctree</span><span class="p">)</span>
+        <span class="n">doctree</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">visitor</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">add_term</span><span class="p">(</span><span class="n">word</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">stem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_stemmer</span><span class="o">.</span><span class="n">stem</span><span class="p">):</span>
+            <span class="n">word</span> <span class="o">=</span> <span class="n">stem</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
+            <span class="n">word</span> <span class="o">=</span> <span class="n">word</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s">u&quot;!@#$%^&amp;*()_+-*/</span><span class="se">\\\&quot;</span><span class="s">;,.[]{}&lt;&gt;&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">word</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span> <span class="k">return</span>
+            <span class="k">if</span> <span class="n">word</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&quot;utf8&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">isalpha</span><span class="p">()</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">word</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span> <span class="k">return</span>
+            <span class="k">if</span> <span class="n">word</span><span class="o">.</span><span class="n">isdigit</span><span class="p">():</span> <span class="k">return</span>
+            <span class="k">if</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">stopwords</span><span class="p">:</span> <span class="k">return</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="nb">float</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
+                <span class="k">return</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">pass</span>
+
+            <span class="k">if</span> <span class="n">DEBUG</span><span class="p">:</span>
+                <span class="n">testfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">word</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&quot;utf8&quot;</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_mapping</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">prefix</span> <span class="o">+</span> <span class="n">word</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+
+        <span class="n">words</span> <span class="o">=</span> <span class="n">seg</span><span class="o">.</span><span class="n">cut</span><span class="p">(</span><span class="n">title</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&quot;utf8&quot;</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">words</span><span class="p">:</span>
+            <span class="n">add_term</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">visitor</span><span class="o">.</span><span class="n">found_words</span><span class="p">:</span>
+            <span class="n">add_term</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">load_indexer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">func</span><span class="p">(</span><span class="n">docnames</span><span class="p">):</span>
+        <span class="k">print</span> <span class="s">&quot;############### CHINESE INDEXER ###############&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">indexer</span> <span class="o">=</span> <span class="n">IndexBuilder</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">)</span>
+        <span class="n">keep</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">all_docs</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">docnames</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">outdir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">searchindex_filename</span><span class="p">),</span> <span class="s">&#39;rb&#39;</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">indexer</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">indexer_format</span><span class="p">)</span>
+            <span class="k">finally</span><span class="p">:</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">IOError</span><span class="p">,</span> <span class="ne">OSError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">keep</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&#39;search index couldn</span><span class="se">\&#39;</span><span class="s">t be loaded, but not all &#39;</span>
+                          <span class="s">&#39;documents will be built: the index will be &#39;</span>
+                          <span class="s">&#39;incomplete.&#39;</span><span class="p">)</span>
+        <span class="c"># delete all entries for files that will be rebuilt</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">indexer</span><span class="o">.</span><span class="n">prune</span><span class="p">(</span><span class="n">keep</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">func</span>
+
+<span class="k">def</span> <span class="nf">builder_inited</span><span class="p">(</span><span class="n">app</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">builder</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s">&#39;html&#39;</span><span class="p">:</span>
+        <span class="k">print</span> <span class="s">&quot;****************************&quot;</span>
+        <span class="k">global</span> <span class="n">seg</span>
+        <span class="n">seg</span> <span class="o">=</span> <span class="n">SEG</span><span class="p">()</span>
+        <span class="n">app</span><span class="o">.</span><span class="n">builder</span><span class="o">.</span><span class="n">load_indexer</span> <span class="o">=</span> <span class="n">load_indexer</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">builder</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="n">app</span><span class="p">):</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s">&#39;builder-inited&#39;</span><span class="p">,</span> <span class="n">builder_inited</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id12">
+<h3>PDF的页码和图编号参照<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h3>
+<p>Sphinx生成的tex文件没有使用\label和\ref进行编号引用，而是生成一些链接，这些链接虽然方便电子版的阅读，可是打印出来之后就毫无用处了，因此我写了一个扩展latex_ref.py为最终生成的PDF添加编号引用功能，这个扩展添加了三个role：tlabel, tref, tpageref，分别对应tex的\label, \ref, \pageref。</p>
+<p>下面是完整的源程序：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="kn">from</span> <span class="nn">docutils</span> <span class="kn">import</span> <span class="n">nodes</span><span class="p">,</span> <span class="n">utils</span>
+
+<span class="k">class</span> <span class="nc">tref</span><span class="p">(</span><span class="n">nodes</span><span class="o">.</span><span class="n">Inline</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">TextElement</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+<span class="k">class</span> <span class="nc">tlabel</span><span class="p">(</span><span class="n">nodes</span><span class="o">.</span><span class="n">Inline</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">TextElement</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+<span class="k">class</span> <span class="nc">tpageref</span><span class="p">(</span><span class="n">nodes</span><span class="o">.</span><span class="n">Inline</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">TextElement</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+<span class="k">def</span> <span class="nf">tref_role</span><span class="p">(</span><span class="n">role</span><span class="p">,</span> <span class="n">rawtext</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">lineno</span><span class="p">,</span> <span class="n">inliner</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="p">{},</span> <span class="n">content</span><span class="o">=</span><span class="p">[]):</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&quot;,&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s">u&quot;图&quot;</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="s">u&quot;图&quot;</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">ref</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">tref</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="n">ref</span><span class="p">,</span> <span class="n">pos</span><span class="o">=</span><span class="n">pos</span><span class="p">)],</span> <span class="p">[]</span>
+    <span class="k">return</span> <span class="p">[],[]</span>
+<span class="k">def</span> <span class="nf">tlabel_role</span><span class="p">(</span><span class="n">role</span><span class="p">,</span> <span class="n">rawtext</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">lineno</span><span class="p">,</span> <span class="n">inliner</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="p">{},</span> <span class="n">content</span><span class="o">=</span><span class="p">[]):</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">tlabel</span><span class="p">(</span><span class="n">latex</span><span class="o">=</span><span class="n">text</span><span class="p">)],</span> <span class="p">[]</span>
+
+<span class="k">def</span> <span class="nf">tpageref_role</span><span class="p">(</span><span class="n">role</span><span class="p">,</span> <span class="n">rawtext</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">lineno</span><span class="p">,</span> <span class="n">inliner</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="p">{},</span> <span class="n">content</span><span class="o">=</span><span class="p">[]):</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">tpageref</span><span class="p">(</span><span class="n">latex</span><span class="o">=</span><span class="n">text</span><span class="p">)],</span> <span class="p">[]</span>
+
+<span class="k">def</span> <span class="nf">latex_visit_ref</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">r&quot;</span><span class="si">%s</span><span class="s">\ref{</span><span class="si">%s</span><span class="s">}&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">node</span><span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">],</span> <span class="n">node</span><span class="p">[</span><span class="s">&#39;ref&#39;</span><span class="p">]))</span>
+    <span class="k">raise</span> <span class="n">nodes</span><span class="o">.</span><span class="n">SkipNode</span>   
+
+<span class="k">def</span> <span class="nf">html_visit_ref</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">r&#39;&lt;a href=&quot;#</span><span class="si">%s</span><span class="s">&quot;&gt;</span><span class="si">%s%s</span><span class="s">&lt;/a&gt;&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">node</span><span class="p">[</span><span class="s">&#39;ref&#39;</span><span class="p">],</span> <span class="n">node</span><span class="p">[</span><span class="s">&#39;pos&#39;</span><span class="p">],</span> <span class="n">node</span><span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">]))</span>
+    <span class="k">raise</span> <span class="n">nodes</span><span class="o">.</span><span class="n">SkipNode</span>
+
+<span class="k">def</span> <span class="nf">latex_visit_label</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">r&quot;\label{</span><span class="si">%s</span><span class="s">}&quot;</span> <span class="o">%</span> <span class="n">node</span><span class="p">[</span><span class="s">&#39;latex&#39;</span><span class="p">])</span>
+    <span class="k">raise</span> <span class="n">nodes</span><span class="o">.</span><span class="n">SkipNode</span>   
+
+<span class="k">def</span> <span class="nf">latex_visit_pageref</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">r&quot;\pageref{</span><span class="si">%s</span><span class="s">}&quot;</span> <span class="o">%</span> <span class="n">node</span><span class="p">[</span><span class="s">&#39;latex&#39;</span><span class="p">])</span>
+    <span class="k">raise</span> <span class="n">nodes</span><span class="o">.</span><span class="n">SkipNode</span>   
+
+<span class="k">def</span> <span class="nf">empty_visit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+    <span class="k">raise</span> <span class="n">nodes</span><span class="o">.</span><span class="n">SkipNode</span>
+
+<span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="n">app</span><span class="p">):</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">tref</span><span class="p">,</span><span class="n">latex</span><span class="o">=</span><span class="p">(</span><span class="n">latex_visit_ref</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span><span class="n">text</span><span class="o">=</span><span class="p">(</span><span class="n">empty_visit</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span><span class="n">html</span><span class="o">=</span><span class="p">(</span><span class="n">html_visit_ref</span><span class="p">,</span> <span class="bp">None</span><span class="p">))</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">tlabel</span><span class="p">,</span><span class="n">latex</span><span class="o">=</span><span class="p">(</span><span class="n">latex_visit_label</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span><span class="n">text</span><span class="o">=</span><span class="p">(</span><span class="n">empty_visit</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span><span class="n">html</span><span class="o">=</span><span class="p">(</span><span class="n">empty_visit</span><span class="p">,</span> <span class="bp">None</span><span class="p">))</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">tpageref</span><span class="p">,</span><span class="n">latex</span><span class="o">=</span><span class="p">(</span><span class="n">latex_visit_pageref</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span><span class="n">text</span><span class="o">=</span><span class="p">(</span><span class="n">empty_visit</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span><span class="n">html</span><span class="o">=</span><span class="p">(</span><span class="n">empty_visit</span><span class="p">,</span> <span class="bp">None</span><span class="p">))</span>
+
+    <span class="n">app</span><span class="o">.</span><span class="n">add_role</span><span class="p">(</span><span class="s">&#39;tref&#39;</span><span class="p">,</span> <span class="n">tref_role</span><span class="p">)</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">add_role</span><span class="p">(</span><span class="s">&#39;tlabel&#39;</span><span class="p">,</span> <span class="n">tlabel_role</span><span class="p">)</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">add_role</span><span class="p">(</span><span class="s">&#39;tpageref&#39;</span><span class="p">,</span> <span class="n">tpageref_role</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="rest">
+<h2>ReST使用心得<a class="headerlink" href="#rest" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id13">
+<h3>添加图的编号和标题<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h3>
+<p>使用figure命令插入带编号和标题的插图：</p>
+<div class="highlight-none"><div class="highlight"><pre>.. _pythonxyhome:
+
+.. figure:: images/pythonxy_home.png
+
+    Python(x,y)的启动画面
+</pre></div>
+</div>
+</div>
+<div class="section" id="id14">
+<h3>PDF文字包围图片<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h3>
+<p>当给figure添加figwidth和align属性之后，在生成的latex文档中，将使用wrapfigure生成图。为了和前面的段落之间添加一个换行符，使用一个斜杠空格。</p>
+<div class="highlight-python"><pre>\
+
+.. _fig-traitsUIintro03:
+
+.. figure:: images/traitsUI_intro_03.png
+    :figwidth: 4cm
+    :align: left
+
+    通过label和tooltip手工指定属性编辑器的标签和说明</pre>
+</div>
+</div>
+<div class="section" id="id15">
+<h3>插入大段代码<a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h3>
+<p>小段代码演示可以直接放到rst文件中，但是大段的代码我希望放在单独的文件中，然后在rst文件中引用相应的代码文件。这样我就可以在Leo中单独做一个目录存放所有的代码文件，编辑其中的代码之后，直接输出到html文件中。</p>
+<p>在Sphinx中可以使用如下的格式嵌入外部文件中的代码段：</p>
+<div class="highlight-html"><div class="highlight"><pre>.. literalinclude:: examples/tvtk_cone.example.py
+
+.. literalinclude:: example.c
+    :language: c
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="id16">
+<h2>未解决的问题<a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h2>
+<p><strong>数学公式输出不正确</strong></p>
+<p>有时候数学公式的输出不正确，某些数学符号不能显示，可是多试几次之后就正常了，不知道是什么原因。</p>
+<p><strong>Leo不能配置目录树和编辑框的宽度比例</strong></p>
+<p>每次Leo开启之后目录树和编辑框的宽度是相等的，看上去很不协调。而且修改mySettings.leo中的相关配置也不能解决，不明白是什么问题。目前的解决方法是添加两个工具按钮：show-tree和hide-tree，这样点击一下show-tree就会将目录树和编辑框改为1:3的比例；而点击hide-tree则能隐藏目录树：</p>
+<div class="highlight-python"><pre>@button show tree
+   g.es(c.frame.resizePanesToRatio(0.25,0.7))
+
+@button hide tree
+    g.es(c.frame.resizePanesToRatio(0.0,0.7))</pre>
+</div>
+<p><strong>用Matplotlib自动生成图片无法输出到PDF中</strong></p>
+<p>可能需要修改 plot_directive.py 文件，使得它能正确的在latex模式下输出图片。</p>
+<p><strong>PDF文档的Bookmarks深度</strong></p>
+<p>要想正确生成的PDF文档的Bookmarks，似乎需要对tex文档进行两次编译。</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">首页目录</a></h3>
+            <ul>
+<li><a class="reference external" href="#">关于本书的编写</a><ul>
+<li><a class="reference external" href="#id2">本书的编写工具</a></li>
+<li><a class="reference external" href="#id3">问题与解决方案</a><ul>
+<li><a class="reference external" href="#id4">代码中的注释</a></li>
+<li><a class="reference external" href="#id5">修改Sphinx的主题</a></li>
+<li><a class="reference external" href="#id6">关闭引号自动转换</a></li>
+<li><a class="reference external" href="#latex">用latex编写数学公式</a></li>
+<li><a class="reference external" href="#id8">Leo的配置</a></li>
+<li><a class="reference external" href="#matplotlib">让Matplotlib显示中文</a></li>
+<li><a class="reference external" href="#id9">用Matplotlib生成图片</a></li>
+<li><a class="reference external" href="#graphviz">用Graphviz绘图</a></li>
+<li><a class="reference external" href="#chm">制作CHM文档</a></li>
+<li><a class="reference external" href="#chmflash">CHM中嵌入Flash动画</a></li>
+<li><a class="reference external" href="#pdf">制作PDF文档</a></li>
+<li><a class="reference external" href="#id10">添加PDF封面</a></li>
+<li><a class="reference external" href="#id11">输出打包的批处理</a></li>
+<li><a class="reference external" href="#html">HTML的中文搜索</a></li>
+<li><a class="reference external" href="#id12">PDF的页码和图编号参照</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#rest">ReST使用心得</a><ul>
+<li><a class="reference external" href="#id13">添加图的编号和标题</a></li>
+<li><a class="reference external" href="#id14">PDF文字包围图片</a></li>
+<li><a class="reference external" href="#id15">插入大段代码</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#id16">未解决的问题</a></li>
+</ul>
+</li>
+</ul>
+
+            <h4>上一篇文章</h4>
+            <p class="topless"><a href="fractal_chaos.html"
+                                  title="上一篇文章">分形与混沌</a></p>
+            <h4>下一篇文章</h4>
+            <p class="topless"><a href="update_list.html"
+                                  title="下一篇文章">最近更新</a></p>
+          <div id="searchbox" style="display: none">
+            <h3>快速搜索</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="搜索" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              中文搜索请尽量用空格分开单个的单词，例如搜索"科学 计算"，而不是"科学计算"
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="update_list.html" title="最近更新"
+             >下一篇</a></li>
+        <li class="right" >
+          <a href="fractal_chaos.html" title="分形与混沌"
+             >上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+    &copy; 2009, <a href="http://hyry.dip.jp/blogt.py">HYRY Studio</a>
+      由 <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.4. 编译
+    </div>
+  </body>
+</html>

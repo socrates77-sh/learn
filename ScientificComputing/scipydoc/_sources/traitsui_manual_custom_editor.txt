@@ -1,0 +1,266 @@
+#############
+设计自己的Trait编辑器
+#############
+
+在前面的章节中我们知道，每种trait属性都对应有缺省的trait编辑器，如果在View中不指定编辑器的话，将使用缺省的编辑器构成界面。每个编辑器都可以对应有多个后台，目前支持的后台界面库有pyQt和wxPython。每种编辑器都可以有四种样式：simple, custom, text, readonly。
+
+traitsUI为我们提供了很丰富的编辑器库，以至于我们很少有自己设计编辑器的需求，然而如果我们能方便地设计自己的编辑器，将能制作出更加专业的程序界面。
+
+本章节将简要介绍trait编辑器的工作原理；并且制作一个新的trait编辑器，用以显示matplotlib提供的绘图控件；然后以此控件制作一个通用的绘制CSV文件数据图像的小工具。
+
+Trait编辑器的工作原理
+=============
+
+我们先来看下面这个小程序，它定义了一个TestStrEditor类，其中有一个名为test的trait属性，其类型为Str，在view中用Item定义要在界面中显示test属性，但是没有指定它所使用的编辑器(通过editor参数)。当执行t.configure_traits()时，traits库将自动为我们挑选文本编辑框控件作为test属性的编辑器： ::
+
+    from enthought.traits.api import *
+    from enthought.traits.ui.api import *
+    
+    class TestStrEditor(HasTraits):
+        test = Str        
+        view = View(Item("test"))
+        
+    t = TestStrEditor()
+    t.configure_traits()
+    
+.. _fig-traitsuimanual01:
+   
+.. figure:: images/traitsui_manual_01.png
+
+    使用文本编辑框控件编辑test属性
+
+.. topic:: Traits库的路径
+
+    下面的介绍需要查看traits库的源程序，因此首先你需要知道它们在哪里：
+    
+    **traits**: site-packages\\Traits-3.2.0-py2.6-win32.egg\\enthought\\traits, 以下简称 %traits%
+    
+    **traitsUI**: site-packages\\Traits-3.2.0-py2.6-win32.egg\\enthought\\traits\\UI, 以下简称 %ui%
+    
+    **wx后台界面库**: site-packages\\TraitsBackendWX-3.2.0-py2.6.egg\\enthought\\traits\ui\\wx, 以下简称 %wx%
+
+Str对象的缺省编辑器通过其create_editor方法获得：
+
+    >>> from enthought.traits.api import *
+    >>> s = Str()
+    >>> ed = s.create_editor()
+    >>> type(ed)
+    <class 'enthought.traits.ui.editors.text_editor.ToolkitEditorFactory'>
+    >>> ed.get()
+    {'auto_set': True,
+     'custom_editor_class': <class 'enthought.traits.ui.wx.text_editor.CustomEditor'>,
+     'enabled': True,
+     'enter_set': False,
+     'evaluate': <enthought.traits.ui.editors.text_editor._Identity object at 0x0427F1B0>,
+     'evaluate_name': '',
+     'format_func': None,
+     'format_str': '',
+     'invalid': '',
+     'is_grid_cell': False,
+     'mapping': {},
+     'multi_line': True,
+     'password': False,
+     'readonly_editor_class': <class 'enthought.traits.ui.wx.text_editor.ReadonlyEditor'>,
+     'simple_editor_class': <class 'enthought.traits.ui.wx.text_editor.SimpleEditor'>,
+     'text_editor_class': <class 'enthought.traits.ui.wx.text_editor.SimpleEditor'>,
+     'view': None}
+    
+create_editor方法的源代码可以在%traits%\trait_types.py中的BaseStr类的定义中找到。create_editor方法得到的是一个text_editor.ToolkitEditorFactory类： ::
+
+    enthought.traits.ui.editors.text_editor.ToolkitEditorFactory
+    
+在%ui%\editors\text_editor.py中你可以找到它的定义，它继承于EditorFactory类。EditorFactory类的代码在%ui%\editor_factory.py中。EditorFactory类是Traits编辑器的核心，通过它和后台界面库联系起来。让我们来详细看看EditorFactory类中关于控件生成方面的代码： ::
+
+    class EditorFactory ( HasPrivateTraits ):
+        # 下面四个属性描述四个类型的编辑器的类
+        simple_editor_class = Property
+        custom_editor_class = Property
+        text_editor_class   = Property
+        readonly_editor_class = Property
+            
+        # 用simple_editor_class创建实际的控件
+        def simple_editor ( self, ui, object, name, description, parent ):
+            return self.simple_editor_class( parent,
+                                             factory     = self, 
+                                             ui          = ui, 
+                                             object      = object, 
+                                             name        = name, 
+                                             description = description ) 
+        
+        
+        # 这是类的方法，它通过类的以及父类自动找到与其匹配的后台界面库中的控件类
+        @classmethod
+        def _get_toolkit_editor(cls, class_name):
+            editor_factory_classes = [factory_class for factory_class in cls.mro() 
+                                      if issubclass(factory_class, EditorFactory)]
+            for index in range(len( editor_factory_classes )):
+                try:
+                    factory_class = editor_factory_classes[index]
+                    editor_file_name = os.path.basename(
+                                    sys.modules[factory_class.__module__].__file__)
+                    return toolkit_object(':'.join([editor_file_name.split('.')[0], 
+                                                 class_name]), True)
+                except Exception, e:
+                    if index == len(editor_factory_classes)-1: 
+                        raise e
+            return None
+        
+        # simple_editor_class属性的get方法，获取属性值         
+        def _get_simple_editor_class(self):
+            try:
+                SimpleEditor = self._get_toolkit_editor('SimpleEditor')
+            except:
+                SimpleEditor = toolkit_object('editor_factory:SimpleEditor')
+            return SimpleEditor
+        
+EditorFactory的对象有四个属性保存后台编辑器控件的类：simple_editor_class, custom_editor_class, text_editor_class, readonly_editor_class。例如前面例子中的ed对象的simple_editor_class为<class 'enthought.traits.ui.wx.text_editor.SimpleEditor'>，我们看到它用的是wx后台界面库中的text_editor中的SimpleEditor类，稍后我们将看看其内容。
+
+EditorFactory是通过其类方法_get_toolkit_editor计算出所要用后台界面库中的类的。由于_get_toolkit_editor是类方法，它的第一个参数cls就是类本身。当调用text_editor.ToolkitEditorFactory._get_toolkit_editor()时，cls就是text_editor.ToolkitEditorFactory类。通过调用cls.mro获得cls以及其所有父类，然后一个一个地查找，从后台界面库中找到与之匹配的类，这个工作由toolkit_object函数完成。其源代码可以在%ui%\toolkit.py中找到。
+
+因为后台界面库中的类的组织结构和traits.ui是一样的，因此不需要额外的配置文件，只需要几个字符串替代操作就可以将traits.ui中的EditorFactory类和后台界面库中的实际的编辑器类联系起来。下图显示了traits.ui中的EditorFactory和后台界面库的关系。
+
+.. _fig-traitsuieditorfactory:
+
+.. figure:: images/traitsui_editor_factory.png
+
+    traits.ui中的EditorFactory和后台界面库的关系
+
+wx后台界面库中定义了所有编辑器控件，在 %wx%\text_editor.py 中你可以找到产生文本框控件的类 text_editor.SimpleEditor。类名表示了控件的样式：simple, custom, text, readonly，而其文件名(模块名)则表示了控件的类型。下面是 text_editor.SimpleEditor的部分代码： ::
+
+    class SimpleEditor ( Editor ):
+      
+        # Flag for window styles:
+        base_style = 0
+        
+        # Background color when input is OK:
+        ok_color = OKColor
+           
+        # Function used to evaluate textual user input:
+        evaluate = evaluate_trait
+            
+        def init ( self, parent ):
+            """ Finishes initializing the editor by creating the underlying toolkit
+                widget.
+            """
+            factory       = self.factory
+            style         = self.base_style
+            self.evaluate = factory.evaluate
+            self.sync_value( factory.evaluate_name, 'evaluate', 'from' )
+                
+            if (not factory.multi_line) or factory.password:
+                style &= ~wx.TE_MULTILINE
+            
+            if factory.password:
+                style |= wx.TE_PASSWORD
+                
+            multi_line = ((style & wx.TE_MULTILINE) != 0)
+            if multi_line:
+                self.scrollable = True
+                
+            if factory.enter_set and (not multi_line):
+                control = wx.TextCtrl( parent, -1, self.str_value,
+                                       style = style | wx.TE_PROCESS_ENTER )
+                wx.EVT_TEXT_ENTER( parent, control.GetId(), self.update_object )
+            else:
+                control = wx.TextCtrl( parent, -1, self.str_value, style = style )
+                
+            wx.EVT_KILL_FOCUS( control, self.update_object )
+            
+            if factory.auto_set:
+                wx.EVT_TEXT( parent, control.GetId(), self.update_object )
+               
+            self.control = control
+            self.set_tooltip()
+        
+真正产生控件的程序是在init方法中，此方法在产生界面时自动被调用，注意方法名是init，不要和对象初始化方法__init__搞混淆了。
+
+制作matplotlib的编辑器
+================
+
+Enthought的官方绘图库是采用Chaco，不过如果你对matplotlib库更加熟悉的话，将matplotlib的绘图控件嵌入TraitsUI界面中将是非常有用的。下面先来看一下嵌入matplotlib控件的完整源代码：
+
+.. literalinclude:: examples/mpl_figure_editor.py
+
+此程序的运行结果如下：
+
+.. _fig-traitsuimanual02:
+
+.. figure:: images/traitsui_manual_02.png
+
+    在TraitsUI界面中嵌入的matplotlib绘图控件
+
+由于我们的编辑器没有simple等四种样式，也不会放到wx后台界面库的模块中，因此不能采用上节所介绍的自动查找编辑器类的办法。traits.ui为我们提供一个一个方便的类来完成这些操作：BasicEditorFactory。它的源程序可以在 %ui%\basic_editor_factory.py中找到。下面是其中的一部分： ::
+
+    class BasicEditorFactory ( EditorFactory ):
+        klass = Any
+        
+        def _get_simple_editor_class ( self ):
+            return self.klass 
+        ...
+    
+它通过重载EditorFactory中的simple_editor_class属性，直接返回创建控件的库klass。MPLFigureEditor继承于BasicEditorFactory，指定创建控件的类为_MPLFigureEditor。
+
+和text_editor.SimpleEditor一样，从Editor类继承，在_MPLFigureEditor类的init方法中，创建实际的控件。因为Editor类中有一个update_editor方法，在其对应的trait属性改变是会被调用，而我们的绘图控件不需要这个功能，所以重载update_editor，让它不做任何事情。
+
+matplotlib中，在创建FigureCanvas时需要指定与其对应的Figure对象： ::
+
+    mpl_control = FigureCanvas(panel, -1, self.value)
+    
+这里self.value就是这个Figure对象，它在MVC的模型类Test中被定义为： ::
+    
+    figure = Instance(Figure, ())
+    
+控件类可以通过self.value获得与其对应的模型类中的对象。因此_MPLFigureEditor中的self.value和Test类中的self.figure是同一个对象。
+
+_create_canvas方法中的程序编写和在一个标准的wx窗口中添加控件是一样的，界面库相关的细节不是本书的重点，因此不再详细解释了。读者可以参照matplotlib和wxPython的相应文档。
+
+CSV数据绘图工具
+=========
+
+.. highlight:: python
+   :linenothreshold: 10
+
+下面用前面介绍的matplotlib编辑器制作一个CSV数据绘图工具。用此工具打开一个CSV数据文档之后，可以绘制多个X-Y坐标图。用户可以自由地添加新的坐标图，修改坐标图的标题，选择坐标图的X轴和Y轴的数据。
+
+下面是此程序的界面截图：
+
+.. _fig-traitsuimanual03:
+
+.. figure:: images/traitsui_manual_03.png
+
+    CSV数据绘图工具的界面
+
+图中以标签页的形式显示多个绘图，用户可以从左侧的数据选择栏中选择X轴和Y轴的数据。标签页可以自由的拖动，构成上下左右分栏，并且可以隐藏左侧的数据选择栏：
+
+.. _fig-traitsuimanual04:
+
+.. figure:: images/traitsui_manual_04.png
+
+    使用可调整DOCK的多标签页界面方便用户对比数据
+
+由于绘图控件是matplotlib所提供的，因此平移、缩放、保存文件等功能也一应俱全。由于所有的界面都是采用TraitsUI设计的，因此主窗口既可以用来单独显示，也可以嵌入到一个更大的界面中，运用十分灵活。
+
+下面是完整的源程序，运行时需要和mpl_figure_editor.py放在一个文件夹下。包括注释程序一共约170行，编写时间少于一小时。
+
+.. literalinclude:: examples/traitsUI_csv_viewer.py
+
+程序中已经有比较详细的注释，这里就不再重复。如果你对traits库的某项用法还不太了解的话，可以直接查看其源代码，代码中都有详细的注释。下面是几个比较重点的部分：
+
+* 整个程序的界面处理都只是组装View对象，看不到任何关于控件操作的代码，因此大大地节省了程序的开发时间。
+
+* 通过配置141行的ListEditor，使其用标签页的方式显示graph_list中的每个元素，以此管理多个Graph对象。
+
+* 在43行中，Graph类用HSplit将其数据选择部分和绘图控件部分分开，HSplit提供的更改左右部分的比例和隐藏的功能。
+
+* 本书写作时所采用的traitsUI库版本为3.2，如果在标签页标题中输入中文，会出现错误，这是因为TraitsUI中还有些代码对unicode的支持不够，希望日后会有所改善。目前可以通过分析错误提示信息，修改TraitsUI库的源代码，只需要将下面提示中的770行中的str改为unicode既可以修复。
+
+    ::
+    
+        File "C:\Python26\lib\site-packages\traitsbackendwx-3.2.0-py2.6.egg\enthought\
+        traits\ui\wx\list_editor.py", line 770, in _create_page
+        name = str( name ) or '???'
+        UnicodeEncodeError: 'ascii' codec can't encode characters in position 0-1: 
+        ordinal not in range(128)
+
+* matplotlib的绘图中是可以使用中文的，但是由于缺省字体不是中文字体，因此中文都变为方块，你可以按照  :ref:`让Matplotlib显示中文 <chinese-in-matplotlib>` 中所述修改matplotlib的字体。
+

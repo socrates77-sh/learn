@@ -1,0 +1,799 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>分形与混沌 &mdash; 用Python做科学计算</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link type="text/css" href="_static/jquery-ui-1.7.2.custom.css" rel="stylesheet" />	
+    <link type="text/css" href="_static/comments.css" rel="stylesheet" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '#',
+        VERSION:     '1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/jquery-ui-1.7.2.custom.min.js"></script>
+    <script type="text/javascript" src="_static/pydoc.js"></script>
+    <link rel="top" title="用Python做科学计算" href="index.html" />
+    <link rel="下一篇" title="关于本书的编写" href="pydoc_write_tools.html" />
+    <link rel="上一篇" title="单摆和双摆模拟" href="double_pendulum.html" /> 
+
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-10837468-1");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="pydoc_write_tools.html" title="关于本书的编写"
+             accesskey="N">下一篇</a></li>
+        <li class="right" >
+          <a href="double_pendulum.html" title="单摆和双摆模拟"
+             accesskey="P">上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="id1">
+<h1>分形与混沌<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<p>自然界的很多事物，例如树木、云彩、山脉、闪电、雪花以及海岸线等等都呈现出传统的几何学不能描述的形状。这些形状都有如下的特性：</p>
+<ul class="simple">
+<li>有着十分精细的不规则的结构</li>
+<li>整体与局部相似，例如一根树杈的形状和一棵树很像</li>
+</ul>
+<p>分形几何学就是用来研究这样一类的几何形状的科学，借助计算机的高速计算和图像显示，使得我们可以更加深入地直观地观察分形几何。在本章中，让我们用Python绘制一些经典的分形图案。</p>
+<div class="section" id="mandelbrot">
+<h2>Mandelbrot集合<a class="headerlink" href="#mandelbrot" title="Permalink to this headline">¶</a></h2>
+<p id="sec-mandelbrot">Mandelbrot(曼德布洛特)集合是在复平面上组成分形的点的集合。</p>
+<div class="topic">
+<p class="topic-title first">Mandelbrot集合的定义(摘自维基百科)</p>
+<p>Mandelbrot集合可以用下面的复二次多项式定义：</p>
+<div class="math">
+<p><img src="_images/math/58784a00773a9d115417370f7e955a2035cc4877.png" alt="f_ c(z) =z^{2}+ c" /></p>
+</div><p>其中c是一个复参数。对于每一个c，从z=0开始对函数 <img class="math" src="_images/math/f1dcc12bfdf1f62805c694e61b8506d7799802ee.png" alt="f_ c(z)"/> 进行迭代。</p>
+<p>序列 <img class="math" src="_images/math/582fc8c8ae3cdd70335be569cd1e5592174338e9.png" alt="(0, f_ c(0), f_c(f_ c(0)), f_ c(f_ c(f_ c(0))), \ldots)"/> 的值或者延伸到无限大，或者只停留在有限半径的圆盘内。</p>
+<p>Mandelbrot集合就是使以上序列不发散的所有c点的集合。</p>
+</div>
+<p>从数学上来讲，Mandelbrot集合是一个复数的集合。一个给定的复数c或者属于Mandelbrot集合，或者不是。</p>
+<p>用程序绘制Mandelbrot集合时不能进行无限次迭代，最简单的方法是使用逃逸时间(迭代次数)进行绘制，具体算法如下：</p>
+<ul class="simple">
+<li>判断每次调用函数 <img class="math" src="_images/math/f1dcc12bfdf1f62805c694e61b8506d7799802ee.png" alt="f_ c(z)"/> 得到的结果是否在半径R之内，即复数的模小于R</li>
+<li>记录下模大于R时的迭代次数</li>
+<li>迭代最多进行N次</li>
+<li>不同的迭代次数的点使用不同的颜色绘制</li>
+</ul>
+<p>下面是完整的绘制Mandelbrot集合的程序：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pylab</span> <span class="kn">as</span> <span class="nn">pl</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">cm</span>
+
+<span class="k">def</span> <span class="nf">iter_point</span><span class="p">(</span><span class="n">c</span><span class="p">):</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="n">c</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">):</span> <span class="c"># 最多迭代100次</span>
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">z</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">2</span><span class="p">:</span> <span class="k">break</span> <span class="c"># 半径大于2则认为逃逸</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">z</span><span class="o">*</span><span class="n">z</span><span class="o">+</span><span class="n">c</span>
+    <span class="k">return</span> <span class="n">i</span> <span class="c"># 返回迭代次数</span>
+    
+<span class="k">def</span> <span class="nf">draw_mandelbrot</span><span class="p">(</span><span class="n">cx</span><span class="p">,</span> <span class="n">cy</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    绘制点(cx, cy)附近正负d的范围的Mandelbrot</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">x0</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">y1</span> <span class="o">=</span> <span class="n">cx</span><span class="o">-</span><span class="n">d</span><span class="p">,</span> <span class="n">cx</span><span class="o">+</span><span class="n">d</span><span class="p">,</span> <span class="n">cy</span><span class="o">-</span><span class="n">d</span><span class="p">,</span> <span class="n">cy</span><span class="o">+</span><span class="n">d</span> 
+    <span class="n">y</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ogrid</span><span class="p">[</span><span class="n">y0</span><span class="p">:</span><span class="n">y1</span><span class="p">:</span><span class="mi">200</span><span class="n">j</span><span class="p">,</span> <span class="n">x0</span><span class="p">:</span><span class="n">x1</span><span class="p">:</span><span class="mi">200</span><span class="n">j</span><span class="p">]</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span><span class="o">*</span><span class="mi">1</span><span class="n">j</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">clock</span><span class="p">()</span>
+    <span class="n">mandelbrot</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">frompyfunc</span><span class="p">(</span><span class="n">iter_point</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)(</span><span class="n">c</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+    <span class="k">print</span> <span class="s">&quot;time=&quot;</span><span class="p">,</span><span class="n">time</span><span class="o">.</span><span class="n">clock</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">mandelbrot</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cm</span><span class="o">.</span><span class="n">Blues_r</span><span class="p">,</span> <span class="n">extent</span><span class="o">=</span><span class="p">[</span><span class="n">x0</span><span class="p">,</span><span class="n">x1</span><span class="p">,</span><span class="n">y0</span><span class="p">,</span><span class="n">y1</span><span class="p">])</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span><span class="o">.</span><span class="n">set_axis_off</span><span class="p">()</span>
+    
+<span class="n">x</span><span class="p">,</span><span class="n">y</span> <span class="o">=</span> <span class="mf">0.27322626</span><span class="p">,</span> <span class="mf">0.595153338</span>
+
+<span class="n">pl</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">231</span><span class="p">)</span>
+<span class="n">draw_mandelbrot</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mf">1.5</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">7</span><span class="p">):</span>    
+    <span class="n">pl</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">230</span><span class="o">+</span><span class="n">i</span><span class="p">)</span>
+    <span class="n">draw_mandelbrot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="mf">0.2</span><span class="o">**</span><span class="p">(</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">subplots_adjust</span><span class="p">(</span><span class="mf">0.02</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.98</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">0.02</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="figure" id="fig-fractalmandelbrot01">
+<img alt="_images/fractal_mandelbrot01.png" src="_images/fractal_mandelbrot01.png" style="width: 14cm;" />
+<p class="caption">Mandelbrot集合，以5倍的倍率放大点(0.273, 0.595)附近</p>
+</div>
+<p>程序中的iter_point函数计算点c的逃逸时间，逃逸半径R为2.0，最大迭代次数为100。draw_mandelbrot函数绘制以点(cx, cy)为中心，边长为2*d的正方形区域内的Mandelbrot集合。</p>
+<p>下面3行计算指定范围内的迭代公式的参数c，c是一个元素为复数的二维数组，大小为200*200，注意np.ogrid不是函数：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">x0</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">y1</span> <span class="o">=</span> <span class="n">cx</span><span class="o">-</span><span class="n">d</span><span class="p">,</span> <span class="n">cx</span><span class="o">+</span><span class="n">d</span><span class="p">,</span> <span class="n">cy</span><span class="o">-</span><span class="n">d</span><span class="p">,</span> <span class="n">cy</span><span class="o">+</span><span class="n">d</span>
+<span class="n">y</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ogrid</span><span class="p">[</span><span class="n">y0</span><span class="p">:</span><span class="n">y1</span><span class="p">:</span><span class="mi">200</span><span class="n">j</span><span class="p">,</span> <span class="n">x0</span><span class="p">:</span><span class="n">x1</span><span class="p">:</span><span class="mi">200</span><span class="n">j</span><span class="p">]</span>
+<span class="n">c</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span><span class="o">*</span><span class="mi">1</span><span class="n">j</span>
+</pre></div>
+</div>
+<p>下面一行程序通过调用np.frompyfunc将iter_point转换为NumPy的ufunc函数，这样它可以自动对c中的每个元素调用iter_point函数，由于结果的数组元素类型为object，还需要调用astype方法将其元素类型转换为浮点类型：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">mandelbrot</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">frompyfunc</span><span class="p">(</span><span class="n">iter_point</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)(</span><span class="n">c</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>最后调用matplotlib的imshow函数将结果数组绘制成图，通过cmap关键字参数指定图的值和颜色的映射表：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">pl</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">mandelbrot</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cm</span><span class="o">.</span><span class="n">Blues_r</span><span class="p">,</span> <span class="n">extent</span><span class="o">=</span><span class="p">[</span><span class="n">x0</span><span class="p">,</span><span class="n">x1</span><span class="p">,</span><span class="n">y0</span><span class="p">,</span><span class="n">y1</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>使用Python绘制Mandelbrot集合最大的问题就是运算速度太慢，下面是上面每幅图的计算时间：</p>
+<div class="highlight-none"><div class="highlight"><pre>time= 0.88162629608
+time= 1.53712748408
+time= 1.71502160191
+time= 1.8691174437
+time= 3.03812691278
+</pre></div>
+</div>
+<p>因为计算每个点的逃逸时间均不相同，因此每幅图的计算时间也不相同。</p>
+<p>计算速度慢的最大的原因是因为iter_point函数的运算速度慢，如果将此函数用C语言重写的话将能显著地提高计算速度，下面使用scipy.weave库将C++重写的iter_point函数转换为Python能调用的函数：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">scipy.weave</span> <span class="kn">as</span> <span class="nn">weave</span>
+
+<span class="k">def</span> <span class="nf">weave_iter_point</span><span class="p">(</span><span class="n">c</span><span class="p">):</span>
+    <span class="n">code</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;</span>
+<span class="s">    std::complex&lt;double&gt; z;</span>
+<span class="s">    int i;</span>
+<span class="s">    z = c;</span>
+<span class="s">    for(i=1;i&lt;100;i++)</span>
+<span class="s">    {</span>
+<span class="s">        if(std::abs(z) &gt; 2) break;</span>
+<span class="s">        z = z*z+c;</span>
+<span class="s">    }</span>
+<span class="s">    return_val=i;</span>
+<span class="s">    &quot;&quot;&quot;</span>
+
+    <span class="n">f</span> <span class="o">=</span> <span class="n">weave</span><span class="o">.</span><span class="n">inline</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="p">[</span><span class="s">&quot;c&quot;</span><span class="p">],</span> <span class="n">compiler</span><span class="o">=</span><span class="s">&quot;gcc&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">f</span>
+</pre></div>
+</div>
+<p>下面是使用weave_iter_point函数计算Mandelbrot集合的时间：</p>
+<div class="highlight-none"><div class="highlight"><pre>time= 0.285266982256
+time= 0.271430028118
+time= 0.293769180161
+time= 0.308515188383
+time= 0.411168179196
+</pre></div>
+</div>
+<p>通过NumPy的数组运算也可以提高计算速度，前面的计算都是先对复数平面上的每个点进行循环，然后再循环迭代计算每个点的逃逸时间。如果要用NumPy的数组运算加速计算的话，可以将这两个循环的顺序颠倒过来，下面的程序演示这一算法：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pylab</span> <span class="kn">as</span> <span class="nn">pl</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">cm</span>
+
+<span class="k">def</span> <span class="nf">draw_mandelbrot</span><span class="p">(</span><span class="n">cx</span><span class="p">,</span> <span class="n">cy</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="mi">200</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    绘制点(cx, cy)附近正负d的范围的Mandelbrot</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">mandelbrot</span>
+
+    <span class="n">x0</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">y1</span> <span class="o">=</span> <span class="n">cx</span><span class="o">-</span><span class="n">d</span><span class="p">,</span> <span class="n">cx</span><span class="o">+</span><span class="n">d</span><span class="p">,</span> <span class="n">cy</span><span class="o">-</span><span class="n">d</span><span class="p">,</span> <span class="n">cy</span><span class="o">+</span><span class="n">d</span> 
+    <span class="n">y</span><span class="p">,</span> <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ogrid</span><span class="p">[</span><span class="n">y0</span><span class="p">:</span><span class="n">y1</span><span class="p">:</span><span class="n">N</span><span class="o">*</span><span class="mi">1</span><span class="n">j</span><span class="p">,</span> <span class="n">x0</span><span class="p">:</span><span class="n">x1</span><span class="p">:</span><span class="n">N</span><span class="o">*</span><span class="mi">1</span><span class="n">j</span><span class="p">]</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span><span class="o">*</span><span class="mi">1</span><span class="n">j</span>
+
+    <span class="c"># 创建X,Y轴的坐标数组</span>
+    <span class="n">ix</span><span class="p">,</span> <span class="n">iy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mgrid</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">N</span><span class="p">,</span><span class="mi">0</span><span class="p">:</span><span class="n">N</span><span class="p">]</span>
+    
+    <span class="c"># 创建保存mandelbrot图的二维数组，缺省值为最大迭代次数</span>
+    <span class="n">mandelbrot</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">)</span><span class="o">*</span><span class="mi">100</span>
+    
+    <span class="c"># 将数组都变成一维的</span>
+    <span class="n">ix</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="n">iy</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="n">c</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="c"># 从c开始迭代，因此开始的迭代次数为1</span>
+    
+    <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">clock</span><span class="p">()</span>
+    
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">100</span><span class="p">):</span>
+        <span class="c"># 进行一次迭代</span>
+        <span class="n">z</span> <span class="o">*=</span> <span class="n">z</span>
+        <span class="n">z</span> <span class="o">+=</span> <span class="n">c</span>
+        <span class="c"># 找到所有结果逃逸了的点</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">z</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">2.0</span>
+        <span class="c"># 将这些逃逸点的迭代次数赋值给mandelbrot图</span>
+        <span class="n">mandelbrot</span><span class="p">[</span><span class="n">ix</span><span class="p">[</span><span class="n">tmp</span><span class="p">],</span> <span class="n">iy</span><span class="p">[</span><span class="n">tmp</span><span class="p">]]</span> <span class="o">=</span> <span class="n">i</span>
+        
+        <span class="c"># 找到所有没有逃逸的点</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">logical_not</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="n">tmp</span><span class="p">)</span>
+        <span class="c"># 更新ix, iy, c, z只包含没有逃逸的点</span>
+        <span class="n">ix</span><span class="p">,</span><span class="n">iy</span><span class="p">,</span><span class="n">c</span><span class="p">,</span><span class="n">z</span> <span class="o">=</span> <span class="n">ix</span><span class="p">[</span><span class="n">tmp</span><span class="p">],</span> <span class="n">iy</span><span class="p">[</span><span class="n">tmp</span><span class="p">],</span> <span class="n">c</span><span class="p">[</span><span class="n">tmp</span><span class="p">],</span><span class="n">z</span><span class="p">[</span><span class="n">tmp</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">z</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="k">break</span>
+
+    <span class="k">print</span> <span class="s">&quot;time=&quot;</span><span class="p">,</span><span class="n">time</span><span class="o">.</span><span class="n">clock</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">mandelbrot</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cm</span><span class="o">.</span><span class="n">Blues_r</span><span class="p">,</span> <span class="n">extent</span><span class="o">=</span><span class="p">[</span><span class="n">x0</span><span class="p">,</span><span class="n">x1</span><span class="p">,</span><span class="n">y0</span><span class="p">,</span><span class="n">y1</span><span class="p">])</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span><span class="o">.</span><span class="n">set_axis_off</span><span class="p">()</span>
+    
+<span class="n">x</span><span class="p">,</span><span class="n">y</span> <span class="o">=</span> <span class="mf">0.27322626</span><span class="p">,</span> <span class="mf">0.595153338</span>
+
+<span class="n">pl</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">231</span><span class="p">)</span>
+<span class="n">draw_mandelbrot</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mf">1.5</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">7</span><span class="p">):</span>    
+    <span class="n">pl</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">230</span><span class="o">+</span><span class="n">i</span><span class="p">)</span>
+    <span class="n">draw_mandelbrot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="mf">0.2</span><span class="o">**</span><span class="p">(</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">subplots_adjust</span><span class="p">(</span><span class="mf">0.02</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.98</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">0.02</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>为了减少计算次数，程序中每次迭代之后，都将已经逃逸的点剔除出去，这样就需要保存每个点的下标，程序中用ix和iy这两个数组来保存没有逃逸的点的下标，因为有额外的数组保存下标，因此数组z和c不需要是二维的。函数迭代部分的程序如下：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># 进行一次迭代</span>
+<span class="n">z</span> <span class="o">*=</span> <span class="n">z</span>
+<span class="n">z</span> <span class="o">+=</span> <span class="n">c</span>
+</pre></div>
+</div>
+<p>使用 <a href="#id2"><span class="problematic" id="id3">*</span></a>=, += 这样的运算符能够让NumPy不分配额外的空间直接在数组z上进行运算。</p>
+<p>下面的程序计算出逃逸点，tmp是逃逸点在z中的下标，由于z和ix和iy等数组始终是同时更新的，因此ix[tmp], iy[tmp]就是逃逸点在图像中的下标：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># 找到所有结果逃逸了的点</span>
+<span class="n">tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">z</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">2.0</span>
+<span class="c"># 将这些逃逸点的迭代次数赋值给mandelbrot图</span>
+<span class="n">mandelbrot</span><span class="p">[</span><span class="n">ix</span><span class="p">[</span><span class="n">tmp</span><span class="p">],</span> <span class="n">iy</span><span class="p">[</span><span class="n">tmp</span><span class="p">]]</span> <span class="o">=</span> <span class="n">i</span>
+</pre></div>
+</div>
+<p>最后通过对tmp中的每个元素取逻辑反，更新所有没有逃逸的点的对应的ix, iy, c, z：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># 找到所有没有逃逸的点</span>
+<span class="n">np</span><span class="o">.</span><span class="n">logical_not</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="n">tmp</span><span class="p">)</span>
+<span class="c"># 更新ix, iy, c, z只包含没有逃逸的点</span>
+<span class="n">ix</span><span class="p">,</span><span class="n">iy</span><span class="p">,</span><span class="n">c</span><span class="p">,</span><span class="n">z</span> <span class="o">=</span> <span class="n">ix</span><span class="p">[</span><span class="n">tmp</span><span class="p">],</span> <span class="n">iy</span><span class="p">[</span><span class="n">tmp</span><span class="p">],</span> <span class="n">c</span><span class="p">[</span><span class="n">tmp</span><span class="p">],</span> <span class="n">z</span><span class="p">[</span><span class="n">tmp</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>此程序的计算时间如下：</p>
+<div class="highlight-none"><div class="highlight"><pre>time= 0.186070576008
+time= 0.327006365334
+time= 0.372756034636
+time= 0.410074464771
+time= 0.681048289658
+time= 0.878626752841
+</pre></div>
+</div>
+<div class="section" id="id4">
+<h3>连续的逃逸时间<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<p>修改逃逸半径R和最大迭代次数N，可以绘制出不同效果的Mandelbrot集合图案。但是前面所述的方法计算出的逃逸时间是大于逃逸半径时的迭代次数，因此所输出的图像最多只有N种不同的颜色值，有很强的梯度感。为了在不同的梯度之间进行渐变处理，使用下面的公式进行逃逸时间计算：</p>
+<div class="math">
+<p><img src="_images/math/f91b77536484359d6b8360d2c77b646cc138edb9.png" alt="n - \log_2 \log_2 |z_n|" /></p>
+</div><p><img class="math" src="_images/math/6046b5fea971a2f95348ba9ece8e46d4b947c57c.png" alt="z_n"/> 是迭代n次之后的结果，通过在逃逸时间的计算中引入迭代结果的模值，结果将不再是整数，而是平滑渐变的。</p>
+<p>下面是计算此逃逸时间的程序：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">smooth_iter_point</span><span class="p">(</span><span class="n">c</span><span class="p">):</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="n">c</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">iter_num</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">z</span><span class="p">)</span><span class="o">&gt;</span><span class="n">escape_radius</span><span class="p">:</span> <span class="k">break</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">z</span><span class="o">*</span><span class="n">z</span><span class="o">+</span><span class="n">c</span>
+    <span class="n">absz</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">absz</span> <span class="o">&gt;</span> <span class="mf">2.0</span><span class="p">:</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="n">i</span> <span class="o">-</span> <span class="n">log</span><span class="p">(</span><span class="n">log</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">z</span><span class="p">),</span><span class="mi">2</span><span class="p">),</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="n">i</span>
+    <span class="k">return</span> <span class="n">mu</span> <span class="c"># 返回正规化的迭代次数</span>
+</pre></div>
+</div>
+<p>如果你的逃逸半径设置得很小，例如2.0，那么有可能结果不够平滑，这时可以在迭代循环之后添加几次迭代保证z能够足够逃逸，例如：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">z</span> <span class="o">=</span> <span class="n">z</span><span class="o">*</span><span class="n">z</span><span class="o">+</span><span class="n">c</span>
+<span class="n">z</span> <span class="o">=</span> <span class="n">z</span><span class="o">*</span><span class="n">z</span><span class="o">+</span><span class="n">c</span>
+<span class="n">i</span> <span class="o">+=</span> <span class="mi">2</span>
+</pre></div>
+</div>
+<p>下图是逃逸半径为10，最大迭代次数为20时，绘制的结果：</p>
+<div class="figure" id="fig-fractalmandelbrot02">
+<img alt="_images/fractal_mandelbrot02.png" src="_images/fractal_mandelbrot02.png" style="width: 14cm;" />
+<p class="caption">逃逸半径=10，最大迭代次数=20的平滑处理后的Mandelbrot集合</p>
+</div>
+<div class="topic">
+<p class="topic-title first">逃逸时间公式是如何得出的？</p>
+<p>请参考： <a class="reference external" href="http://linas.org/art-gallery/escape/ray.html">http://linas.org/art-gallery/escape/ray.html</a></p>
+</div>
+<p>完整的程序请参考 <a class="reference external" href="example_mandelbrot.html"><em>绘制Mandelbrot集合</em></a></p>
+</div>
+</div>
+<div class="section" id="ifs">
+<h2>迭代函数系统(IFS)<a class="headerlink" href="#ifs" title="Permalink to this headline">¶</a></h2>
+<p id="sec-ifs">迭代函数系统是一种用来创建分形图案的算法，它所创建的分形图永远是绝对自相似的。下面我们直接通过绘制一种蕨类植物的叶子来说明迭代函数系统的算法：</p>
+<p>有下面4个线性函数将二维平面上的坐标进行线性映射变换：</p>
+<div class="highlight-none"><div class="highlight"><pre>1.
+    x(n+1）= 0
+    y(n+1) = 0.16 * y(n)
+
+2.
+    x(n+1) = 0.2 * x(n) − 0.26 * y(n)
+    y(n+1) = 0.23 * x(n) + 0.22 * y(n) + 1.6
+
+3.
+    x(n+1) = −0.15 * x(n) + 0.28 * y(n)
+    y(n+1) = 0.26 * x(n) + 0.24 * y(n) + 0.44
+
+4.
+    x(n+1) = 0.85 * x(n) + 0.04 * y(n)
+    y(n+1) = −0.04 * x(n) + 0.85 * y(n) + 1.6
+</pre></div>
+</div>
+<p>所谓迭代函数是指将函数的输出再次当作输入进行迭代计算，因此上面公式都是通过坐标 x(n),y(n) 计算变换后的坐标 x(n+1),y(n+1)。现在的问题是有4个迭代函数，迭代时选择哪个函数进行计算呢？我们为每个函数指定一个概率值，它们依次为1%, 7%, 7%和85%。选择迭代函数时使用通过每个函数的概率随机选择一个函数进行迭代。上面的例子中，第四个函数被选择迭代的概率最高。</p>
+<p>最后我们从坐标原点(0,0)开始迭代，将每次迭代所得到的坐标绘制成图，就得到了叶子的分形图案。下面的程序演示这一计算过程：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">pl</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<span class="c"># 蕨类植物叶子的迭代函数和其概率值</span>
+<span class="n">eq1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],[</span><span class="mi">0</span><span class="p">,</span><span class="mf">0.16</span><span class="p">,</span><span class="mi">0</span><span class="p">]])</span>
+<span class="n">p1</span> <span class="o">=</span> <span class="mf">0.01</span>
+
+<span class="n">eq2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">0.2</span><span class="p">,</span><span class="o">-</span><span class="mf">0.26</span><span class="p">,</span><span class="mi">0</span><span class="p">],[</span><span class="mf">0.23</span><span class="p">,</span><span class="mf">0.22</span><span class="p">,</span><span class="mf">1.6</span><span class="p">]])</span>
+<span class="n">p2</span> <span class="o">=</span> <span class="mf">0.07</span>
+
+<span class="n">eq3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="o">-</span><span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.28</span><span class="p">,</span> <span class="mi">0</span><span class="p">],[</span><span class="mf">0.26</span><span class="p">,</span><span class="mf">0.24</span><span class="p">,</span><span class="mf">0.44</span><span class="p">]])</span>
+<span class="n">p3</span> <span class="o">=</span> <span class="mf">0.07</span>
+
+<span class="n">eq4</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">0.85</span><span class="p">,</span> <span class="mf">0.04</span><span class="p">,</span> <span class="mi">0</span><span class="p">],[</span><span class="o">-</span><span class="mf">0.04</span><span class="p">,</span> <span class="mf">0.85</span><span class="p">,</span> <span class="mf">1.6</span><span class="p">]])</span>
+<span class="n">p4</span> <span class="o">=</span> <span class="mf">0.85</span>
+
+<span class="k">def</span> <span class="nf">ifs</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">eq</span><span class="p">,</span> <span class="n">init</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    进行函数迭代</span>
+<span class="sd">    p: 每个函数的选择概率列表</span>
+<span class="sd">    eq: 迭代函数列表</span>
+<span class="sd">    init: 迭代初始点</span>
+<span class="sd">    n: 迭代次数</span>
+<span class="sd">    </span>
+<span class="sd">    返回值： 每次迭代所得的X坐标数组， Y坐标数组， 计算所用的函数下标    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c"># 迭代向量的初始化</span>
+    <span class="n">pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+    <span class="n">pos</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">init</span>
+    
+    <span class="c"># 通过函数概率，计算函数的选择序列</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">accumulate</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>    
+    <span class="n">rands</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+    <span class="n">select</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">p</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
+        <span class="n">select</span><span class="p">[</span><span class="n">rands</span><span class="o">&lt;</span><span class="n">x</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="o">-</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span>
+    
+    <span class="c"># 结果的初始化</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+    
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="n">eqidx</span> <span class="o">=</span> <span class="n">select</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="c"># 所选的函数下标</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">eq</span><span class="p">[</span><span class="n">eqidx</span><span class="p">],</span> <span class="n">pos</span><span class="p">)</span> <span class="c"># 进行迭代</span>
+        <span class="n">pos</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">tmp</span> <span class="c"># 更新迭代向量</span>
+
+        <span class="c"># 保存结果</span>
+        <span class="n">result</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">tmp</span>
+        <span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">eqidx</span>
+        
+    <span class="k">return</span> <span class="n">result</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">result</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">c</span>
+
+<span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">clock</span><span class="p">()</span>
+<span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">ifs</span><span class="p">([</span><span class="n">p1</span><span class="p">,</span><span class="n">p2</span><span class="p">,</span><span class="n">p3</span><span class="p">,</span><span class="n">p4</span><span class="p">],[</span><span class="n">eq1</span><span class="p">,</span><span class="n">eq2</span><span class="p">,</span><span class="n">eq3</span><span class="p">,</span><span class="n">eq4</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="mi">100000</span><span class="p">)</span>
+<span class="k">print</span> <span class="n">time</span><span class="o">.</span><span class="n">clock</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span><span class="mi">6</span><span class="p">))</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">121</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">&quot;g&quot;</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s">&quot;s&quot;</span><span class="p">,</span> <span class="n">linewidths</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s">&quot;equal&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s">&quot;off&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">122</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">c</span> <span class="o">=</span> <span class="n">c</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s">&quot;s&quot;</span><span class="p">,</span> <span class="n">linewidths</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s">&quot;equal&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s">&quot;off&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">subplots_adjust</span><span class="p">(</span><span class="n">left</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">right</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">bottom</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">top</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">wspace</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">hspace</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">gcf</span><span class="p">()</span><span class="o">.</span><span class="n">patch</span><span class="o">.</span><span class="n">set_facecolor</span><span class="p">(</span><span class="s">&quot;white&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>程序中的ifs函数是进行函数迭代的主函数，我们希望通过矩阵乘法计算函数(numpy.dot)的输出，因此需要将乘法向量扩充为三维的：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+<span class="n">pos</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">init</span>
+</pre></div>
+</div>
+<p>这样每次和迭代函数系数进行矩阵乘积运算的向量就变成了： x(n), y(n), 1.0 。</p>
+<p>为了减少计算时间，我们不在迭代循环中计算随机数选择迭代方程，而是事先通过每个函数的概率，计算出函数选择数组select，注意这里使用accumulate函数先将概率累加，然后产生一组0到1之间的随机数，通过判断随机数所在的概率区间选择不同的方程下标：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">accumulate</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+<span class="n">rands</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+<span class="n">select</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">p</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
+    <span class="n">select</span><span class="p">[</span><span class="n">rands</span><span class="o">&lt;</span><span class="n">x</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="o">-</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span>
+</pre></div>
+</div>
+<p>最后我们通过调用scatter绘图函数将所得到的坐标进行散列图绘制：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">pl</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">&quot;g&quot;</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s">&quot;s&quot;</span><span class="p">,</span> <span class="n">linewidths</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>其中每个关键字参数的含义如下：</p>
+<ul class="simple">
+<li><strong>s</strong> : 散列点的大小，因为我们要绘制10万点，因此大小选择为1</li>
+<li><strong>c</strong> : 点的颜色，这里选择绿色</li>
+<li><strong>marker</strong> : 点的形状，&quot;s&quot;表示正方形，方形的绘制是最快的</li>
+<li><strong>linewidths</strong> : 点的边框宽度，0表示没有边框</li>
+</ul>
+<p>此外，关键字参数c还可以传入一个数组，作为每个点的颜色值，我们将计算坐标的函数下标传入，这样可以直观地看出哪个点是哪个函数迭代产生的：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">pl</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">c</span> <span class="o">=</span> <span class="n">c</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s">&quot;s&quot;</span><span class="p">,</span> <span class="n">linewidths</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>下图是程序的输出：</p>
+<div class="figure" id="fig-fractalifs01">
+<img alt="_images/fractal_ifs01.png" src="_images/fractal_ifs01.png" />
+<p class="caption">函数迭代系统所绘制的蕨类植物的叶子</p>
+</div>
+<p>观察右图的4种颜色的部分可以发现概率为1%的函数1所计算的是叶杆部分(深蓝色)，概率为7%的两个函数计算的是左右两片子叶，而概率为85%的函数计算的是整个叶子的迭代：即最下面的三种颜色的点通过此函数的迭代产生上面的所有的深红色的点。</p>
+<p>我们可以看出整个叶子呈现出完美的自相似特性，任意取其中的一个子叶，将其旋转放大之后都和整个叶子相同。</p>
+<div class="section" id="d">
+<h3>2D仿射变换<a class="headerlink" href="#d" title="Permalink to this headline">¶</a></h3>
+<p>上面所介绍的4个变换方程的一般形式如下：</p>
+<div class="highlight-none"><div class="highlight"><pre>x(n+1) = A * x(n) + B * y(n) + C
+y(n+1) = D * x(n) + E * y(n) + F
+</pre></div>
+</div>
+<p>这种变换被称为2D仿射变换，它是从2D坐标到其他2D坐标的线性映射，保留直线性和平行性。即原来是直线上的坐标，变换之后仍然成一条直线，原来是平行的直线，变换之后仍然是平行的。这种变换我们可以看作是一系列平移、缩放、翻转和旋转变换构成的。</p>
+<p>为了直观地显示仿射变换，我们可以使用平面上的两个三角形来表示。因为仿射变换公式中有6个未知数：A, B, C, D, E, F，而每两个点之间的变换决定两个方程，因此一共需要3组点来决定六个变换方程，正好是两个三角形，如下图所示：</p>
+<div class="figure" id="fig-fractalifs02">
+<img alt="_images/fractal_ifs02.png" src="_images/fractal_ifs02.png" />
+<p class="caption">两个三角形决定一个2D仿射变换的六个参数</p>
+</div>
+<p>从红色三角形的每个顶点变换到绿色三角形的对应顶点，正好能够决定仿射变换中的六个参数。这样我们可是使用N+1个三角形，决定N个仿射变换，其中的每一个变换的参数都是由第0个三角形和其它的三角形决定的。这第0个三角形我们称之为基础三角形，其余的三角形称之为变换三角形。</p>
+<p>为了绘制迭代函数系统的图像，我们还需要给每个仿射变换方程指定一个迭代概率的参数。此参数也可以使用三角形直观地表达出来：迭代概率和变换三角形的面积成正比。即迭代概率为变换三角形的面积除以所有变换三角形的面积之和。</p>
+<p>如下图所示，前面介绍的蕨类植物的分形图案的迭代方程可以由5个三角形决定，可以很直观地看出紫色的小三角形决定了叶子的茎；而两个蓝色的三角形决定了左右两片子叶；绿色的三角形将茎和两片子叶往上复制，形成整片叶子。</p>
+<div class="figure" id="fig-fractalifs03">
+<img alt="_images/fractal_ifs03.png" src="_images/fractal_ifs03.png" />
+<p class="caption">5个三角形的仿射方程绘制蕨类植物的叶子</p>
+</div>
+</div>
+<div class="section" id="id5">
+<h3>迭代函数系统设计器<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<p id="sec-ifs-designer">按照上节所介绍的三角形法，我们可以设计一个迭代函数系统的设计工具，如下图所示：</p>
+<OBJECT CLASSID="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" WIDTH="600" HEIGHT="370" CODEBASE="http://active.macromedia.com/flash5/cabs/swflash.cab#version=7,0,0,0">
+<PARAM NAME="movie" VALUE="_images/ifs.swf">
+<PARAM NAME="play" VALUE="true">
+<PARAM NAME="loop" VALUE="false">
+<PARAM NAME="wmode" VALUE="transparent">
+<PARAM NAME="quality" VALUE="high">
+<EMBED SRC="_images/ifs.swf" width="600" HEIGHT="370" quality="high" loop="false" wmode="transparent" TYPE="application/x-shockwave-flash" PLUGINSPAGE="http://www.macromedia.com/shockwave/download/index.cgi?P1_Prod_Version=ShockwaveFlash">
+</EMBED>
+</OBJECT>
+<img src="_images/ifs.swf" style="visibility:hidden"/><p>具体的程序请参照 <a class="reference external" href="example_ifs.html"><em>迭代函数系统的分形</em></a> ，这里简单地介绍一下程序的几个核心组成部分：</p>
+<p>首先通过两个三角形求解仿射方程的系数相当于求六元线性方程组的解，solve_eq函数完成这一工作，它先计算出线性方程组的矩阵a和b, 然后调用NumPy的linalg.solve对线性方程组 a*X = b 求解：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">solve_eq</span><span class="p">(</span><span class="n">triangle1</span><span class="p">,</span> <span class="n">triangle2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    解方程，从triangle1变换到triangle2的变换系数</span>
+<span class="sd">        triangle1,2是二维数组：</span>
+<span class="sd">        x0,y0</span>
+<span class="sd">        x1,y1</span>
+<span class="sd">        x2,y2</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">x0</span><span class="p">,</span><span class="n">y0</span> <span class="o">=</span> <span class="n">triangle1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">x1</span><span class="p">,</span><span class="n">y1</span> <span class="o">=</span> <span class="n">triangle1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">x2</span><span class="p">,</span><span class="n">y2</span> <span class="o">=</span> <span class="n">triangle1</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+
+    <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">6</span><span class="p">,</span><span class="mi">6</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">triangle2</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">a</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">x0</span><span class="p">,</span><span class="n">y0</span><span class="p">,</span><span class="mi">1</span>
+    <span class="n">a</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">:</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="n">x0</span><span class="p">,</span><span class="n">y0</span><span class="p">,</span><span class="mi">1</span>
+    <span class="n">a</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">x1</span><span class="p">,</span><span class="n">y1</span><span class="p">,</span><span class="mi">1</span>
+    <span class="n">a</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">:</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="n">x1</span><span class="p">,</span><span class="n">y1</span><span class="p">,</span><span class="mi">1</span>
+    <span class="n">a</span><span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">x2</span><span class="p">,</span><span class="n">y2</span><span class="p">,</span><span class="mi">1</span>
+    <span class="n">a</span><span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="p">:</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="n">x2</span><span class="p">,</span><span class="n">y2</span><span class="p">,</span><span class="mi">1</span>
+
+    <span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+    <span class="n">c</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">c</span>
+</pre></div>
+</div>
+<p>triangle_area函数计算三角形的面积，它使用NumPy的cross函数计算三角形的两个边的向量的叉积：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">triangle_area</span><span class="p">(</span><span class="n">triangle</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    计算三角形的面积</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="n">triangle</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">B</span> <span class="o">=</span> <span class="n">triangle</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">C</span> <span class="o">=</span> <span class="n">triangle</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">AB</span> <span class="o">=</span> <span class="n">A</span><span class="o">-</span><span class="n">B</span>
+    <span class="n">AC</span> <span class="o">=</span> <span class="n">A</span><span class="o">-</span><span class="n">C</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cross</span><span class="p">(</span><span class="n">AB</span><span class="p">,</span><span class="n">AC</span><span class="p">))</span><span class="o">/</span><span class="mf">2.0</span>
+</pre></div>
+</div>
+<p>整个程序的界面使用TraitsUI库生成，将matplotlib的Figure控件通过MPLFigureEditor和_MPLFigureEditor类嵌入到TraitsUI生成的界面中，请参考： <a class="reference external" href="traitsui_manual_custom_editor.html"><em>设计自己的Trait编辑器</em></a></p>
+<p>IFSDesigner._figure_default创建Figure对象，并且添加两个并排的子图ax和ax2，ax用于三角形编辑，而ax2用于分形图案显示。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">_figure_default</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    figure属性的缺省值，直接创建一个Figure对象</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">figure</span> <span class="o">=</span> <span class="n">Figure</span><span class="p">()</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="n">figure</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">121</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">ax2</span> <span class="o">=</span> <span class="n">figure</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">122</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">ax2</span><span class="o">.</span><span class="n">set_axis_off</span><span class="p">()</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_axis_off</span><span class="p">()</span>
+    <span class="n">figure</span><span class="o">.</span><span class="n">subplots_adjust</span><span class="p">(</span><span class="n">left</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">right</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">bottom</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">top</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">wspace</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">hspace</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">figure</span><span class="o">.</span><span class="n">patch</span><span class="o">.</span><span class="n">set_facecolor</span><span class="p">(</span><span class="s">&quot;w&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">figure</span>
+</pre></div>
+</div>
+<p>IFSTriangles类完成三角形的编辑工作，其中通过如下的语句绑定Figure控件的canvas的鼠标事件</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">canvas</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">canvas</span>
+<span class="c"># 绑定canvas的鼠标事件</span>
+<span class="n">canvas</span><span class="o">.</span><span class="n">mpl_connect</span><span class="p">(</span><span class="s">&#39;button_press_event&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">button_press_callback</span><span class="p">)</span>
+<span class="n">canvas</span><span class="o">.</span><span class="n">mpl_connect</span><span class="p">(</span><span class="s">&#39;button_release_event&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">button_release_callback</span><span class="p">)</span>
+<span class="n">canvas</span><span class="o">.</span><span class="n">mpl_connect</span><span class="p">(</span><span class="s">&#39;motion_notify_event&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">motion_notify_callback</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>由于canvas只有在真正显示Figure时才会创建，因此不能在创建Figure控件时创建IFSTriangles对象，而需要在界面生成之后，显示之前创建它。这里我们通过给IFSDesigner类的view属性指定其handler为IFSHandler对象，重载Handler的init方法，此方法在界面生成之后，显示之前被调用：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">IFSHandler</span><span class="p">(</span><span class="n">Handler</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    在界面显示之前需要初始化的内容</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">info</span><span class="p">):</span>
+        <span class="n">info</span><span class="o">.</span><span class="n">object</span><span class="o">.</span><span class="n">init_gui_component</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">True</span>
+</pre></div>
+</div>
+<p>然后IFSDesigner类的init_gui_component方法完成实际和canvas相关的初始工作：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">init_gui_component</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">ifs_triangle</span> <span class="o">=</span> <span class="n">IFSTriangles</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+    <span class="n">thread</span><span class="o">.</span><span class="n">start_new_thread</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">ifs_calculate</span><span class="p">,</span> <span class="p">())</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+<p>由于通过函数迭代计算分形图案比较费时，因此在另外一个线程中执行ifs_calculate方法进行运算，每计算ITER_COUNT个点，就调用ax2.scatter将产生的点添加进ax2中，由于随着ax2中的点数增加，界面重绘将越来越慢，因此在draw_points函数中限制最多只调用ITER_TIMES次scatter函数。因为在别的线程中不能更新界面，因此通过调用wx.CallAfter在管理GUI的线程中调用draw_points进行界面刷新。:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">ifs_calculate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    在别的线程中计算</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">draw_points</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ax2</span><span class="o">.</span><span class="n">collections</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">ITER_TIMES</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ax2</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s">&quot;s&quot;</span><span class="p">,</span> <span class="n">linewidths</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ax2</span><span class="o">.</span><span class="n">set_axis_off</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ax2</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s">&quot;equal&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">clear_points</span><span class="p">():</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ax2</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+
+    <span class="k">while</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">exit</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">clear</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">clear</span> <span class="o">=</span> <span class="bp">False</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">initpos</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+                <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">ifs</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">ifs_triangle</span><span class="o">.</span><span class="n">get_areas</span><span class="p">(),</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">ifs_triangle</span><span class="o">.</span><span class="n">get_eqs</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">initpos</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">initpos</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ax2</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+
+            <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">ifs</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">ifs_triangle</span><span class="o">.</span><span class="n">get_areas</span><span class="p">(),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ifs_triangle</span><span class="o">.</span><span class="n">get_eqs</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">initpos</span><span class="p">,</span> <span class="n">ITER_COUNT</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="o">&lt;</span> <span class="mi">1000000</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">y</span><span class="p">))</span> <span class="o">&lt;</span> <span class="mi">1000000</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">initpos</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
+                <span class="n">wx</span><span class="o">.</span><span class="n">CallAfter</span><span class="p">(</span> <span class="n">draw_points</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">c</span> <span class="p">)</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.05</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span>
+</pre></div>
+</div>
+<p>用户修改三角形之后，需要重新迭代，并绘制分形图案，三角形的改变通过 IFSTriangles.version 属性通知给IFSDesigner，在IFSTriangles中，三角形改变之后，将运行：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="o">+=</span> <span class="mi">1</span>
+</pre></div>
+</div>
+<p>在IFSDesigner中监听version属性的变化：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="nd">@on_trait_change</span><span class="p">(</span><span class="s">&quot;ifs_triangle.version&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">on_ifs_version_changed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    当三角形更新时，重新绘制所有的迭代点</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">clear</span> <span class="o">=</span> <span class="bp">True</span>
+</pre></div>
+</div>
+<p>当IFSDesigner.clear为True时，真正进行迭代运算的ifs_calculate方法就知道需要重新计算了。</p>
+</div>
+</div>
+<div class="section" id="l-system">
+<h2>L-System分形<a class="headerlink" href="#l-system" title="Permalink to this headline">¶</a></h2>
+<p id="sec-lsystem">前面所绘制的分形图案都是都是使用数学函数的迭代产生，而L-System分形则是采用符号的递归迭代产生。首先如下定义几个有含义的符号：</p>
+<ul class="simple">
+<li><strong>F</strong> : 向前走固定单位</li>
+<li><strong>+</strong> : 正方向旋转固定单位</li>
+<li><strong>-</strong> : 负方向旋转固定单位</li>
+</ul>
+<p>使用这三个符号我们很容易描述下图中由4条线段构成的图案：</p>
+<div class="highlight-none"><div class="highlight"><pre>F+F--F+F
+</pre></div>
+</div>
+<p>如果将此符号串中的所有F都替换为F+F--F+F，就能得到如下的新字符串：</p>
+<div class="highlight-none"><div class="highlight"><pre>F+F--F+F+F+F--F+F--F+F--F+F+F+F--F+F
+</pre></div>
+</div>
+<p>如此替换迭代下去，并根据字串进行绘图(符号+和-分别正负旋转60度)，可得到如下的分形图案：</p>
+<div class="figure" id="fig-fractal-lsystem02">
+<img alt="_images/fractal_lsystem02.png" src="_images/fractal_lsystem02.png" style="width: 14cm;" />
+<p class="caption">使用F+F--F+F迭代的分形图案</p>
+</div>
+<p>除了 F, +, - 之外我们再定义如下几个符号：</p>
+<ul class="simple">
+<li><strong>f</strong> : 向前走固定单位，为了定义不同的迭代公式</li>
+<li><strong>[</strong> : 将当前的位置入堆栈</li>
+<li><strong>]</strong> : 从堆栈中读取坐标，修改当前位置</li>
+<li><strong>S</strong> : 初始迭代符号</li>
+</ul>
+<p>所有的符号(包括上面未定义的)都可以用来定义迭代，通过引入两个方括号符号，使得我们能够描述分岔的图案。</p>
+<p>例如下面的符号迭代能够绘制出一棵植物：</p>
+<div class="highlight-none"><div class="highlight"><pre>S -&gt; X
+X -&gt; F-[[X]+X]+F[+FX]-X
+F -&gt; FF
+</pre></div>
+</div>
+<p>我们用一个字典定义所有的迭代公式和其它的一些绘图信息：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s">&quot;X&quot;</span><span class="p">:</span><span class="s">&quot;F-[[X]+X]+F[+FX]-X&quot;</span><span class="p">,</span> <span class="s">&quot;F&quot;</span><span class="p">:</span><span class="s">&quot;FF&quot;</span><span class="p">,</span> <span class="s">&quot;S&quot;</span><span class="p">:</span><span class="s">&quot;X&quot;</span><span class="p">,</span>
+    <span class="s">&quot;direct&quot;</span><span class="p">:</span><span class="o">-</span><span class="mi">45</span><span class="p">,</span>
+    <span class="s">&quot;angle&quot;</span><span class="p">:</span><span class="mi">25</span><span class="p">,</span>
+    <span class="s">&quot;iter&quot;</span><span class="p">:</span><span class="mi">6</span><span class="p">,</span>
+    <span class="s">&quot;title&quot;</span><span class="p">:</span><span class="s">&quot;Plant&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>其中：</p>
+<ul class="simple">
+<li><strong>direct</strong> : 是绘图的初始角度，通过指定不同的值可以旋转整个图案</li>
+<li><strong>angle</strong> : 定义符号+,-旋转时的角度，不同的值能产生完全不同的图案</li>
+<li><strong>iter</strong> : 迭代次数</li>
+</ul>
+<p>下面的程序将上述字典转换为需要绘制的线段坐标：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">L_System</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rule</span><span class="p">):</span>
+        <span class="n">info</span> <span class="o">=</span> <span class="n">rule</span><span class="p">[</span><span class="s">&#39;S&#39;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">rule</span><span class="p">[</span><span class="s">&#39;iter&#39;</span><span class="p">]):</span>
+            <span class="n">ninfo</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">info</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">rule</span><span class="p">:</span>
+                    <span class="n">ninfo</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rule</span><span class="p">[</span><span class="n">c</span><span class="p">])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">ninfo</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+            <span class="n">info</span> <span class="o">=</span> <span class="s">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ninfo</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rule</span> <span class="o">=</span> <span class="n">rule</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">info</span> <span class="o">=</span> <span class="n">info</span>
+
+    <span class="k">def</span> <span class="nf">get_lines</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rule</span><span class="p">[</span><span class="s">&#39;direct&#39;</span><span class="p">]</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rule</span><span class="p">[</span><span class="s">&#39;angle&#39;</span><span class="p">]</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="n">l</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">stack</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">c</span> <span class="ow">in</span> <span class="s">&quot;Ff&quot;</span><span class="p">:</span>
+                <span class="n">r</span> <span class="o">=</span> <span class="n">d</span> <span class="o">*</span> <span class="n">pi</span> <span class="o">/</span> <span class="mi">180</span>
+                <span class="n">t</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">l</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">r</span><span class="p">),</span> <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">l</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(((</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">t</span><span class="p">[</span><span class="mi">1</span><span class="p">])))</span>
+                <span class="n">p</span> <span class="o">=</span> <span class="n">t</span>
+            <span class="k">elif</span> <span class="n">c</span> <span class="o">==</span> <span class="s">&quot;+&quot;</span><span class="p">:</span>
+                <span class="n">d</span> <span class="o">+=</span> <span class="n">a</span>
+            <span class="k">elif</span> <span class="n">c</span> <span class="o">==</span> <span class="s">&quot;-&quot;</span><span class="p">:</span>
+                <span class="n">d</span> <span class="o">-=</span> <span class="n">a</span>
+            <span class="k">elif</span> <span class="n">c</span> <span class="o">==</span> <span class="s">&quot;[&quot;</span><span class="p">:</span>
+                <span class="n">stack</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">p</span><span class="p">,</span><span class="n">d</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">c</span> <span class="o">==</span> <span class="s">&quot;]&quot;</span><span class="p">:</span>
+                <span class="n">p</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">stack</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                <span class="k">del</span> <span class="n">stack</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">lines</span>
+</pre></div>
+</div>
+<p>我们使用matplotlib的LineCollection绘制所有的直线：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">pl</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">collections</span>
+
+<span class="c"># rule = {...}  此处省略rule的定义</span>
+
+<span class="n">lines</span> <span class="o">=</span> <span class="n">L_System</span><span class="p">(</span><span class="n">rule</span><span class="p">)</span><span class="o">.</span><span class="n">get_lines</span><span class="p">()</span>
+
+<span class="n">fig</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+<span class="n">linecollections</span> <span class="o">=</span> <span class="n">collections</span><span class="o">.</span><span class="n">LineCollection</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">add_collection</span><span class="p">(</span><span class="n">linecollections</span><span class="p">,</span> <span class="n">autolim</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>下面是几种L-System的分形图案，绘制此图的完整程序请参照 <a class="reference external" href="example_lsystem.html"><em>绘制L-System的分形图</em></a> 。</p>
+<div class="figure" id="fig-fractal-lsystem03">
+<img alt="_images/fractal_lsystem03.png" src="_images/fractal_lsystem03.png" style="width: 14cm;" />
+<p class="caption">几种L-System的迭代图案</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">首页目录</a></h3>
+            <ul>
+<li><a class="reference external" href="#">分形与混沌</a><ul>
+<li><a class="reference external" href="#mandelbrot">Mandelbrot集合</a><ul>
+<li><a class="reference external" href="#id4">连续的逃逸时间</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#ifs">迭代函数系统(IFS)</a><ul>
+<li><a class="reference external" href="#d">2D仿射变换</a></li>
+<li><a class="reference external" href="#id5">迭代函数系统设计器</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#l-system">L-System分形</a></li>
+</ul>
+</li>
+</ul>
+
+            <h4>上一篇文章</h4>
+            <p class="topless"><a href="double_pendulum.html"
+                                  title="上一篇文章">单摆和双摆模拟</a></p>
+            <h4>下一篇文章</h4>
+            <p class="topless"><a href="pydoc_write_tools.html"
+                                  title="下一篇文章">关于本书的编写</a></p>
+          <div id="searchbox" style="display: none">
+            <h3>快速搜索</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="搜索" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              中文搜索请尽量用空格分开单个的单词，例如搜索"科学 计算"，而不是"科学计算"
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="pydoc_write_tools.html" title="关于本书的编写"
+             >下一篇</a></li>
+        <li class="right" >
+          <a href="double_pendulum.html" title="单摆和双摆模拟"
+             >上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+    &copy; 2009, <a href="http://hyry.dip.jp/blogt.py">HYRY Studio</a>
+      由 <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.4. 编译
+    </div>
+  </body>
+</html>

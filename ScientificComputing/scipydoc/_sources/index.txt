@@ -1,0 +1,138 @@
+############
+用Python做科学计算
+############
+
+.. raw:: latex
+
+    \renewcommand\partname{部分} 
+    \renewcommand{\chaptermark}[1]{\markboth{第 \thechapter\ 章 \hspace{4mm} #1}{}}
+    \fancyhead[LE,RO]{用Python做科学计算}
+    \renewcommand{\figurename}{\textsc{图}}
+
+.. topic:: 版权声明
+
+    本书的著作权归作者(HYRY Studio)所有。你可以：
+    
+    * 下载、保存以及打印本书
+    
+    * 网络链接、转载本书的部分或者全部内容，但是必须在明显处提供读者访问本书发布网站的链接
+       
+    * 在你的程序中任意使用本书所附的程序代码，但是由本书的程序所引起的任何问题，作者不承担任何责任
+       
+    你不可以：
+    
+    * 以任何形式出售本书的电子版或者打印版
+    
+    * 擅自印刷、出版本书
+    
+    * 以纸媒出版为目的，改写、改编以及摘抄本书的内容
+    
+    * 在课程设计、毕业设计以及作业中大段摘抄本书文字，或直接使用本书的程序代码
+
+.. topic:: 使用说明
+
+    本书使用\ `reStructuredText <http://docutils.sourceforge.net/rst.html>`_\ 编写，采用\ `Sphinx <http://sphinx.pocoo.org>`_\ 发布。在此基础上添加了评论功能，你可以在hyry.dip.jp的在线版本中点击章节标题前面的评论按钮，对每个章节进行评论。推荐使用IE7.0以上、FireFox、Google Chome等浏览器阅读本书。
+
+    本书有两个镜像地址： 
+    
+    * http://hyry.dip.jp/pydoc (每日更新)
+    * http://pyscin.appspot.com/html/index.html (每周更新)
+    
+    请使用下面的链接下载各种打包版本，其中Html打包版本格式最为正确，CHM和PDF版都多少有些问题。
+    
+    `下载Html打包版 <http://hyry.dip.jp/files/scipydoc.zip>`_ `下载CHM版 <http://hyry.dip.jp/files/scipydoc.chm>`_ `下载PDF版 <http://hyry.dip.jp/files/scipydoc.pdf>`_ `下载源代码 <http://hyry.dip.jp/files/scipycode.zip>`_    
+    
+    另外，你还可以通过\ `Google文档 <http://docs.google.com/leaf?id=0B6aBwV_8NoD-ZjBkNmYxMjUtMTVkOC00MGI1LTg2M2UtMTk0MzhiMzRiNWZi&hl=en>`_\ 和 \ `ZoomQuiet.org <http://www.zoomquiet.org/share/doc/HYRY-scipydoc/>`_\ (国内下载快速)下载PDF版本
+
+    请查看 :doc:`update_list` 了解最新添加的内容
+ 
+.. topic:: 关于HYRY Studio
+
+    * HYRY Studio首页： http://hyry.dip.jp
+    * 博客地址： http://hyry.dip.jp/blogt.py
+
+        
+Python是一种面向对象的、动态的程序设计语言。具有非常简洁而清晰的语法，适合于完成各种高层任务。它既可以用来快速开发程序脚本，也可以用来开发大规模的软件。
+
+随着NumPy, SciPy, Matplotlib, Enthought librarys等众多程序库的开发，Python越来越适合于做科学计算、绘制高质量的2D和3D图像。和科学计算领域最流行的商业软件Matlab相比，Python是一门通用的程序设计语言，比Matlab所采用的脚本语言的应用范围更广泛，有更多的程序库的支持。虽然Matlab中的许多高级功能和toolbox目前还是无法替代的，不过在日常的科研开发之中仍然有很多的工作是可以用Python代劳的。
+
+本书将介绍如何用Python开发科学计算的应用程序，除了介绍数值计算之外，我们还将着重介绍如何制作交互式的2D、3D图像；如何设计精巧的程序界面；如何和C语言所编写的高速计算程序结合；如何编写声音、图像处理算法。
+
+阅读本书你需要学习过Python语言的一些基础知识，对面向对象的程序开发有所了解。有关Python语言基础的知识，可以参考：
+
+啄木鸟社区的Python图书概览： http://wiki.woodpecker.org.cn/moin/PyBooks
+
+本书中的所有示例均在Windows XP系统下采用Python(x,y)通过测试。如果你觉得安装众多的Python程序库很麻烦，不妨下载安装Python(x,y)。请阅读：\ :doc:`install`
+
+基础篇
+====
+
+.. htmlonly::
+
+    科学计算所用到的各种库的入门介绍
+
+.. toctree::
+    :maxdepth: 2
+   
+    install.rst
+    numpy_intro.rst
+    scipy_intro.rst
+    sympy_intro.rst
+    matplotlib_intro.rst
+    traits_intro.rst
+    traitsUI_intro.rst
+    chaco_intro.rst
+    tvtk_intro.rst
+    mlab_and_mayavi.rst
+    vpython_intro.rst
+    opencv_intro.rst
+
+手册篇
+====
+
+.. htmlonly::
+
+    各个库的用户使用手册的翻译
+
+.. toctree::
+   :maxdepth: 2
+   
+   traits_manual_index.rst
+   visual_manual_index.rst
+
+实战篇
+====
+
+.. htmlonly::
+
+    用所学到的东西解决实际问题
+
+.. toctree::
+    :maxdepth: 2
+   
+    wave_pyaudio.rst
+    filters.rst
+    fft_study.rst
+    frequency_process.rst
+    ctypes_numpy.rst
+    fast_nlms_in_python.rst
+    double_pendulum.rst
+    fractal_chaos.rst
+
+附录
+====
+
+.. toctree::
+   :maxdepth: 2
+   
+   pydoc_write_tools.rst
+   update_list.rst
+
+源程序集
+====
+
+.. toctree::
+   :maxdepth: 1
+   
+   example_code_list.rst
+

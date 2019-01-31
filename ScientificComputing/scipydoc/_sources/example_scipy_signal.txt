@@ -1,0 +1,12 @@
+#######
+带通滤波器设计
+#######
+
+相关文档： :doc:`scipy_intro`
+
+用scipy.signal库设计带通滤波器，并用频率扫描波测试其频率响应。
+
+.. image:: images/scipy_signal01.png
+
+.. literalinclude:: examples/scipy_signal.py
+

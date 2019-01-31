@@ -1,0 +1,10 @@
+########
+三维标量场观察器
+########
+
+相关文档： :ref:`将Mayavi嵌入到界面中 <sec-mayavi-embed>`
+
+.. image:: images/mayavi2_embed02.png 
+
+.. literalinclude:: examples/mayavi_embed_fieldviewer.py
+

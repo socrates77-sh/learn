@@ -1,0 +1,415 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>TraitsUI-轻松制作用户界面 &mdash; 用Python做科学计算</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link type="text/css" href="_static/jquery-ui-1.7.2.custom.css" rel="stylesheet" />	
+    <link type="text/css" href="_static/comments.css" rel="stylesheet" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '#',
+        VERSION:     '1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/jquery-ui-1.7.2.custom.min.js"></script>
+    <script type="text/javascript" src="_static/pydoc.js"></script>
+    <link rel="top" title="用Python做科学计算" href="index.html" />
+    <link rel="下一篇" title="Chaco-交互式图表" href="chaco_intro.html" />
+    <link rel="上一篇" title="Traits-为Python添加类型定义" href="traits_intro.html" /> 
+
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-10837468-1");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="chaco_intro.html" title="Chaco-交互式图表"
+             accesskey="N">下一篇</a></li>
+        <li class="right" >
+          <a href="traits_intro.html" title="Traits-为Python添加类型定义"
+             accesskey="P">上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="traitsui">
+<h1>TraitsUI-轻松制作用户界面<a class="headerlink" href="#traitsui" title="Permalink to this headline">¶</a></h1>
+<p>Python有着丰富的界面开发库，除了缺省安装的Tkinter以外，wxPython、pyQt4等都是非常优秀的界面开发库。但是它们有一个共同的问题：需要开发者掌握众多的API函数，许多细节，例如配置控件的属性、位置以及事件响应都需要开发者一一处理。</p>
+<p>在开发科学计算程序时，我们希望快速实现一个够用的界面，让用户能够交互式的处理数据，而又不希望在界面制作上花费过多的精力。以traits为基础、以Model-View-Controller为设计思想的TraitUI库就是实现这一理想的最佳伴侣。</p>
+<div class="section" id="id1">
+<h2>缺省界面<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>TraitsUI是一套建立在Traits库基础上的用户界面库。它和Traits紧密相连，如果你已经设计好了一个继承于HasTraits的类的话，那么直接调用其configure_traits方法，系统将会使用TraitsUI自动生成一个界面，以供用户交互式地修改对象的trait属性。让我们先来看下面这个例子:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">enthought.traits.api</span> <span class="kn">import</span> <span class="n">HasTraits</span><span class="p">,</span> <span class="n">Str</span><span class="p">,</span> <span class="n">Int</span>
+
+<span class="k">class</span> <span class="nc">SimpleEmployee</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+    <span class="n">first_name</span> <span class="o">=</span> <span class="n">Str</span>
+    <span class="n">last_name</span> <span class="o">=</span> <span class="n">Str</span>
+    <span class="n">department</span> <span class="o">=</span> <span class="n">Str</span>
+
+    <span class="n">employee_number</span> <span class="o">=</span> <span class="n">Str</span>
+    <span class="n">salary</span> <span class="o">=</span> <span class="n">Int</span>
+
+<span class="n">sam</span> <span class="o">=</span> <span class="n">SimpleEmployee</span><span class="p">()</span>
+<span class="n">sam</span><span class="o">.</span><span class="n">configure_traits</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>此程序创建一个SimpleEmployee类的对象sam，然后调用sam.configure_traits显示出如下的缺省界面：</p>
+<div class="figure" id="fig-traitsuiintro01">
+<img alt="_images/traitsUI_intro_01.png" src="_images/traitsUI_intro_01.png" />
+<p class="caption">自动生成的SimpleEmployee类的对话框</p>
+</div>
+<p>可以看到此界面是自动根据trait属性生成。所有的属性都以文本框的形式编辑，并且每个文本框前面都有一个文字标签，其文字根据trait属性名自动生成：第一个字母变为大写，所有的下划线变为空格。最下面为我们提供了OK和Cancel按钮以确定或者取消对trait属性值的修改。</p>
+<p>salary属性虽然和其它属性一样都采用文本框进行编辑，但是由于salary属性定义为Int类型，所以它将检查非法输入，并以红色背景警示，鼠标左击Salary标签，将弹出salary属性相关的详细说明，由于我们没有设置此说明，系统缺省给出salary所能接受的值的类型。</p>
+<div class="figure" id="fig-traitsuiintro02">
+<img alt="_images/traitsUI_intro_02.png" src="_images/traitsUI_intro_02.png" />
+<p class="caption">界面中的每个属性编辑器都有详细说明，并且能检查非法输入</p>
+</div>
+<p>我们连一行界面相关的代码都没有写，却能得到这样一个已经够实用的界面，应该还是很令人满意的吧。为了人工控制界面的设计和布局，就需要我们添加自己的代码了。</p>
+</div>
+<div class="section" id="id2">
+<h2>自定义界面<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>下面的程序在前面的基础上自定义了一个视图对象view1，然后将此对象传递给configure_traits方法，于是界面就按照视图中描述的那样生成了：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="kn">from</span> <span class="nn">enthought.traits.api</span> <span class="kn">import</span> <span class="n">HasTraits</span><span class="p">,</span> <span class="n">Str</span><span class="p">,</span> <span class="n">Int</span>
+<span class="kn">from</span> <span class="nn">enthought.traits.ui.api</span> <span class="kn">import</span> <span class="n">View</span><span class="p">,</span> <span class="n">Item</span>
+
+<span class="k">class</span> <span class="nc">SimpleEmployee</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+    <span class="n">first_name</span> <span class="o">=</span> <span class="n">Str</span>
+    <span class="n">last_name</span> <span class="o">=</span> <span class="n">Str</span>
+    <span class="n">department</span> <span class="o">=</span> <span class="n">Str</span>
+    <span class="n">employee_number</span> <span class="o">=</span> <span class="n">Str</span>
+    <span class="n">salary</span> <span class="o">=</span> <span class="n">Int</span>
+
+<span class="n">view1</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span>
+    <span class="n">Item</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">&#39;department&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;部门&quot;</span><span class="p">,</span> <span class="n">tooltip</span><span class="o">=</span><span class="s">u&quot;在哪个部门干活&quot;</span><span class="p">),</span>
+    <span class="n">Item</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">&#39;last_name&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;姓&quot;</span><span class="p">),</span>
+    <span class="n">Item</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">&#39;first_name&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;名&quot;</span><span class="p">))</span>
+
+<span class="n">sam</span> <span class="o">=</span> <span class="n">SimpleEmployee</span><span class="p">()</span>
+<span class="n">sam</span><span class="o">.</span><span class="n">configure_traits</span><span class="p">(</span><span class="n">view</span><span class="o">=</span><span class="n">view1</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="topic">
+<p class="topic-title first">选择后台界面库</p>
+<p>用traits.ui库创建的界面可以选择后台界面库，目前支持的有qt4和wx两种。在启动程序时添加 -toolikt qt4 或者 -toolikt wx 选择使用何种界面库生成界面。本文中全部使用wx作为后台界面库。</p>
+</div>
+<div class="figure" id="fig-traitsuiintro03">
+<img alt="_images/traitsUI_intro_03.png" src="_images/traitsUI_intro_03.png" />
+<p class="caption">通过label和tooltip手工指定属性编辑器的标签和说明</p>
+</div>
+<p>有关界面视图的对象都在traits.ui库中，所以首先从其中载入View和Item。View用来生成视图，而Item则用来描述视图中的项目(控件)。程序中，用Item依次创建三个视图项目，都作为参数传递给View，于是所生成的界面中按照参数的顺序显示控件，而不是按照trait属性名排序了。</p>
+<div class="section" id="item">
+<h3>Item对象<a class="headerlink" href="#item" title="Permalink to this headline">¶</a></h3>
+<p>Item对象是视图的基本组成单位，每个Item描述界面中的中的一个控件，通常都是用来显示HasTraits对象中的某一个trait属性。每个Item由一系列的关键字参数来进行配置，这些参数对Item的内容、表现以及行为进行描述。其中最重要的一个参数就是name。我们看到name参数的值都配置为SimpleEmployee类的trait属性名，于是Item就知道到哪里去寻找真正要显示的值了。可以看出视图与数据是通过属性名联系起来的。剩下的两个参数label和tooltip设置Item在界面中的一些显示相关的属性。Item对象还有很多属性其它属性，请参考TraitsUI的用户手册，或者在iPython中输入Item??直接查看其源代码。如果你查看了Item的源代码的话，你就会发现，原来Item的这些属性也都是用trait定义的：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Item</span> <span class="p">(</span> <span class="n">ViewSubElement</span> <span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; An element in a Traits-based user interface.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c">#  Trait definitions:</span>
+
+    <span class="c"># A unique identifier for the item. If not set, it defaults to the value</span>
+    <span class="c"># of **name**.</span>
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">Str</span>
+
+    <span class="c"># User interface label for the item in the GUI. If this attribute is not</span>
+    <span class="c"># set, the label is the value of **name** with slight modifications:</span>
+    <span class="c"># underscores are replaced by spaces, and the first letter is capitalized.</span>
+    <span class="c"># If an item&#39;s **name** is not specified, its label is displayed as</span>
+    <span class="c"># static text, without any editor widget.</span>
+    <span class="n">label</span> <span class="o">=</span> <span class="n">Str</span>
+
+    <span class="c"># Name of the trait the item is editing:</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">Str</span>
+</pre></div>
+</div>
+<p>除了Item之外，TraitsUI库还定义了下面几个Item的子类：</p>
+<ul class="simple">
+<li>Label</li>
+<li>Heading</li>
+<li>Spring</li>
+</ul>
+<p>这些类用来协助View的布局，因此不需要和某个trait属性关联。</p>
+</div>
+<div class="section" id="group">
+<h3>Group对象<a class="headerlink" href="#group" title="Permalink to this headline">¶</a></h3>
+<p>前面的例子中，我们通过把三个Item对象传递给View，创建了一个控件垂直排列的布局。然而在真正的界面开发中，需要更加高级的布局方式，例如，将一组相关的元素组织在一起，放到一个组中，我们可以为此组添加标签，定义组的帮助文本，通过设置组的属性使组类的元素同时有效或无效。在TraitUI中，这样的组的功能通过Group对象实现，让我们来修改一下前面的例子：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="kn">from</span> <span class="nn">enthought.traits.api</span> <span class="kn">import</span> <span class="n">HasTraits</span><span class="p">,</span> <span class="n">Str</span><span class="p">,</span> <span class="n">Int</span>
+<span class="kn">from</span> <span class="nn">enthought.traits.ui.api</span> <span class="kn">import</span> <span class="n">View</span><span class="p">,</span> <span class="n">Item</span><span class="p">,</span> <span class="n">Group</span>
+
+<span class="k">class</span> <span class="nc">SimpleEmployee</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+    <span class="n">first_name</span> <span class="o">=</span> <span class="n">Str</span>
+    <span class="n">last_name</span> <span class="o">=</span> <span class="n">Str</span>
+    <span class="n">department</span> <span class="o">=</span> <span class="n">Str</span>
+
+    <span class="n">employee_number</span> <span class="o">=</span> <span class="n">Str</span>
+    <span class="n">salary</span> <span class="o">=</span> <span class="n">Int</span>
+    <span class="n">bonus</span> <span class="o">=</span> <span class="n">Int</span>
+
+<span class="n">view1</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span>
+    <span class="n">Group</span><span class="p">(</span>
+        <span class="n">Item</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">&#39;employee_number&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&#39;编号&#39;</span><span class="p">),</span>
+        <span class="n">Item</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">&#39;department&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;部门&quot;</span><span class="p">,</span> <span class="n">tooltip</span><span class="o">=</span><span class="s">u&quot;在哪个部门干活&quot;</span><span class="p">),</span>
+        <span class="n">Item</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">&#39;last_name&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;姓&quot;</span><span class="p">),</span>
+        <span class="n">Item</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">&#39;first_name&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;名&quot;</span><span class="p">),</span>
+        <span class="n">label</span> <span class="o">=</span> <span class="s">u&#39;个人信息&#39;</span><span class="p">,</span>
+        <span class="n">show_border</span> <span class="o">=</span> <span class="bp">True</span>
+    <span class="p">),</span>
+    <span class="n">Group</span><span class="p">(</span>
+        <span class="n">Item</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">&#39;salary&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;工资&quot;</span><span class="p">),</span>
+        <span class="n">Item</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">&#39;bonus&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;奖金&quot;</span><span class="p">),</span>
+        <span class="n">label</span> <span class="o">=</span> <span class="s">u&#39;收入&#39;</span><span class="p">,</span>
+        <span class="n">show_border</span> <span class="o">=</span> <span class="bp">True</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+
+<span class="n">sam</span> <span class="o">=</span> <span class="n">SimpleEmployee</span><span class="p">()</span>
+<span class="n">sam</span><span class="o">.</span><span class="n">configure_traits</span><span class="p">(</span><span class="n">view</span><span class="o">=</span><span class="n">view1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>此程序的运行效果如下：</p>
+<div class="figure" id="fig-traitsuiintro04">
+<img alt="_images/traitsUI_intro_04.png" src="_images/traitsUI_intro_04.png" />
+<p class="caption">分标签页显示两个Group的内容</p>
+</div>
+<p>我们分别创建两个Group传递给View，每个Group中仍然通过Item创建控件，通过Group的关键字参数指定其label和show_border属性。由于View中的所有内容都是Group，它自动地将两个Group放到Tab中，对两个Group进行分标签显示。</p>
+<p>如果我们希望能同时看到两个Group的话，可以另外再创建一个Group将这两个Group包括起来：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">view2</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span> <span class="n">Group</span><span class="p">(</span> <span class="n">view1</span><span class="o">.</span><span class="n">content</span> <span class="p">)</span> <span class="p">)</span>
+</pre></div>
+</div>
+<p>这里我们创建视图view2，它包括一个Group，此Group的内容则直接使用view1的内容(也就是那两个Group)。当然也可以把view1中的内容复制进去：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">view2</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span><span class="n">Group</span><span class="p">(</span>
+    <span class="n">Group</span><span class="p">(</span>
+        <span class="n">Item</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">&#39;employee_number&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&#39;编号&#39;</span><span class="p">),</span>
+        <span class="n">Item</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">&#39;department&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;部门&quot;</span><span class="p">,</span> <span class="n">tooltip</span><span class="o">=</span><span class="s">u&quot;在哪个部门干活&quot;</span><span class="p">),</span>
+        <span class="n">Item</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">&#39;last_name&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;姓&quot;</span><span class="p">),</span>
+        <span class="n">Item</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">&#39;first_name&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;名&quot;</span><span class="p">),</span>
+        <span class="n">label</span> <span class="o">=</span> <span class="s">u&#39;个人信息&#39;</span><span class="p">,</span>
+        <span class="n">show_border</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="p">),</span>
+    <span class="n">Group</span><span class="p">(</span>
+        <span class="n">Item</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">&#39;salary&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;工资&quot;</span><span class="p">),</span>
+        <span class="n">Item</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">&#39;bonus&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;奖金&quot;</span><span class="p">),</span>
+        <span class="n">label</span> <span class="o">=</span> <span class="s">u&#39;收入&#39;</span><span class="p">,</span>
+        <span class="n">show_border</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="p">)</span>
+<span class="p">))</span>
+</pre></div>
+</div>
+<p>然后我们将view2传递给configure_traits，用view2显示界面：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">sam</span><span class="o">.</span><span class="n">configure_traits</span><span class="p">(</span><span class="n">view</span><span class="o">=</span><span class="n">view2</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="figure" id="fig-traitsuiintro06">
+<img alt="_images/traitsUI_intro_06.png" src="_images/traitsUI_intro_06.png" />
+<p class="caption">竖排显示两个Group的内容</p>
+</div>
+<p>在创建Group时，我们可以通过设置其orientation和layout等属性，改变Group的内容呈现方式。由于某些设置会经常用到，因此还提供了专门的Group子类重载这些属性的缺省值。例如下面是从Group类继承的HSplit类的代码：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">HSplit</span> <span class="p">(</span> <span class="n">Group</span> <span class="p">):</span>
+    <span class="c"># ... ...</span>
+    <span class="n">layout</span>      <span class="o">=</span> <span class="s">&#39;split&#39;</span>
+    <span class="n">orientation</span> <span class="o">=</span> <span class="s">&#39;horizontal&#39;</span>
+</pre></div>
+</div>
+<p>HSplit对象将其所包括的内容按照水平排列，并且在每两个子内容之间添加一个可调整的分隔条，HSplit和如下的代码是等价的：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">Group</span><span class="p">(</span> <span class="o">...</span> <span class="p">,</span> <span class="n">layout</span> <span class="o">=</span> <span class="s">&#39;split&#39;</span><span class="p">,</span> <span class="n">orientation</span> <span class="o">=</span> <span class="s">&#39;horizontal&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>为了正确显示分隔条，其子内容中需要有一个具有scrollable属性，如下面的代码(省略Item定义等部分)所示：</p>
+<div class="highlight-python"><pre>view1 = View(
+    HSplit(
+        VGroup(
+            ... ...,
+            scrollable = True
+        ),
+        VGroup(
+            ... ...
+        ),
+
+    ),
+    resizable = True,
+    width = 400,
+    height = 150
+)</pre>
+</div>
+<div class="figure" id="fig-traitsuiintro07">
+<img alt="_images/traitsUI_intro_07.png" src="_images/traitsUI_intro_07.png" />
+<p class="caption">带分隔条的横排显示两个Group的内容</p>
+</div>
+<p>下面是Group的各种子类和其对应的Group属性配置：</p>
+<ul>
+<li><p class="first"><strong>HGroup</strong> : 内容水平排列：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">Group</span><span class="p">(</span><span class="n">orientation</span><span class="o">=</span> <span class="s">&#39;horizontal&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first"><strong>HFlow</strong> : 内容水平排列，当超过水平宽度时，将自动换行：</p>
+<div class="highlight-python"><pre>Group(orientation= 'horizontal, layout='flow', show_labels=False)</pre>
+</div>
+</li>
+<li><p class="first"><strong>HSplit</strong> : 内容水平分隔，中间插入分隔条：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">Group</span><span class="p">(</span><span class="n">orientation</span><span class="o">=</span> <span class="s">&#39;horizontal&#39;</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s">&#39;split&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first"><strong>Tabbed</strong> : 内容分标签页显示：</p>
+<div class="highlight-python"><pre>Group(orientation= 'horizontal', layout='tabbed)</pre>
+</div>
+</li>
+<li><p class="first"><strong>VGroup</strong> : 内容垂直排列：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">Group</span><span class="p">(</span><span class="n">orientation</span><span class="o">=</span> <span class="s">&#39;vertical&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first"><strong>VFlow</strong> : 内容垂直排列，当超过垂直高度时，将自动换列：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">Group</span><span class="p">(</span><span class="n">orientation</span><span class="o">=</span> <span class="s">&#39;vertical&#39;</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s">&#39;flow&#39;</span><span class="p">,</span> <span class="n">show_labels</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first"><strong>VFold</strong> : 内容垂直排列，可折叠 ：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">Group</span><span class="p">(</span><span class="n">orientation</span><span class="o">=</span> <span class="s">&#39;vertical&#39;</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s">&#39;fold&#39;</span><span class="p">,</span> <span class="n">show_labels</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first"><strong>VGrid</strong> : 按照两列的网格进行垂直排列 ：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">Group</span><span class="p">(</span><span class="n">orientation</span><span class="o">=</span> <span class="s">&#39;vertical&#39;</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first"><strong>VSplit</strong> ： 内容垂直排列，中间插入分隔条：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">Group</span><span class="p">(</span><span class="n">orientation</span><span class="o">=</span> <span class="s">&#39;vertical&#39;</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s">&#39;split&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="id3">
+<h2>配置视图<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<p>前面介绍了如何使用Item和Group等类组织窗口界面中的内容，这一节我们来看看如何配置窗口本身的属性。</p>
+<div class="section" id="id4">
+<h3>视图类型<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<p>通过kind属性可以修改View对象的显示类型：</p>
+<ul class="simple">
+<li>'modal' : 模式窗口, 非即时更新</li>
+<li>'live'  : 非模式窗口，即时更新</li>
+<li>'livemodal' : 模式窗口，即时更新</li>
+<li>'nonmodal' : 非模式窗口，非即时更新</li>
+<li>'wizard' : 向导类型</li>
+<li>'panel' : 嵌入到其它窗口中的面板，即时更新，非模式</li>
+<li>'subpanel'</li>
+</ul>
+<p>其中 'modal', 'live', 'livemodal', 'nonmodal' 四种类型的View都将采用窗口显示其内容。所谓模式窗口，表示此窗口关闭之前，程序中的其它窗口都不能被激活。而即时更新则是指当窗口中的控件内容改变时，修改会立即反应到窗口所对应的模型数据上，非即时更新的窗口则会复制模型数据，所有的改变在模型副本上进行，只有当用户确定修改(通常通过OK或者Apply按钮)时，才会修改原始数据。</p>
+<p>'wizard'由一系列特定的向导窗口组成，属于模式窗口，并且即时更新数据。</p>
+<p>'panel'和'subpanel' 则是嵌入到窗口中的面板，panel可以拥有自己的命令按钮，而subpanel则没有命令按钮。</p>
+</div>
+<div class="section" id="id5">
+<h3>命令按钮<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<p>在对话框中经常可以看到 OK, Cacel, Apply 之类的按钮，我们称之为命令按钮，它们完成所有对话框窗口都共同的操作。在TraitsUI中，这些按钮可以通过View对象的buttons属性进行设置，其值为要显示的按钮列表。</p>
+<p>TraitsUI定义了UndoButton, ApplyButton, RevertButton, OKButton, CancelButton等六个标准的命令按钮，每个按钮对应一个名字，在指定buttons属性时，可以使用按钮的类名或者其对应的名字。与按钮类对应的名字就是类名除去Button，例如UndoButton对应为&quot;Undo&quot;。</p>
+<p>在 enthought.tratis.ui.menu 中还预定义了一些命令按钮列表，方便直接使用：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">OKCancelButtons</span> <span class="o">=</span> <span class="sb">``</span><span class="p">[</span><span class="n">OKButton</span><span class="p">,</span> <span class="n">CancelButton</span> <span class="p">]</span><span class="sb">``</span>
+<span class="n">ModalButtons</span> <span class="o">=</span> <span class="sb">``</span><span class="p">[</span> <span class="n">ApplyButton</span><span class="p">,</span> <span class="n">RevertButton</span><span class="p">,</span> <span class="n">OKButton</span><span class="p">,</span> <span class="n">CancelButton</span><span class="p">,</span> <span class="n">HelpButton</span> <span class="p">]</span><span class="sb">``</span>
+<span class="n">LiveButtons</span> <span class="o">=</span> <span class="sb">``</span><span class="p">[</span> <span class="n">UndoButton</span><span class="p">,</span> <span class="n">RevertButton</span><span class="p">,</span> <span class="n">OKButton</span><span class="p">,</span> <span class="n">CancelButton</span><span class="p">,</span> <span class="n">HelpButton</span> <span class="p">]</span><span class="sb">``</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">首页目录</a></h3>
+            <ul>
+<li><a class="reference external" href="#">TraitsUI-轻松制作用户界面</a><ul>
+<li><a class="reference external" href="#id1">缺省界面</a></li>
+<li><a class="reference external" href="#id2">自定义界面</a><ul>
+<li><a class="reference external" href="#item">Item对象</a></li>
+<li><a class="reference external" href="#group">Group对象</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#id3">配置视图</a><ul>
+<li><a class="reference external" href="#id4">视图类型</a></li>
+<li><a class="reference external" href="#id5">命令按钮</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            <h4>上一篇文章</h4>
+            <p class="topless"><a href="traits_intro.html"
+                                  title="上一篇文章">Traits-为Python添加类型定义</a></p>
+            <h4>下一篇文章</h4>
+            <p class="topless"><a href="chaco_intro.html"
+                                  title="下一篇文章">Chaco-交互式图表</a></p>
+          <div id="searchbox" style="display: none">
+            <h3>快速搜索</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="搜索" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              中文搜索请尽量用空格分开单个的单词，例如搜索"科学 计算"，而不是"科学计算"
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="chaco_intro.html" title="Chaco-交互式图表"
+             >下一篇</a></li>
+        <li class="right" >
+          <a href="traits_intro.html" title="Traits-为Python添加类型定义"
+             >上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+    &copy; 2009, <a href="http://hyry.dip.jp/blogt.py">HYRY Studio</a>
+      由 <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.4. 编译
+    </div>
+  </body>
+</html>

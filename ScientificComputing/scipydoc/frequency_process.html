@@ -1,0 +1,572 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>频域信号处理 &mdash; 用Python做科学计算</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link type="text/css" href="_static/jquery-ui-1.7.2.custom.css" rel="stylesheet" />	
+    <link type="text/css" href="_static/comments.css" rel="stylesheet" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '#',
+        VERSION:     '1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/jquery-ui-1.7.2.custom.min.js"></script>
+    <script type="text/javascript" src="_static/pydoc.js"></script>
+    <link rel="top" title="用Python做科学计算" href="index.html" />
+    <link rel="下一篇" title="Ctypes和NumPy" href="ctypes_numpy.html" />
+    <link rel="上一篇" title="FFT演示程序" href="fft_study.html" /> 
+
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-10837468-1");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="ctypes_numpy.html" title="Ctypes和NumPy"
+             accesskey="N">下一篇</a></li>
+        <li class="right" >
+          <a href="fft_study.html" title="FFT演示程序"
+             accesskey="P">上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="id1">
+<h1>频域信号处理<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<p>用FFT(快速傅立叶变换)能将时域的数字信号转换为频域信号。转换为频域信号之后我们可以很方便地分析出信号的频率成分，在频域上进行处理，最终还可以将处理完毕的频域信号通过IFFT(逆变换)转换为时域信号，实现许多在时域无法完成的信号处理算法。本章通过几个实例，简单地介绍有关频域信号处理的一些基本知识。</p>
+<div class="section" id="id2">
+<h2>观察信号的频谱<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>将时域信号通过FFT转换为频域信号之后，将其各个频率分量的幅值绘制成图，可以很直观地观察信号的频谱。下面的程序完成这一任务：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pylab</span> <span class="kn">as</span> <span class="nn">pl</span>
+
+<span class="n">sampling_rate</span> <span class="o">=</span> <span class="mi">8000</span>
+<span class="n">fft_size</span> <span class="o">=</span> <span class="mi">512</span>
+<span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">sampling_rate</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="mf">156.25</span><span class="o">*</span><span class="n">t</span><span class="p">)</span>  <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="mf">234.375</span><span class="o">*</span><span class="n">t</span><span class="p">)</span>
+<span class="n">xs</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:</span><span class="n">fft_size</span><span class="p">]</span>
+<span class="n">xf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">rfft</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span><span class="o">/</span><span class="n">fft_size</span>
+<span class="n">freqs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">sampling_rate</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">fft_size</span><span class="o">/</span><span class="mi">2</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">xfp</span> <span class="o">=</span> <span class="mi">20</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">xf</span><span class="p">),</span> <span class="mf">1e-20</span><span class="p">,</span> <span class="mf">1e100</span><span class="p">))</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">211</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">[:</span><span class="n">fft_size</span><span class="p">],</span> <span class="n">xs</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">u&quot;时间(秒)&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">u&quot;156.25Hz和234.375Hz的波形和频谱&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">212</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">freqs</span><span class="p">,</span> <span class="n">xfp</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">u&quot;频率(Hz)&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">subplots_adjust</span><span class="p">(</span><span class="n">hspace</span><span class="o">=</span><span class="mf">0.4</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>下面逐行对这个程序进行解释：</p>
+<p>首先定义了两个常数：sampling_rate, fft_size，分别表示数字信号的取样频率和FFT的长度。</p>
+<p>然后调用np.arange产生1秒钟的取样时间，t中的每个数值直接表示取样点的时间，因此其间隔为取样周期1/sampline_rate：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">sampling_rate</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>用取样时间数组t可以很方便地调用函数计算出波形数据，这里计算的是两个正弦波的叠加，一个频率是156.25Hz，一个是234.375Hz：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="mf">156.25</span><span class="o">*</span><span class="n">t</span><span class="p">)</span>  <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="mf">234.375</span><span class="o">*</span><span class="n">t</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>为什么选择这两个奇怪的频率呢？因为这两个频率的正弦波在512个取样点中正好有整数个周期。满足这个条件波形的FFT结果能够精确地反映其频谱。</p>
+<div class="topic">
+<p class="topic-title first">N点FFT能精确计算的频率</p>
+<p>假设取样频率为fs, 取波形中的N个数据进行FFT变换。那么这N点数据包含整数个周期的波形时，FFT所计算的结果是精确的。于是能精确计算的波形的周期是: n*fs/N。对于8kHz取样，512点FFT来说，8000/512.0 = 15.625Hz，前面的156.25Hz和234.375Hz正好是其10倍和15倍。</p>
+</div>
+<p>下面从波形数据x中截取fft_size个点进行fft计算。np.fft库中提供了一个rfft函数，它方便我们对实数信号进行FFT计算。根据FFT计算公式，为了正确显示波形能量，还需要将rfft函数的结果除以fft_size：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">xs</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:</span><span class="n">fft_size</span><span class="p">]</span>
+<span class="n">xf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">rfft</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span><span class="o">/</span><span class="n">fft_size</span>
+</pre></div>
+</div>
+<p>rfft函数的返回值是N/2+1个复数，分别表示从0(Hz)到sampling_rate/2(Hz)的N/2+1点频率的成分。于是可以通过下面的np.linspace计算出返回值中每个下标对应的真正的频率：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">freqs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">sampling_rate</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">fft_size</span><span class="o">/</span><span class="mi">2</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>最后我们计算每个频率分量的幅值，并通过 20*np.log10() 将其转换为以db单位的值。为了防止0幅值的成分造成log10无法计算，我们调用np.clip对xf的幅值进行上下限处理：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">xfp</span> <span class="o">=</span> <span class="mi">20</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">xf</span><span class="p">),</span> <span class="mf">1e-20</span><span class="p">,</span> <span class="mf">1e100</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>剩下的程序就是将时域波形和频域波形绘制出来，这里就不再详细叙述了。此程序的输出为：</p>
+<div class="figure" id="fig-spectrumexample01">
+<img alt="_images/spectrum_example_01.png" src="_images/spectrum_example_01.png" style="width: 14cm;" />
+<p class="caption">使用FFT计算正弦波的频谱</p>
+</div>
+<p>如果你放大其频谱中的两个峰值的部分的话，可以看到其值分别为：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">xfp</span><span class="p">[</span><span class="mi">10</span><span class="p">]</span>
+<span class="go">-6.0205999132796251</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">xfp</span><span class="p">[</span><span class="mi">15</span><span class="p">]</span>
+<span class="go">-9.6432746655328714e-16</span>
+</pre></div>
+</div>
+<p>即156.25Hz的成分为-6dB， 而234.375Hz的成分为0dB，与波形的计算公式中的各个分量的能量(振幅值/2)符合。</p>
+<p>如果我们波形不能在fft_size个取样中形成整数个周期的话会怎样呢？</p>
+<p>将波形计算公式修改为：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="mi">200</span><span class="o">*</span><span class="n">t</span><span class="p">)</span>  <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="mi">300</span><span class="o">*</span><span class="n">t</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>得到的结果如下：</p>
+<div class="figure" id="fig-spectrumexample02">
+<img alt="_images/spectrum_example_02.png" src="_images/spectrum_example_02.png" style="width: 14cm;" />
+<p class="caption">非完整周期的正弦波经过FFT变换之后出现频谱泄漏</p>
+</div>
+<p>这次得到的频谱不再是两个完美的峰值，而是两个峰值频率周围的频率都有能量。这显然和两个正弦波的叠加波形的频谱有区别。本来应该属于200Hz和300Hz的能量分散到了周围的频率中，这个现象被称为频谱泄漏。出现频谱泄漏的原因在于fft_size个取样点无法放下整数个200Hz和300Hz的波形。</p>
+<div class="topic">
+<p class="topic-title first">频谱泄漏的解释</p>
+<p>我们只能在有限的时间段中对信号进行测量，无法知道在测量范围之外的信号是怎样的。因此只能对测量范围之外的信号进行假设。而傅立叶变换的假设很简单：测量范围之外的信号是所测量到的信号的重复。</p>
+<p>现在考虑512点FFT，从信号中取出的512个数据就是FFT的测量范围，它计算的是这512个数据一直重复的波形的频谱。显然如果512个数据包含整数个周期的话，那么得到的结果就是原始信号的频谱，而如果不是整数周期的话，得到的频谱就是如下波形的频谱，这里假设对50Hz的正弦波进行512点FFT：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">/</span><span class="mi">8000</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="mi">50</span><span class="o">*</span><span class="n">t</span><span class="p">)[:</span><span class="mi">512</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="n">x</span><span class="p">,</span><span class="n">x</span><span class="p">,</span><span class="n">x</span><span class="p">]))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="figure" id="fig-spectrumexample03">
+<img alt="_images/spectrum_example_03.png" src="_images/spectrum_example_03.png" style="width: 14cm;" />
+<p class="caption">50Hz正弦波的512点FFT所计算的频谱的实际波形</p>
+</div>
+<p>由于这个波形的前后不是连续的，出现波形跳变，而跳变处的有着非常广泛的频谱，因此FFT的结果中出现频谱泄漏。</p>
+</div>
+<div class="section" id="id3">
+<h3>窗函数<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<p>为了减少FFT所截取的数据段前后的跳变，可以对数据先乘以一个窗函数，使得其前后数据能平滑过渡。例如常用的hann窗函数的定义如下：</p>
+<div class="math">
+<p><img src="_images/math/83dd06861e33821a6a9e28eccce33f90b0725c9c.png" alt="w(n)= 0.5\; \left(1 - \cos \left ( \frac{2 \pi n}{N-1} \right) \right)" /></p>
+</div><p>其中N为窗函数的点数，下面是一个512点hann窗的曲线：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pylab</span> <span class="kn">as</span> <span class="nn">pl</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">scipy.signal</span> <span class="kn">as</span> <span class="nn">signal</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pl</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">hann</span><span class="p">(</span><span class="mi">512</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="figure" id="fig-spectrumexample04">
+<img alt="_images/spectrum_example_04.png" src="_images/spectrum_example_04.png" style="width: 14cm;" />
+<p class="caption">hann窗函数</p>
+</div>
+<p>窗函数都在scipy.signal库中定义，它们的第一个参数为点数N。可以看出hann窗函数是完全对称的，也就是说第0点和第511点的值完全相同，都为0。在这样的函数和信号数据相乘的话，结果中会出现前后两个连续的0，这样FFT的结果所表示的周期信号中有两个连续的0值，会对信号的周期性有一定的影响。</p>
+<div class="topic">
+<p class="topic-title first">计算周期信号的一个周期的数据</p>
+<p>考虑对一个正弦波取样10个点，那么第一个点的值为0，而最后一个点的值不应该是0，这样这10个数据的重复才能是精确的正弦波，下面的两种计算中，前者是正确的：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">10</span><span class="p">))</span>
+<span class="go">array([  0.00000000e+00,   5.87785252e-01,   9.51056516e-01,</span>
+<span class="go">         9.51056516e-01,   5.87785252e-01,   1.22464680e-16,</span>
+<span class="go">        -5.87785252e-01,  -9.51056516e-01,  -9.51056516e-01,</span>
+<span class="go">        -5.87785252e-01])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+<span class="go">array([  0.00000000e+00,   6.42787610e-01,   9.84807753e-01,</span>
+<span class="go">         8.66025404e-01,   3.42020143e-01,  -3.42020143e-01,</span>
+<span class="go">        -8.66025404e-01,  -9.84807753e-01,  -6.42787610e-01,</span>
+<span class="go">        -2.44929360e-16])</span>
+</pre></div>
+</div>
+</div>
+<p>为了解决连续0值的问题，hann函数提供了一个sym关键字参数，如果设置其为0的话，那么将产生一个N+1点的hann窗函数，然后取其前N个数，这样得到的窗函数适合于周期信号：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">signal</span><span class="o">.</span><span class="n">hann</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span>
+<span class="go">array([ 0.        ,  0.1882551 ,  0.61126047,  0.95048443,  0.95048443,</span>
+<span class="go">        0.61126047,  0.1882551 ,  0.        ])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">signal</span><span class="o">.</span><span class="n">hann</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="n">sym</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="go">array([ 0.        ,  0.14644661,  0.5       ,  0.85355339,  1.        ,</span>
+<span class="go">        0.85355339,  0.5       ,  0.14644661])</span>
+</pre></div>
+</div>
+<p>50Hz正弦波与窗函数乘积之后的重复波形如下：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">/</span><span class="mi">8000</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="mi">50</span><span class="o">*</span><span class="n">t</span><span class="p">)[:</span><span class="mi">512</span><span class="p">]</span> <span class="o">*</span> <span class="n">signal</span><span class="o">.</span><span class="n">hann</span><span class="p">(</span><span class="mi">512</span><span class="p">,</span> <span class="n">sym</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="n">x</span><span class="p">,</span><span class="n">x</span><span class="p">,</span><span class="n">x</span><span class="p">]))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="figure" id="fig-spectrumexample05">
+<img alt="_images/spectrum_example_05.png" src="_images/spectrum_example_05.png" style="width: 14cm;" />
+<p class="caption">加hann窗的50Hz正弦波的512点FFT所计算的实际波形</p>
+</div>
+<p>回到前面的例子，将200Hz, 300Hz的叠加波形与hann窗乘积之后再计算其频谱，得到如下频谱图：</p>
+<div class="figure" id="fig-spectrumexample06">
+<img alt="_images/spectrum_example_06.png" src="_images/spectrum_example_06.png" style="width: 14cm;" />
+<p class="caption">加hann窗前后的频谱，hann窗能降低频谱泄漏</p>
+</div>
+<p>可以看到与hann窗乘积之后的信号的频谱能量更加集中于200Hz和300Hz，但是其能量有所降低。这是因为hann窗本身有一定的能量衰减：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">hann</span><span class="p">(</span><span class="mi">512</span><span class="p">,</span> <span class="n">sym</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span><span class="o">/</span><span class="mi">512</span>
+<span class="go">0.5</span>
+</pre></div>
+</div>
+<p>因此如果需要严格保持信号的能量的话，还需要在乘以hann窗之后再乘以2。</p>
+<p>上面完整绘图程序请参照： <a class="reference external" href="example_spectrum_example_hann.html"><em>频谱泄漏和hann窗</em></a></p>
+</div>
+<div class="section" id="id4">
+<h3>频谱平均<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<p>对于频谱特性不随时间变化的信号，例如引擎、压缩机等机器噪声，可以对其进行长时间的采样，然后分段进行FFT计算，最后对每个频率分量的幅值求其平均值可以准确地测量信号的频谱。</p>
+<p>下面的程序完成这一计算：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">scipy.signal</span> <span class="kn">as</span> <span class="nn">signal</span>
+<span class="kn">import</span> <span class="nn">pylab</span> <span class="kn">as</span> <span class="nn">pl</span>
+
+<span class="k">def</span> <span class="nf">average_fft</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fft_size</span><span class="p">):</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">//</span> <span class="n">fft_size</span> <span class="o">*</span> <span class="n">fft_size</span>
+    <span class="n">tmp</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">fft_size</span><span class="p">)</span>
+    <span class="n">tmp</span> <span class="o">*=</span> <span class="n">signal</span><span class="o">.</span><span class="n">hann</span><span class="p">(</span><span class="n">fft_size</span><span class="p">,</span> <span class="n">sym</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">xf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">rfft</span><span class="p">(</span><span class="n">tmp</span><span class="p">)</span><span class="o">/</span><span class="n">fft_size</span><span class="p">)</span>
+    <span class="n">avgf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">xf</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="mi">20</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">avgf</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>average_fft(x, fft_size)对数组x进行fft_size点FFT运算，以dB为单位返回其平均后的幅值。由于x的长度可能不是fft_size的整数倍，因此首先将其缩短为fft_size的整数倍，然后用reshape函数将其转换为一个二维数组tmp。tmp的第1轴的长度为fft_size：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">//</span> <span class="n">fft_size</span> <span class="o">*</span> <span class="n">fft_size</span>
+<span class="n">tmp</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">fft_size</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>然后将tmp的第1轴上的数据和窗函数相乘，这里选用的是hann窗：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">tmp</span> <span class="o">*=</span> <span class="n">signal</span><span class="o">.</span><span class="n">hann</span><span class="p">(</span><span class="n">fft_size</span><span class="p">,</span> <span class="n">sym</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>调用rfft对tmp每的行数据进行FFT计算，并求其幅值：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">xf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">rfft</span><span class="p">(</span><span class="n">tmp</span><span class="p">)</span><span class="o">/</span><span class="n">fft_size</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>接下来调用average函数对xf沿着第0轴进行平均，这样就得到每个频率分量的平均幅值：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">avgf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">xf</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>下面是利用averagge_fft函数计算随机数序列频谱的例子：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">100000</span><span class="p">)</span> <span class="o">-</span> <span class="mf">0.5</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">xf</span> <span class="o">=</span> <span class="n">average_fft</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">512</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xf</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="figure" id="fig-spectrumexample07">
+<img alt="_images/spectrum_example_07.png" src="_images/spectrum_example_07.png" style="width: 14cm;" />
+<p class="caption">白色噪声的频谱接近水平直线(注意Y轴的范围)</p>
+</div>
+<p>我们可以看到随机噪声的频谱接近一条水平的直线，也就是说每个频率窗口的能量都相同，这种噪声我们称之为白色噪声。</p>
+<p>如果我们利用scipy.signal库中的滤波器设计函数，设计一个IIR低通滤波器，将白色噪声输入到此低通滤波器，绘制其输出数据的平均频谱的话，就能够观察到IIR滤波器的频率响应特性，下面的程序利用iirdesign设计一个8kHz取样的1kHz的 Chebyshev I 型低通滤波器，iirdesign函数需要用正规化的频率(取值范围为0-1)，然后调用filtfilt对白色噪声信号x进行低通滤波：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">b</span><span class="p">,</span><span class="n">a</span><span class="o">=</span><span class="n">signal</span><span class="o">.</span><span class="n">iirdesign</span><span class="p">(</span><span class="mi">1000</span><span class="o">/</span><span class="mf">4000.0</span><span class="p">,</span> <span class="mi">1100</span><span class="o">/</span><span class="mf">4000.0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">40</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s">&quot;cheby1&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">100000</span><span class="p">)</span> <span class="o">-</span> <span class="mf">0.5</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">filtfilt</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>如果用average_fft计算输出信号y的平均频谱，得到如下频谱图：</p>
+<div class="figure" id="fig-spectrumexample08">
+<img alt="_images/spectrum_example_08.png" src="_images/spectrum_example_08.png" style="width: 14cm;" />
+<p class="caption">经过低通滤波器的白色噪声的频谱</p>
+</div>
+</div>
+</div>
+<div class="section" id="id5">
+<h2>快速卷积<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
+<p>我们知道，信号x经过系统h之后的输出y是x和h的卷积，虽然卷积的计算方法很简单，但是当x和h都很长的时候，卷积计算是非常耗费时间的。因此对于比较长的系统h，需要找到比直接计算卷积更快的方法。</p>
+<p>信号系统理论中有这样一个规律：时域的卷积等于频域的乘积，因此要计算时域的卷积，可以将时域信号转换为频域信号，进行乘积运算之后再将结果转换为时域信号，实现快速卷积。</p>
+<p>由于FFT运算可以高效地将时域信号转换为频域信号，其运算的复杂度为 O(N*log(N))，因此三次FFT运算加一次乘积运算的总复杂度仍然为 O(N*log(N)) 级别，而卷积运算的复杂度为 O(N*N)，显然通过FFT计算卷积要比直接计算快速得多。这里假设需要卷积的两个信号的长度都为N。</p>
+<p>但是有一个问题：FFT运算假设其所计算的信号为周期信号，因此通过上述方法计算出的结果实际上是两个信号的循环卷积，而不是线性卷积。为了用FFT计算线性卷积，需要对信号进行补零扩展，使得其长度长于线性卷积结果的长度。</p>
+<p>例如，如果我们要计算数组a和b的卷积，a和b的长度都为128，那么它们的卷积结果的长度为 len(a) + len(b) - 1 = 257。为了用FFT能够计算其线性卷积，需要将a和b都扩展到256。下面的程序演示这个计算过程：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="k">def</span> <span class="nf">fft_convolve</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">):</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="o">+</span><span class="nb">len</span><span class="p">(</span><span class="n">b</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="mi">2</span><span class="o">**</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">n</span><span class="p">))</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">N</span><span class="p">)</span>
+    <span class="n">B</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">N</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">ifft</span><span class="p">(</span><span class="n">A</span><span class="o">*</span><span class="n">B</span><span class="p">)[:</span><span class="n">n</span><span class="p">]</span>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">128</span><span class="p">)</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">128</span><span class="p">)</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">)</span>
+    
+    <span class="k">print</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">c</span> <span class="o">-</span> <span class="n">fft_convolve</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">)))</span>
+</pre></div>
+</div>
+<p>此程序的输出为直接卷积和FFT快速卷积的结果之间的误差，大约为5e-12左右。</p>
+<p>在这段程序中，a,b的长度为128，其卷积结果c的长度为n=255，我们通过下面的算式找到大于n的最小的2的整数次幂：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">N</span> <span class="o">=</span> <span class="mi">2</span><span class="o">**</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">n</span><span class="p">))</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>在调用fft函数对其进行变换时，传递第二个参数为N(FFT的长度)，这样fft函数将自动对a,b进行补零。最后通过ifft得到的卷积结果c2的长度为N，比实际的卷积结果c要多出一个数，这个多出来的元素应该接近于0，请读者自行验证。</p>
+<p>下面测试一下速度：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">timeit</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">setup</span><span class="o">=</span><span class="s">&quot;&quot;&quot;import numpy as np</span>
+<span class="go">a=np.random.rand(10000)</span>
+<span class="go">b=np.random.rand(10000)</span>
+<span class="go">from spectrum_fft_convolve import fft_convolve&quot;&quot;&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">timeit</span><span class="o">.</span><span class="n">timeit</span><span class="p">(</span><span class="s">&quot;np.convolve(a,b)&quot;</span><span class="p">,</span><span class="n">setup</span><span class="p">,</span> <span class="n">number</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="go">1.852900578146091</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">timeit</span><span class="o">.</span><span class="n">timeit</span><span class="p">(</span><span class="s">&quot;fft_convolve(a,b)&quot;</span><span class="p">,</span><span class="n">setup</span><span class="p">,</span> <span class="n">number</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="go">0.19475575806416145</span>
+</pre></div>
+</div>
+<p>显然计算两个很长的数组的卷积，FFT快速卷积要比直接卷积快很多。但是对于较短的数组，直接卷积运算将更快一些。下图显示了直接卷积和快速卷积的每点的平均计算时间和长度之间的关系：</p>
+<div class="figure" id="fig-spectrumexample09">
+<img alt="_images/spectrum_example_09.png" src="_images/spectrum_example_09.png" style="width: 14cm;" />
+<p class="caption">用FFT计算卷积和直接卷积的时间复杂度比较</p>
+</div>
+<p>由于图中的Y轴表示每点的计算时间，因此对于直接卷积它是线性的：O(N*N)/N。我们看到对于1024点以上的计算，快速卷积显示出明显的优势。</p>
+<p>具体的程序请参照 <a class="reference external" href="example_spectrum_fft_convolve_timeit.html"><em>FFT卷积的速度比较</em></a></p>
+<p>由于FFT卷积很常用，因此scipy.signal库中提供了fftconvolve函数，此函数采用FFT运算可以计算多维数组的卷积。读者也可以参照此函数的源代码帮助理解。</p>
+<div class="section" id="id6">
+<h3>分段运算<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+<p>现在考虑对于输入信号x和系统响应h的卷积运算，通常x是非常长的，例如要对某段录音进行滤波处理，假设取样频率为8kHz，录音长度为1分钟的话，那么x的长度为480000。而且x的长度也可能不是固定的，例如我们可能需要对麦克风的连续输入信号进行滤波处理。而h的长度通常都是固定的，例如它是某个房间的冲击响应，或者是某种FIR滤波器。</p>
+<p>根据前面的介绍，为了有效地利用FFT计算卷积，我们希望它的两个输入长度相当，于是就需要对信号x进行分段处理。对卷积的分段运算被称作：overlap-add运算。</p>
+<p>overlap-add的计算方法如下图所示：</p>
+<div class="figure" id="fig-spectrumexample10">
+<img alt="_images/spectrum_example_10.png" src="_images/spectrum_example_10.png" style="width: 14cm;" />
+<p class="caption">分段卷积的过程演示</p>
+</div>
+<p>原始信号x长度为300，将它分为三段，分别与滤波器系数h进行卷积计算，h的长度为101，因此每段输出200个数据，图中用绿色标出每段输出的200个数据。这3段数据按照时间顺序进行求和之后得到结果和原始信号的卷积是相同的。</p>
+<p>因此将持续的输入信号x和滤波器h进行卷积的运算可以按照如下步骤进行，假设h的长度为M：</p>
+<ol class="arabic simple">
+<li>建立一个缓存，其大小为N+M-1，初始值为0</li>
+<li>每次从x中读取N个数据，和h进行卷积，得到N+M-1个数据，和缓存中的数据进行求和，并放进缓存中，然后输出缓存前N个数据</li>
+<li>将缓存中的数据向左移动N个元素，也就是让缓存中的第N个元素成为第0个元素，后面的N个元素全部设置为0</li>
+<li>跳转到2重复运行</li>
+</ol>
+<p>下面是实现这一算法的演示程序：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>
+<span class="n">h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">101</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
+
+<span class="n">N</span> <span class="o">=</span> <span class="mi">50</span> <span class="c"># 分段大小</span>
+<span class="n">M</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">h</span><span class="p">)</span> <span class="c"># 滤波器长度</span>
+
+<span class="n">output</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="c">#缓存初始化为0</span>
+<span class="nb">buffer</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">M</span><span class="o">+</span><span class="n">N</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">/</span><span class="n">N</span><span class="p">):</span>
+    <span class="c">#从输入信号中读取N个数据</span>
+    <span class="n">xslice</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="o">*</span><span class="n">N</span><span class="p">:(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">N</span><span class="p">]</span>
+    <span class="c">#计算卷积</span>
+    <span class="n">yslice</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">xslice</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
+    <span class="c">#将卷积的结果加入到缓冲中</span>
+    <span class="nb">buffer</span> <span class="o">+=</span> <span class="n">yslice</span>
+    <span class="c">#输出缓存中的前N个数据，注意使用copy，否则输出的是buffer的一个视图</span>
+    <span class="n">output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="nb">buffer</span><span class="p">[:</span><span class="n">N</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="p">)</span>
+    <span class="c">#缓存中的数据左移动N个元素</span>
+    <span class="nb">buffer</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">M</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="nb">buffer</span><span class="p">[</span><span class="n">N</span><span class="p">:]</span>
+    <span class="c">#后面的补0</span>
+    <span class="nb">buffer</span><span class="p">[</span><span class="n">M</span><span class="o">-</span><span class="mi">1</span><span class="p">:]</span> <span class="o">=</span> <span class="mi">0</span>
+
+<span class="c">#将输出的数据组合为数组</span>
+<span class="n">y2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+<span class="c">#计算和直接卷积的结果之间的误差</span>
+<span class="k">print</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span> <span class="n">y2</span> <span class="o">-</span> <span class="n">y</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)]</span> <span class="p">)</span> <span class="p">)</span>
+</pre></div>
+</div>
+<p>注意第23行需要输出缓存前N个数据的拷贝，否则输出的是数组的一个视图，当此后buffer更新时，视图中的数据会一起更新。</p>
+<p>将FFT快速卷积和overlap-add相结合，可以制作出一些快速的实时数据滤波算法。但是由于FFT卷积对于两个长度相当的数组时最为有效，因此在分段时也会有所限制：例如如果滤波器的长度为2048，那么理想的分段长度也为2048，如果将分段长度设置得过低，反而会增加运算量。因此在实时性要求很强的系统中，只能采用直接卷积。</p>
+</div>
+</div>
+<div class="section" id="hilbert">
+<h2>Hilbert变换<a class="headerlink" href="#hilbert" title="Permalink to this headline">¶</a></h2>
+<p>Hilbert变换能在振幅保持不变的情况下将输入信号的相角偏移90度，简单地说就是能将正弦波形转换为余弦波形，下面的程序验证这一特性：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">fftpack</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">pl</span>
+
+<span class="c"># 产生1024点4个周期的正弦波</span>
+<span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">8</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="mi">1024</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+
+<span class="c"># 进行Hilbert变换</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">fftpack</span><span class="o">.</span><span class="n">hilbert</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;原始波形&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;Hilbert转换后的波形&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>关于程序的几点说明：</p>
+<ul class="simple">
+<li>hilbert转换函数在scipy.fftpack函数库中</li>
+<li>为了生成完美的正弦波，需要计算整数个周期，因此调用linspace时指定endpoint=False，这样就不会包括区间的结束点：8*np.pi</li>
+</ul>
+<p>此程序的输出图表如下，我们可以很清楚地看出hilbert将正弦波变换为了余弦波形。</p>
+<div class="figure" id="fig-spectrumhilbert01">
+<img alt="_images/spectrum_hilbert_01.png" src="_images/spectrum_hilbert_01.png" style="width: 14cm;" />
+<p class="caption">Hilbert变换将正弦波变为余弦波</p>
+</div>
+<div class="topic">
+<p class="topic-title first">Hilbert正变换的相角偏移符号</p>
+<p>本书中将相角偏移+90度成为Hilbert正变换。有的文献书籍正好将定义倒转过来：将偏移+90度成为Hilbert负变换，而偏移-90度成为Hilbert正变换。</p>
+</div>
+<p>相角偏移90度相当于复数平面上的点与虚数单位1j相乘，因此Hilbert变换的频率响应可以用如下公式给出：</p>
+<div class="math">
+<p><img src="_images/math/602afe88ec03219a44abe7cf23b0859f89ee91ef.png" alt="H(\omega) = j \cdot sgn(\omega)" /></p>
+</div><p>其中 <img class="math" src="_images/math/54d7d48553f4d9e7ab418118607ea324cbfddfda.png" alt="\omega"/> 为圆频率，sgn函数为符号函数，即：</p>
+<div class="math">
+<p><img src="_images/math/276c2f7665f32fff8a85ad1cb339e90257882575.png" alt="sgn(\omega) =\begin{cases}
+\ \ 1, &amp; \mbox{for } \omega &gt; 0,\\
+\ \ 0, &amp; \mbox{for } \omega = 0,\\
+-1, &amp; \mbox{for } \omega &lt; 0,
+\end{cases}" /></p>
+</div><p>我们可以将其频率响应理解为：</p>
+<ul class="simple">
+<li>直流分量为0</li>
+<li>正频率成分偏移+90度</li>
+<li>负频率成分偏移-90度</li>
+</ul>
+<p>由于对于实数信号来说，正负频率成分共轭，因此对实数信号进行Hilbert变换之后仍然是实数信号。下面的程序验证Hilbert变换的频率响应：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">16</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y</span> <span class="o">=</span> <span class="n">fftpack</span><span class="o">.</span><span class="n">hilbert</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">Y</span><span class="o">/</span><span class="n">X</span><span class="p">)</span>
+<span class="go">array([ 0.,  1.,  1.,  1.,  1.,  1.,  1.,  1.,</span>
+<span class="go">        0., -1., -1., -1., -1., -1., -1., -1.])</span>
+</pre></div>
+</div>
+<p>对信号进行N点FFT变换之后：</p>
+<ul class="simple">
+<li>下标为0的频率分量表示直流分量</li>
+<li>下标为N/2的的频率分量为取样频率/2的频率分量</li>
+<li>1到N/2-1为正频率分量</li>
+<li>N/2+1到N为负频率分量</li>
+</ul>
+<p>对照Y/X的虚数部分，不难看出它是符合Hilbert的频率响应的。如果你用np.real(Y/X)观察实数部分的话，它们全部接近于0。</p>
+<p>Hilbert变换可以用作包络检波。具体算法如下所示：</p>
+<div class="math">
+<p><img src="_images/math/8cfd3cef692c0e4871725e2354a9ba81e9ed4932.png" alt="envelope = \sqrt{H(x)^2 + x^2}" /></p>
+</div><p>其中x为原始载波波形，H(x)为x的Hilbert变换之后的波形，envelope为信号x的包络。其原理很容易理解：假设x为正弦波，那么H(x)为余弦波，根据公式：</p>
+<div class="math">
+<p><img src="_images/math/7411300acb8eb65ca866c61d09c003b5e7e5b807.png" alt="\sin^2(t) + \cos^2(t) = 1" /></p>
+</div><p>可知envelope恒等于1，为sin(t)信号的包络。下面的程序验证这一算法：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pylab</span> <span class="kn">as</span> <span class="nn">pl</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">fftpack</span>
+
+<span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="mf">20000.0</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="mi">1000</span><span class="o">*</span><span class="n">t</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="mi">10</span><span class="o">*</span><span class="n">t</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="mi">7</span><span class="o">*</span><span class="n">t</span><span class="p">)</span> <span class="o">+</span> <span class="mf">3.0</span><span class="p">)</span>
+<span class="n">hx</span> <span class="o">=</span> <span class="n">fftpack</span><span class="o">.</span><span class="n">hilbert</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+<span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;载波信号&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">hx</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span> <span class="s">&quot;r&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;检出的包络信号&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">u&quot;使用Hilbert变换进行包络检波&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="figure" id="fig-spectrumhilbert02">
+<img alt="_images/spectrum_hilbert_02.png" src="_images/spectrum_hilbert_02.png" style="width: 14cm;" />
+<p class="caption">使用Hilbert变换对载波信号进行包络检波</p>
+</div>
+<p>前面介绍过可以使用频率扫描波形测量滤波器的频率响应，我们可以使用这个算法计算出扫描波的包络：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">run</span> <span class="n">filter_lfilter_example01</span><span class="o">.</span><span class="n">py</span> <span class="c"># 运行滤波器的例子</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">hy</span> <span class="o">=</span> <span class="n">fftpack</span><span class="o">.</span><span class="n">hilbert</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">y</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">hy</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span><span class="s">&quot;r&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pl</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">u&quot;频率扫描波的包络&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>得到的包络波形如下图所示：</p>
+<div class="figure" id="fig-spectrumhilbert03">
+<img alt="_images/spectrum_hilbert_03.png" src="_images/spectrum_hilbert_03.png" style="width: 14cm;" />
+<p class="caption">使用Hilbert变换对频率扫描波进行包络检波</p>
+</div>
+<p>可以看出在高频和低频处包络计算出现较大的误差。而在中频部分能很好地计算出包络的形状。</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">首页目录</a></h3>
+            <ul>
+<li><a class="reference external" href="#">频域信号处理</a><ul>
+<li><a class="reference external" href="#id2">观察信号的频谱</a><ul>
+<li><a class="reference external" href="#id3">窗函数</a></li>
+<li><a class="reference external" href="#id4">频谱平均</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#id5">快速卷积</a><ul>
+<li><a class="reference external" href="#id6">分段运算</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#hilbert">Hilbert变换</a></li>
+</ul>
+</li>
+</ul>
+
+            <h4>上一篇文章</h4>
+            <p class="topless"><a href="fft_study.html"
+                                  title="上一篇文章">FFT演示程序</a></p>
+            <h4>下一篇文章</h4>
+            <p class="topless"><a href="ctypes_numpy.html"
+                                  title="下一篇文章">Ctypes和NumPy</a></p>
+          <div id="searchbox" style="display: none">
+            <h3>快速搜索</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="搜索" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              中文搜索请尽量用空格分开单个的单词，例如搜索"科学 计算"，而不是"科学计算"
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="ctypes_numpy.html" title="Ctypes和NumPy"
+             >下一篇</a></li>
+        <li class="right" >
+          <a href="fft_study.html" title="FFT演示程序"
+             >上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+    &copy; 2009, <a href="http://hyry.dip.jp/blogt.py">HYRY Studio</a>
+      由 <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.4. 编译
+    </div>
+  </body>
+</html>

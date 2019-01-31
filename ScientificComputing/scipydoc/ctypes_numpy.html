@@ -1,0 +1,256 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Ctypes和NumPy &mdash; 用Python做科学计算</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link type="text/css" href="_static/jquery-ui-1.7.2.custom.css" rel="stylesheet" />	
+    <link type="text/css" href="_static/comments.css" rel="stylesheet" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '#',
+        VERSION:     '1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/jquery-ui-1.7.2.custom.min.js"></script>
+    <script type="text/javascript" src="_static/pydoc.js"></script>
+    <link rel="top" title="用Python做科学计算" href="index.html" />
+    <link rel="下一篇" title="自适应滤波器和NLMS模拟" href="fast_nlms_in_python.html" />
+    <link rel="上一篇" title="频域信号处理" href="frequency_process.html" /> 
+
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-10837468-1");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="fast_nlms_in_python.html" title="自适应滤波器和NLMS模拟"
+             accesskey="N">下一篇</a></li>
+        <li class="right" >
+          <a href="frequency_process.html" title="频域信号处理"
+             accesskey="P">上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="ctypesnumpy">
+<h1>Ctypes和NumPy<a class="headerlink" href="#ctypesnumpy" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="ctypes">
+<h2>用ctypes加速计算<a class="headerlink" href="#ctypes" title="Permalink to this headline">¶</a></h2>
+<p>Ctypes是Python处理动态链接库的标准扩展模块，在Windows下使用它可以直接调用C语言编写的DLL动态链接库。由于对传递的参数没有类型和越界检查，因此如果编写的代码有问题的话，很可能会造成程序崩溃。当将数组数据使用指针传递时，出错误的风险将更加大。</p>
+<p>为了让程序更加安全，通常会用Python代码对Ctypes调用进行包装，在调用Ctypes之前，在Python级别对数据类型和越界进行检查。这样做会使得调用接口部分比其它的一些手工编写的扩展模块速度要慢，但是如果C语言的代码段处理相当多的数据的话，接口调用部分的速度损失是可以忽略不计的。</p>
+</div>
+<div class="section" id="ctypesdll">
+<h2>用ctypes调用DLL<a class="headerlink" href="#ctypesdll" title="Permalink to this headline">¶</a></h2>
+<p>为了使用CTypes，你必须依次完成以下步骤：</p>
+<ul class="simple">
+<li>编写动态连接库程序</li>
+<li>载入动态连接库</li>
+<li>将Python的对象转换为ctypes所能识别的参数</li>
+<li>使用ctypes的参数调用动态连接库中的函数</li>
+</ul>
+<p>下面我们来看看如何用ctypes调用动态链接库。</p>
+</div>
+<div class="section" id="numpyctypes">
+<h2>numpy对ctypes的支持<a class="headerlink" href="#numpyctypes" title="Permalink to this headline">¶</a></h2>
+<p>为了方便动态连接库的载入，numpy提供了一个便捷函数ctypeslib.load_library。它有两个参数，第一个参数是库的文件名，第二个参数是库所在的路径。函数返回的是一个ctypes的对象。通过此对象的属性可以直接到动态连接库所提供的函数。</p>
+<p>例如如果我们有一个库名为test_sum.dll，其中提供了一个函数mysum :</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="kt">double</span> <span class="nf">mysum</span><span class="p">(</span><span class="kt">double</span> <span class="n">a</span><span class="p">[],</span> <span class="kt">long</span> <span class="n">n</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">double</span> <span class="n">sum</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
+    <span class="k">for</span><span class="p">(</span><span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">i</span><span class="o">&lt;</span><span class="n">n</span><span class="p">;</span><span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="n">sum</span> <span class="o">+=</span> <span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+    <span class="k">return</span> <span class="n">sum</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>的话，我们可以使用如下语句载入此库：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">ctypes</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sum_test</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ctypeslib</span><span class="o">.</span><span class="n">load_library</span><span class="p">(</span><span class="s">&quot;sum_test&quot;</span><span class="p">,</span> <span class="s">&quot;.&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">sum_test</span><span class="o">.</span><span class="n">mysum</span>
+<span class="go">&lt;_FuncPtr object at 0x037D7210&gt;</span>
+</pre></div>
+</div>
+<p>要正确调用sum函数，还必须对其参数类型进行说明，下面的语句描述了sum函数的两个参数的类型和返回值的类型进行描述：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">sum_test</span><span class="o">.</span><span class="n">mysum</span><span class="o">.</span><span class="n">argtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">POINTER</span><span class="p">(</span><span class="n">c_double</span><span class="p">),</span> <span class="n">c_long</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sum_test</span><span class="o">.</span><span class="n">mysum</span><span class="o">.</span><span class="n">restype</span> <span class="o">=</span> <span class="n">c_double</span>
+</pre></div>
+</div>
+<p>接下来就可以正常调用sum函数了：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">101</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sum_test</span><span class="o">.</span><span class="n">mysum</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">ctypes</span><span class="o">.</span><span class="n">data_as</span><span class="p">(</span><span class="n">POINTER</span><span class="p">(</span><span class="n">c_double</span><span class="p">)),</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+<span class="go">5050.0</span>
+</pre></div>
+</div>
+<p>每次调用sum都需要进行类型转换时比较麻烦的事情，因此可以编写一个Python的mysum函数，将C语言的mysum函数包装起来:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">mysum</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">sum_test</span><span class="o">.</span><span class="n">mysum</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">ctypes</span><span class="o">.</span><span class="n">data_as</span><span class="p">(</span><span class="n">POINTER</span><span class="p">(</span><span class="n">c_double</span><span class="p">)),</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>在上面的例子中，test_sum.mysum的参数值使用标准的ctypes类型声明：用POINTER(c_double)声明mysum函数的第一个参数是一个指向double的指针；然后调用数组x的x.ctypes.data_as函数将x转换为一个指向double的指针类型。</p>
+<p>由于数组的元素在内存中的存储可以是不连续的，而且可以是多维数组，因此我们不能指望前面的mysum函数能够处理所有的情况：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">11</span><span class="p">,</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span> <span class="n">mysum</span><span class="p">(</span><span class="n">x</span><span class="p">[::</span><span class="mi">2</span><span class="p">])</span>
+<span class="go">15.0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">sum</span><span class="p">(</span><span class="n">x</span><span class="p">[::</span><span class="mi">2</span><span class="p">])</span>
+<span class="go">25.0</span>
+</pre></div>
+</div>
+<p>由于x[::2]和x共同一块内存空间，而x[::2]中的元素是不连续的，每个元素之间的间隔为16byptes(2个double的大小)。因此将它传递给mysum的话，实际上计算的是x数组中前5项的和：1+2+3+4+5=15，而实际上我们希望的结果是：1+3+5+7+9=25。</p>
+<p>为了对传递的数组参数进行更加详细的描述，numpy库提供了ndpointer函数。ndpointer函数对restype和argtypes中的数组参数进行描述，他有如下4个参数：</p>
+<ul class="simple">
+<li><strong>dtype</strong> : 数组的元素类型</li>
+<li><strong>ndim</strong> : 数组的维数</li>
+<li><strong>shape</strong> : 数组的形状，各个轴的长度</li>
+<li><strong>flags</strong> : 数组的标志</li>
+</ul>
+<p>例如：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">test_sum</span><span class="o">.</span><span class="n">mysum</span><span class="o">.</span><span class="n">argtypes</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">ctypeslib</span><span class="o">.</span><span class="n">ndpointer</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span> <span class="n">ndim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="s">&quot;C_CONTIGUOUS&quot;</span><span class="p">),</span>
+    <span class="n">c_long</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+<p>描述了sumfunc函数的参数为一个元素类型为double的、一维的、连续的元素按C语言规定排列的数组。</p>
+<p>这时传递给mysum函数的第一个参数可以直接是数组，因此无需再编写一个Python函数对其进行包装：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">sum_test</span><span class="o">.</span><span class="n">mysum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+<span class="go">55.0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sum_test</span><span class="o">.</span><span class="n">mysum</span><span class="p">(</span><span class="n">x</span><span class="p">[::</span><span class="mi">2</span><span class="p">],</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+<span class="go">ArgumentError: argument 1: &lt;type &#39;exceptions.TypeError&#39;&gt;:</span>
+<span class="go">array must have flags [&#39;C_CONTIGUOUS&#39;]</span>
+</pre></div>
+</div>
+<p>我们注意到如果参数数组不是连续空间的话，mysum函数的调用会抛出异常错误，提醒我们其参数需要C语言排列的连续数组。</p>
+<p>如果我们希望它能够处理多维、不连续的数组的话，就需要把数组的shape和strides属性都传递给过去。假设我们想写一个通用的mysum2函数，它可以对二维数组的所有元素进行求和。下面是C语言的程序：</p>
+<div class="highlight-c"><div class="highlight"><pre><span class="kt">double</span> <span class="nf">mysum2</span><span class="p">(</span><span class="kt">double</span> <span class="n">a</span><span class="p">[],</span> <span class="kt">int</span> <span class="n">strides</span><span class="p">[],</span> <span class="kt">int</span> <span class="n">shapes</span><span class="p">[])</span>
+<span class="p">{</span>
+    <span class="kt">double</span> <span class="n">sum</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">S0</span><span class="p">,</span> <span class="n">S1</span><span class="p">;</span>
+    <span class="n">M</span> <span class="o">=</span> <span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span> <span class="n">N</span><span class="o">=</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
+    <span class="n">S0</span> <span class="o">=</span> <span class="n">strides</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">double</span><span class="p">);</span>
+    <span class="n">S1</span> <span class="o">=</span> <span class="n">strides</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">double</span><span class="p">);</span>
+
+    <span class="k">for</span><span class="p">(</span><span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">i</span><span class="o">&lt;</span><span class="n">M</span><span class="p">;</span><span class="n">i</span><span class="o">++</span><span class="p">){</span>
+        <span class="k">for</span><span class="p">(</span><span class="n">j</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">j</span><span class="o">&lt;</span><span class="n">N</span><span class="p">;</span><span class="n">j</span><span class="o">++</span><span class="p">){</span>
+            <span class="n">sum</span> <span class="o">+=</span> <span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="o">*</span><span class="n">S0</span> <span class="o">+</span> <span class="n">j</span><span class="o">*</span><span class="n">S1</span><span class="p">];</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">sum</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>mysum2函数有3个参数，第一个参数a[]指向保存数组数据的内存块；第二个参数astrides指向保存数组各个轴元素之间的间隔(以byte为单位)；第三个参数dims指向保存数组各个轴长度的数组。</p>
+<p>由于strides保存的是以byte为单位的间隔长度，因此需要除以sizeof(double)计算出以double为单位的间隔长度S0和S1。这样二维数组a中的第i行、第j列的元素可以通过a[i*S0 + j*S1]来存取。下面用ctypes对mysum2函数进行包装：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">sum_test</span><span class="o">.</span><span class="n">mysum2</span><span class="o">.</span><span class="n">restype</span> <span class="o">=</span> <span class="n">c_double</span>
+<span class="n">sum_test</span><span class="o">.</span><span class="n">mysum2</span><span class="o">.</span><span class="n">argtypes</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">ctypeslib</span><span class="o">.</span><span class="n">ndpointer</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span> <span class="n">ndim</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+    <span class="n">POINTER</span><span class="p">(</span><span class="n">c_int</span><span class="p">),</span>
+    <span class="n">POINTER</span><span class="p">(</span><span class="n">c_int</span><span class="p">)</span>
+<span class="p">]</span>
+
+<span class="k">def</span> <span class="nf">mysum2</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">sum_test</span><span class="o">.</span><span class="n">mysum2</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">ctypes</span><span class="o">.</span><span class="n">strides</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">ctypes</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>在mysum2函数中，为了将数组x的strides和shape属性传递给C语言的函数，可以使用x.ctypes中提供的strides和shape属性。注意不能直接传递x.strides和x.shape，因为这些是python的tuple对象，而x.ctypes.shape得到的是ctypes包装的整数数组：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span><span class="o">.</span><span class="n">ctypes</span><span class="o">.</span><span class="n">shape</span>
+<span class="go">&lt;numpy.core._internal.c_long_Array_2 object at 0x020B4DF0&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">s</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">ctypes</span><span class="o">.</span><span class="n">shape</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="go">3</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<span class="go">4</span>
+</pre></div>
+</div>
+<p>可以看出x.ctypes.shape是一个有两个元素的C语言长整型数组。虽然我们也可以在Python中通过下标读取其各个元素的值，但是通常它们是作为参数传递给C语言函数用的。</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">首页目录</a></h3>
+            <ul>
+<li><a class="reference external" href="#">Ctypes和NumPy</a><ul>
+<li><a class="reference external" href="#ctypes">用ctypes加速计算</a></li>
+<li><a class="reference external" href="#ctypesdll">用ctypes调用DLL</a></li>
+<li><a class="reference external" href="#numpyctypes">numpy对ctypes的支持</a></li>
+</ul>
+</li>
+</ul>
+
+            <h4>上一篇文章</h4>
+            <p class="topless"><a href="frequency_process.html"
+                                  title="上一篇文章">频域信号处理</a></p>
+            <h4>下一篇文章</h4>
+            <p class="topless"><a href="fast_nlms_in_python.html"
+                                  title="下一篇文章">自适应滤波器和NLMS模拟</a></p>
+          <div id="searchbox" style="display: none">
+            <h3>快速搜索</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="搜索" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              中文搜索请尽量用空格分开单个的单词，例如搜索"科学 计算"，而不是"科学计算"
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="fast_nlms_in_python.html" title="自适应滤波器和NLMS模拟"
+             >下一篇</a></li>
+        <li class="right" >
+          <a href="frequency_process.html" title="频域信号处理"
+             >上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+    &copy; 2009, <a href="http://hyry.dip.jp/blogt.py">HYRY Studio</a>
+      由 <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.4. 编译
+    </div>
+  </body>
+</html>

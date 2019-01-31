@@ -1,0 +1,235 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>NLMS算法的模拟测试 &mdash; 用Python做科学计算</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link type="text/css" href="_static/jquery-ui-1.7.2.custom.css" rel="stylesheet" />	
+    <link type="text/css" href="_static/comments.css" rel="stylesheet" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '#',
+        VERSION:     '1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/jquery-ui-1.7.2.custom.min.js"></script>
+    <script type="text/javascript" src="_static/pydoc.js"></script>
+    <link rel="top" title="用Python做科学计算" href="index.html" />
+    <link rel="up" title="源程序集" href="example_code_list.html" />
+    <link rel="下一篇" title="三维标量场观察器" href="example_mayavi_embed_fieldviewer.html" />
+    <link rel="上一篇" title="CSV文件数据图形化工具" href="example_traitsUI_csv_viewer.html" /> 
+
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-10837468-1");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="example_mayavi_embed_fieldviewer.html" title="三维标量场观察器"
+             accesskey="N">下一篇</a></li>
+        <li class="right" >
+          <a href="example_traitsUI_csv_viewer.html" title="CSV文件数据图形化工具"
+             accesskey="P">上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li>
+          <li><a href="example_code_list.html" accesskey="U">源程序集</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="nlms">
+<h1>NLMS算法的模拟测试<a class="headerlink" href="#nlms" title="Permalink to this headline">¶</a></h1>
+<p>相关文档： <a class="reference external" href="fast_nlms_in_python.html"><em>自适应滤波器和NLMS模拟</em></a></p>
+<p>测试NLMS在系统辨识、信号预测和信号均衡方面的应用。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="c"># filename: nlms_test.py</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pylab</span> <span class="kn">as</span> <span class="nn">pl</span>
+<span class="kn">import</span> <span class="nn">nlms_numpy</span>
+<span class="kn">import</span> <span class="nn">scipy.signal</span>
+
+
+<span class="c"># 随机产生FIR滤波器的系数，长度为length， 延时为delay， 指数衰减</span>
+<span class="k">def</span> <span class="nf">make_path</span><span class="p">(</span><span class="n">delay</span><span class="p">,</span> <span class="n">length</span><span class="p">):</span>
+   <span class="n">path_length</span> <span class="o">=</span> <span class="n">length</span> <span class="o">-</span> <span class="n">delay</span>
+   <span class="n">h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+   <span class="n">h</span><span class="p">[</span><span class="n">delay</span><span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">(</span><span class="n">path_length</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="n">path_length</span><span class="p">)</span> <span class="p">)</span>
+   <span class="n">h</span> <span class="o">/=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">h</span><span class="o">*</span><span class="n">h</span><span class="p">))</span>
+   <span class="k">return</span> <span class="n">h</span>
+
+<span class="k">def</span> <span class="nf">plot_converge</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&quot;&quot;</span><span class="p">):</span>
+    <span class="n">size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+    <span class="n">avg_number</span> <span class="o">=</span> <span class="mi">200</span>
+    <span class="n">e</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">y</span><span class="p">[:</span><span class="n">size</span><span class="p">]</span> <span class="o">-</span> <span class="n">u</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">tmp</span> <span class="o">=</span> <span class="n">e</span><span class="p">[:</span><span class="nb">int</span><span class="p">(</span><span class="n">size</span><span class="o">/</span><span class="n">avg_number</span><span class="p">)</span><span class="o">*</span><span class="n">avg_number</span><span class="p">]</span>
+    <span class="n">tmp</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">avg_number</span>
+    <span class="n">avg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">average</span><span class="p">(</span> <span class="n">tmp</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span> <span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">avg</span><span class="p">)),</span> <span class="mi">10</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">avg</span><span class="p">),</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">diff_db</span><span class="p">(</span><span class="n">h0</span><span class="p">,</span> <span class="n">h</span><span class="p">):</span>
+   <span class="k">return</span> <span class="mi">10</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">h0</span><span class="o">-</span><span class="n">h</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">h0</span><span class="o">-</span><span class="n">h</span><span class="p">))</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">h0</span><span class="o">*</span><span class="n">h0</span><span class="p">))</span>    
+
+<span class="c"># 用NLMS进行系统辨识的模拟, 未知系统的传递函数为h0, 使用的参照信号为x</span>
+<span class="k">def</span> <span class="nf">sim_system_identify</span><span class="p">(</span><span class="n">nlms</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">h0</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">noise_scale</span><span class="p">):</span>
+      <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">h0</span><span class="p">)</span>
+      <span class="n">d</span> <span class="o">=</span> <span class="n">y</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">))</span> <span class="o">*</span> <span class="n">noise_scale</span> <span class="c"># 添加白色噪声的外部干扰</span>
+      <span class="n">h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">h0</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span> <span class="c"># 自适应滤波器的长度和未知系统长度相同，初始值为0</span>
+      <span class="n">u</span> <span class="o">=</span> <span class="n">nlms</span><span class="p">(</span> <span class="n">x</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">step_size</span> <span class="p">)</span>
+      <span class="k">return</span> <span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">h</span>
+
+<span class="k">def</span> <span class="nf">system_identify_test1</span><span class="p">():</span>
+    <span class="n">h0</span> <span class="o">=</span> <span class="n">make_path</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">256</span><span class="p">)</span> <span class="c"># 随机产生一个未知系统的传递函数</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">(</span><span class="mi">10000</span><span class="p">)</span>  <span class="c"># 参照信号为白噪声      </span>
+    <span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">sim_system_identify</span><span class="p">(</span><span class="n">nlms_numpy</span><span class="o">.</span><span class="n">nlms</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">h0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
+    <span class="k">print</span> <span class="n">diff_db</span><span class="p">(</span><span class="n">h0</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span> <span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">211</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">subplots_adjust</span><span class="p">(</span><span class="n">hspace</span><span class="o">=</span><span class="mf">0.4</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">h0</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">&quot;r&quot;</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">&quot;b&quot;</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">u&quot;未知系统和收敛后的滤波器的系数比较&quot;</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">212</span><span class="p">)</span>
+    <span class="n">plot_converge</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">u&quot;自适应滤波器收敛特性&quot;</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">&quot;Iterations (samples)&quot;</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">&quot;Converge Level (dB)&quot;</span><span class="p">)</span>    
+    <span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="k">def</span> <span class="nf">system_identify_test2</span><span class="p">():</span>
+    <span class="n">h0</span> <span class="o">=</span> <span class="n">make_path</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">256</span><span class="p">)</span> <span class="c"># 随机产生一个未知系统的传递函数</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">(</span><span class="mi">20000</span><span class="p">)</span>  <span class="c"># 参照信号为白噪声   </span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">step_size</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">):</span>
+        <span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">sim_system_identify</span><span class="p">(</span><span class="n">nlms_numpy</span><span class="o">.</span><span class="n">nlms</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">h0</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
+        <span class="n">plot_converge</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;μ=</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">step_size</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">u&quot;更新系数和收敛特性的关系&quot;</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">&quot;Iterations (samples)&quot;</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">&quot;Converge Level (dB)&quot;</span><span class="p">)</span>        
+    <span class="n">pl</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>   
+
+<span class="k">def</span> <span class="nf">system_identify_test3</span><span class="p">():</span>
+    <span class="n">h0</span> <span class="o">=</span> <span class="n">make_path</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">256</span><span class="p">)</span> <span class="c"># 随机产生一个未知系统的传递函数</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">(</span><span class="mi">20000</span><span class="p">)</span>  <span class="c"># 参照信号为白噪声   </span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">noise_scale</span> <span class="ow">in</span> <span class="p">[</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">]:</span>
+        <span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">sim_system_identify</span><span class="p">(</span><span class="n">nlms_numpy</span><span class="o">.</span><span class="n">nlms</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">h0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">noise_scale</span><span class="p">)</span>
+        <span class="n">plot_converge</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;noise=</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">noise_scale</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">u&quot;外部干扰和收敛特性的关系&quot;</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">&quot;Iterations (samples)&quot;</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">&quot;Converge Level (dB)&quot;</span><span class="p">)</span>        
+    <span class="n">pl</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>       
+
+<span class="k">def</span> <span class="nf">sim_signal_equation</span><span class="p">(</span><span class="n">nlms</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">h0</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">noise_scale</span><span class="p">):</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:</span><span class="o">-</span><span class="n">D</span><span class="p">]</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">D</span><span class="p">:]</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">h0</span><span class="p">)[:</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)]</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">h0</span><span class="p">)</span><span class="o">+</span><span class="mi">2</span><span class="o">*</span><span class="n">D</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">))</span> <span class="o">*</span> <span class="n">noise_scale</span>    
+    <span class="n">u</span> <span class="o">=</span> <span class="n">nlms</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">step_size</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">h</span>
+
+<span class="k">def</span> <span class="nf">signal_equation_test1</span><span class="p">():</span>    
+    <span class="n">h0</span> <span class="o">=</span> <span class="n">make_path</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">64</span><span class="p">)</span>
+    <span class="n">D</span> <span class="o">=</span> <span class="mi">128</span>
+    <span class="n">length</span> <span class="o">=</span> <span class="mi">20000</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">(</span><span class="n">length</span><span class="o">+</span><span class="n">D</span><span class="p">)</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">sim_signal_equation</span><span class="p">(</span><span class="n">nlms_numpy</span><span class="o">.</span><span class="n">nlms</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">h0</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">h0</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;未知系统&quot;</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;自适应滤波器&quot;</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">h0</span><span class="p">,</span> <span class="n">h</span><span class="p">),</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;二者卷积&quot;</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">u&quot;信号均衡演示&quot;</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+    <span class="n">w0</span><span class="p">,</span> <span class="n">H0</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">signal</span><span class="o">.</span><span class="n">freqz</span><span class="p">(</span><span class="n">h0</span><span class="p">,</span> <span class="n">worN</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">)</span>
+    <span class="n">w</span><span class="p">,</span> <span class="n">H</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">signal</span><span class="o">.</span><span class="n">freqz</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">worN</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">w0</span><span class="p">,</span> <span class="mi">20</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">H0</span><span class="p">)),</span> <span class="n">w</span><span class="p">,</span> <span class="mi">20</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">H</span><span class="p">)))</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">u&quot;未知系统和自适应滤波器的振幅特性&quot;</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">u&quot;圆频率&quot;</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">u&quot;振幅(dB)&quot;</span><span class="p">)</span> 
+    <span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+    
+<span class="n">signal_equation_test1</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h4>上一篇文章</h4>
+            <p class="topless"><a href="example_traitsUI_csv_viewer.html"
+                                  title="上一篇文章">CSV文件数据图形化工具</a></p>
+            <h4>下一篇文章</h4>
+            <p class="topless"><a href="example_mayavi_embed_fieldviewer.html"
+                                  title="下一篇文章">三维标量场观察器</a></p>
+          <div id="searchbox" style="display: none">
+            <h3>快速搜索</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="搜索" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              中文搜索请尽量用空格分开单个的单词，例如搜索"科学 计算"，而不是"科学计算"
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="example_mayavi_embed_fieldviewer.html" title="三维标量场观察器"
+             >下一篇</a></li>
+        <li class="right" >
+          <a href="example_traitsUI_csv_viewer.html" title="CSV文件数据图形化工具"
+             >上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li>
+          <li><a href="example_code_list.html" >源程序集</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+    &copy; 2009, <a href="http://hyry.dip.jp/blogt.py">HYRY Studio</a>
+      由 <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.4. 编译
+    </div>
+  </body>
+</html>

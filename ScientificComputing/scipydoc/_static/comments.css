@@ -1,0 +1,41 @@
+
+#comment_block{
+    font-size : 12px;
+}
+
+#comment_block textarea, #comment_block input {
+    border : 1px solid #777777;
+}
+
+/*
+#comment_list{
+    height : 200px;
+    overflow : scroll;
+}
+*/
+
+.comment_item{
+    margin-bottom : 5px;
+    border-bottom : 1px solid #777777;
+}
+
+.comment_head{
+    border-bottom: 1px dashed #cccccc;
+}
+
+a.comment_link{
+    cursor : pointer;
+ /*   border : 1px dotted #cccccc; */
+}
+
+a.comment_link:hover{
+  /*  border : 1px solid #777777; */
+}
+
+div.sphinxsidebar{
+    position : fixed;
+    left : 0px;
+    top : 30px;
+    margin-left : 0px !important;
+}
+

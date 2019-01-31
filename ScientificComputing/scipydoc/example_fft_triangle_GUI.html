@@ -1,0 +1,340 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>三角波的FFT演示 &mdash; 用Python做科学计算</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link type="text/css" href="_static/jquery-ui-1.7.2.custom.css" rel="stylesheet" />	
+    <link type="text/css" href="_static/comments.css" rel="stylesheet" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '#',
+        VERSION:     '1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/jquery-ui-1.7.2.custom.min.js"></script>
+    <script type="text/javascript" src="_static/pydoc.js"></script>
+    <link rel="top" title="用Python做科学计算" href="index.html" />
+    <link rel="up" title="源程序集" href="example_code_list.html" />
+    <link rel="下一篇" title="在traitsUI中使用的matplotlib控件" href="example_mpl_figure_editor.html" />
+    <link rel="上一篇" title="源程序集" href="example_code_list.html" /> 
+
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-10837468-1");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="example_mpl_figure_editor.html" title="在traitsUI中使用的matplotlib控件"
+             accesskey="N">下一篇</a></li>
+        <li class="right" >
+          <a href="example_code_list.html" title="源程序集"
+             accesskey="P">上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li>
+          <li><a href="example_code_list.html" accesskey="U">源程序集</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="fft">
+<h1>三角波的FFT演示<a class="headerlink" href="#fft" title="Permalink to this headline">¶</a></h1>
+<p>相关文档： <a class="reference external" href="fft_study.html"><em>FFT演示程序</em></a></p>
+<p>本程序演示各种三角波形的FFT频谱，用户可以方便地修改三角波的各个参数，并立即看到其FFT频谱的变化。</p>
+<OBJECT CLASSID="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" WIDTH="589" HEIGHT="447" CODEBASE="http://active.macromedia.com/flash5/cabs/swflash.cab#version=7,0,0,0">
+<PARAM NAME="movie" VALUE="_images/fft_study_04.swf">
+<PARAM NAME="play" VALUE="true">
+<PARAM NAME="loop" VALUE="false">
+<PARAM NAME="wmode" VALUE="transparent">
+<PARAM NAME="quality" VALUE="high">
+<EMBED SRC="_images/fft_study_04.swf" width="589" HEIGHT="447" quality="high" loop="false" wmode="transparent" TYPE="application/x-shockwave-flash" PLUGINSPAGE="http://www.macromedia.com/shockwave/download/index.cgi?P1_Prod_Version=ShockwaveFlash">
+</EMBED>
+</OBJECT>
+<img src="_images/fft_study_04.swf" style="visibility:hidden"/><div class="highlight-python"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="kn">from</span> <span class="nn">enthought.traits.api</span> <span class="kn">import</span> \
+    <span class="n">Str</span><span class="p">,</span> <span class="n">Float</span><span class="p">,</span> <span class="n">HasTraits</span><span class="p">,</span> <span class="n">Property</span><span class="p">,</span> <span class="n">cached_property</span><span class="p">,</span> <span class="n">Range</span><span class="p">,</span> <span class="n">Instance</span><span class="p">,</span> <span class="n">on_trait_change</span><span class="p">,</span> <span class="n">Enum</span>
+
+<span class="kn">from</span> <span class="nn">enthought.chaco.api</span> <span class="kn">import</span> <span class="n">Plot</span><span class="p">,</span> <span class="n">AbstractPlotData</span><span class="p">,</span> <span class="n">ArrayPlotData</span><span class="p">,</span> <span class="n">VPlotContainer</span>
+
+<span class="kn">from</span> <span class="nn">enthought.traits.ui.api</span> <span class="kn">import</span> \
+    <span class="n">Item</span><span class="p">,</span> <span class="n">View</span><span class="p">,</span> <span class="n">VGroup</span><span class="p">,</span> <span class="n">HSplit</span><span class="p">,</span> <span class="n">ScrubberEditor</span><span class="p">,</span> <span class="n">VSplit</span>
+
+<span class="kn">from</span> <span class="nn">enthought.enable.api</span> <span class="kn">import</span> <span class="n">Component</span><span class="p">,</span> <span class="n">ComponentEditor</span>
+<span class="kn">from</span> <span class="nn">enthought.chaco.tools.api</span> <span class="kn">import</span> <span class="n">PanTool</span><span class="p">,</span> <span class="n">ZoomTool</span> 
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="c"># 鼠标拖动修改值的控件的样式</span>
+<span class="n">scrubber</span> <span class="o">=</span> <span class="n">ScrubberEditor</span><span class="p">(</span>
+    <span class="n">hover_color</span>  <span class="o">=</span> <span class="mh">0xFFFFFF</span><span class="p">,</span> 
+    <span class="n">active_color</span> <span class="o">=</span> <span class="mh">0xA0CD9E</span><span class="p">,</span> 
+    <span class="n">border_color</span> <span class="o">=</span> <span class="mh">0x808080</span>
+<span class="p">)</span>
+
+<span class="c"># 取FFT计算的结果freqs中的前n项进行合成，返回合成结果，计算loops个周期的波形</span>
+<span class="k">def</span> <span class="nf">fft_combine</span><span class="p">(</span><span class="n">freqs</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">loops</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="n">length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">freqs</span><span class="p">)</span> <span class="o">*</span> <span class="n">loops</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">length</span><span class="p">)</span>
+    <span class="n">index</span> <span class="o">=</span> <span class="n">loops</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">/</span> <span class="n">length</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">freqs</span><span class="p">[:</span><span class="n">n</span><span class="p">]):</span>
+        <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span> <span class="n">p</span> <span class="o">*=</span> <span class="mi">2</span> <span class="c"># 除去直流成分之外，其余的系数都*2</span>
+        <span class="n">data</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">k</span><span class="o">*</span><span class="n">index</span><span class="p">)</span> <span class="c"># 余弦成分的系数为实数部</span>
+        <span class="n">data</span> <span class="o">-=</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">k</span><span class="o">*</span><span class="n">index</span><span class="p">)</span> <span class="c"># 正弦成分的系数为负的虚数部</span>
+    <span class="k">return</span> <span class="n">index</span><span class="p">,</span> <span class="n">data</span>    
+
+<span class="k">class</span> <span class="nc">TriangleWave</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+    <span class="c"># 指定三角波的最窄和最宽范围，由于Range似乎不能将常数和traits名混用</span>
+    <span class="c"># 所以定义这两个不变的trait属性</span>
+    <span class="n">low</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">0.02</span><span class="p">)</span>
+    <span class="n">hi</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+
+    <span class="c"># 三角波形的宽度</span>
+    <span class="n">wave_width</span> <span class="o">=</span> <span class="n">Range</span><span class="p">(</span><span class="s">&quot;low&quot;</span><span class="p">,</span> <span class="s">&quot;hi&quot;</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span>
+
+    <span class="c"># 三角波的顶点C的x轴坐标</span>
+    <span class="n">length_c</span> <span class="o">=</span> <span class="n">Range</span><span class="p">(</span><span class="s">&quot;low&quot;</span><span class="p">,</span> <span class="s">&quot;wave_width&quot;</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span>
+
+    <span class="c"># 三角波的定点的y轴坐标</span>
+    <span class="n">height_c</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+
+    <span class="c"># FFT计算所使用的取样点数，这里用一个Enum类型的属性以供用户从列表中选择</span>
+    <span class="n">fftsize</span> <span class="o">=</span> <span class="n">Enum</span><span class="p">(</span> <span class="p">[(</span><span class="mi">2</span><span class="o">**</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">12</span><span class="p">)])</span>
+
+    <span class="c"># FFT频谱图的x轴上限值</span>
+    <span class="n">fft_graph_up_limit</span> <span class="o">=</span> <span class="n">Range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">400</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
+
+    <span class="c"># 用于显示FFT的结果</span>
+    <span class="n">peak_list</span> <span class="o">=</span> <span class="n">Str</span>
+
+    <span class="c"># 采用多少个频率合成三角波</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="n">Range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+
+    <span class="c"># 保存绘图数据的对象</span>
+    <span class="n">plot_data</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">AbstractPlotData</span><span class="p">)</span>    
+
+    <span class="c"># 绘制波形图的容器</span>
+    <span class="n">plot_wave</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">Component</span><span class="p">)</span>
+
+    <span class="c"># 绘制FFT频谱图的容器</span>
+    <span class="n">plot_fft</span>  <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">Component</span><span class="p">)</span>
+
+    <span class="c"># 包括两个绘图的容器</span>
+    <span class="n">container</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">Component</span><span class="p">)</span>
+
+    <span class="c"># 设置用户界面的视图， 注意一定要指定窗口的大小，这样绘图容器才能正常初始化</span>
+    <span class="n">view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span>
+        <span class="n">HSplit</span><span class="p">(</span>
+            <span class="n">VSplit</span><span class="p">(</span>
+                <span class="n">VGroup</span><span class="p">(</span>
+                    <span class="n">Item</span><span class="p">(</span><span class="s">&quot;wave_width&quot;</span><span class="p">,</span> <span class="n">editor</span> <span class="o">=</span> <span class="n">scrubber</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;波形宽度&quot;</span><span class="p">),</span>
+                    <span class="n">Item</span><span class="p">(</span><span class="s">&quot;length_c&quot;</span><span class="p">,</span> <span class="n">editor</span> <span class="o">=</span> <span class="n">scrubber</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;最高点x坐标&quot;</span><span class="p">),</span>
+                    <span class="n">Item</span><span class="p">(</span><span class="s">&quot;height_c&quot;</span><span class="p">,</span> <span class="n">editor</span> <span class="o">=</span> <span class="n">scrubber</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;最高点y坐标&quot;</span><span class="p">),</span>
+                    <span class="n">Item</span><span class="p">(</span><span class="s">&quot;fft_graph_up_limit&quot;</span><span class="p">,</span> <span class="n">editor</span> <span class="o">=</span> <span class="n">scrubber</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;频谱图范围&quot;</span><span class="p">),</span>
+                    <span class="n">Item</span><span class="p">(</span><span class="s">&quot;fftsize&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;FFT点数&quot;</span><span class="p">),</span>
+                    <span class="n">Item</span><span class="p">(</span><span class="s">&quot;N&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;合成波频率数&quot;</span><span class="p">)</span>
+                <span class="p">),</span>
+                <span class="n">Item</span><span class="p">(</span><span class="s">&quot;peak_list&quot;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s">&quot;custom&quot;</span><span class="p">,</span> <span class="n">show_label</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">250</span><span class="p">)</span>
+            <span class="p">),</span>
+            <span class="n">VGroup</span><span class="p">(</span>
+                <span class="n">Item</span><span class="p">(</span><span class="s">&quot;container&quot;</span><span class="p">,</span> <span class="n">editor</span><span class="o">=</span><span class="n">ComponentEditor</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">600</span><span class="p">,</span><span class="mi">300</span><span class="p">)),</span> <span class="n">show_label</span> <span class="o">=</span> <span class="bp">False</span><span class="p">),</span>
+                <span class="n">orientation</span> <span class="o">=</span> <span class="s">&quot;vertical&quot;</span>
+            <span class="p">)</span>
+        <span class="p">),</span>
+        <span class="n">resizable</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span>
+        <span class="n">width</span> <span class="o">=</span> <span class="mi">800</span><span class="p">,</span>
+        <span class="n">height</span> <span class="o">=</span> <span class="mi">600</span><span class="p">,</span>
+        <span class="n">title</span> <span class="o">=</span> <span class="s">u&quot;三角波FFT演示&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c"># 创建绘图的辅助函数，创建波形图和频谱图有很多类似的地方，因此单独用一个函数以</span>
+    <span class="c"># 减少重复代码</span>
+    <span class="k">def</span> <span class="nf">_create_plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s">&quot;line&quot;</span><span class="p">):</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">Plot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">plot_data</span><span class="p">)</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">type</span><span class="p">)</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">tools</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">PanTool</span><span class="p">(</span><span class="n">p</span><span class="p">))</span>
+        <span class="n">zoom</span> <span class="o">=</span> <span class="n">ZoomTool</span><span class="p">(</span><span class="n">component</span><span class="o">=</span><span class="n">p</span><span class="p">,</span> <span class="n">tool_mode</span><span class="o">=</span><span class="s">&quot;box&quot;</span><span class="p">,</span> <span class="n">always_on</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">overlays</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">zoom</span><span class="p">)</span>        
+        <span class="n">p</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="k">return</span> <span class="n">p</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c"># 首先需要调用父类的初始化函数</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">TriangleWave</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+
+        <span class="c"># 创建绘图数据集，暂时没有数据因此都赋值为空，只是创建几个名字，以供Plot引用</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_data</span> <span class="o">=</span> <span class="n">ArrayPlotData</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="p">[],</span> <span class="n">y</span><span class="o">=</span><span class="p">[],</span> <span class="n">f</span><span class="o">=</span><span class="p">[],</span> <span class="n">p</span><span class="o">=</span><span class="p">[],</span> <span class="n">x2</span><span class="o">=</span><span class="p">[],</span> <span class="n">y2</span><span class="o">=</span><span class="p">[])</span> 
+
+        <span class="c"># 创建一个垂直排列的绘图容器，它将频谱图和波形图上下排列</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">container</span> <span class="o">=</span> <span class="n">VPlotContainer</span><span class="p">()</span>
+
+        <span class="c"># 创建波形图，波形图绘制两条曲线： 原始波形(x,y)和合成波形(x2,y2)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_wave</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_plot</span><span class="p">((</span><span class="s">&quot;x&quot;</span><span class="p">,</span><span class="s">&quot;y&quot;</span><span class="p">),</span> <span class="s">&quot;Triangle Wave&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_wave</span><span class="o">.</span><span class="n">plot</span><span class="p">((</span><span class="s">&quot;x2&quot;</span><span class="p">,</span><span class="s">&quot;y2&quot;</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="s">&quot;red&quot;</span><span class="p">)</span>
+
+        <span class="c"># 创建频谱图，使用数据集中的f和p</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_fft</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_plot</span><span class="p">((</span><span class="s">&quot;f&quot;</span><span class="p">,</span><span class="s">&quot;p&quot;</span><span class="p">),</span> <span class="s">&quot;FFT&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s">&quot;scatter&quot;</span><span class="p">)</span>
+
+        <span class="c"># 将两个绘图容器添加到垂直容器中</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">container</span><span class="o">.</span><span class="n">add</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">plot_wave</span> <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">container</span><span class="o">.</span><span class="n">add</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">plot_fft</span> <span class="p">)</span>
+
+        <span class="c"># 设置</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_wave</span><span class="o">.</span><span class="n">x_axis</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="s">&quot;Samples&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_fft</span><span class="o">.</span><span class="n">x_axis</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="s">&quot;Frequency pins&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_fft</span><span class="o">.</span><span class="n">y_axis</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="s">&quot;(dB)&quot;</span>
+
+        <span class="c"># 改变fftsize为1024，因为Enum的默认缺省值为枚举列表中的第一个值</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fftsize</span> <span class="o">=</span> <span class="mi">1024</span>
+
+    <span class="c"># FFT频谱图的x轴上限值的改变事件处理函数，将最新的值赋值给频谱图的响应属性</span>
+    <span class="k">def</span> <span class="nf">_fft_graph_up_limit_changed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_fft</span><span class="o">.</span><span class="n">x_axis</span><span class="o">.</span><span class="n">mapper</span><span class="o">.</span><span class="n">range</span><span class="o">.</span><span class="n">high</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fft_graph_up_limit</span>
+
+    <span class="k">def</span> <span class="nf">_N_changed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_sin_combine</span><span class="p">()</span>
+
+    <span class="c"># 多个trait属性的改变事件处理函数相同时，可以用@on_trait_change指定</span>
+    <span class="nd">@on_trait_change</span><span class="p">(</span><span class="s">&quot;wave_width, length_c, height_c, fftsize&quot;</span><span class="p">)</span>        
+    <span class="k">def</span> <span class="nf">update_plot</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c"># 计算三角波</span>
+        <span class="k">global</span> <span class="n">y_data</span>
+        <span class="n">x_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">fftsize</span><span class="p">)</span>
+        <span class="n">func</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">triangle_func</span><span class="p">()</span>
+        <span class="c"># 将func函数的返回值强制转换成float64</span>
+        <span class="n">y_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cast</span><span class="p">[</span><span class="s">&quot;float64&quot;</span><span class="p">](</span><span class="n">func</span><span class="p">(</span><span class="n">x_data</span><span class="p">))</span>
+
+        <span class="c"># 计算频谱</span>
+        <span class="n">fft_parameters</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">y_data</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_data</span><span class="p">)</span>
+
+        <span class="c"># 计算各个频率的振幅</span>
+        <span class="n">fft_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="mi">20</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">fft_parameters</span><span class="p">))[:</span><span class="bp">self</span><span class="o">.</span><span class="n">fftsize</span><span class="o">/</span><span class="mi">2</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span> <span class="o">-</span><span class="mi">120</span><span class="p">,</span> <span class="mi">120</span><span class="p">)</span>
+
+        <span class="c"># 将计算的结果写进数据集</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_data</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="s">&quot;x&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fftsize</span><span class="p">))</span> <span class="c"># x坐标为取样点</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_data</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="s">&quot;y&quot;</span><span class="p">,</span> <span class="n">y_data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_data</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="s">&quot;f&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">fft_data</span><span class="p">)))</span> <span class="c"># x坐标为频率编号</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_data</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="s">&quot;p&quot;</span><span class="p">,</span> <span class="n">fft_data</span><span class="p">)</span>
+
+        <span class="c"># 合成波的x坐标为取样点，显示2个周期</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_data</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="s">&quot;x2&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">fftsize</span><span class="p">))</span> 
+
+        <span class="c"># 更新频谱图x轴上限</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fft_graph_up_limit_changed</span><span class="p">()</span>
+
+        <span class="c"># 将振幅大于-80dB的频率输出</span>
+        <span class="n">peak_index</span> <span class="o">=</span> <span class="p">(</span><span class="n">fft_data</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">80</span><span class="p">)</span>
+        <span class="n">peak_value</span> <span class="o">=</span> <span class="n">fft_data</span><span class="p">[</span><span class="n">peak_index</span><span class="p">][:</span><span class="mi">20</span><span class="p">]</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">f</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">peak_index</span><span class="p">),</span> <span class="n">peak_value</span><span class="p">):</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> : </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">peak_list</span> <span class="o">=</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+
+        <span class="c"># 保存现在的fft计算结果，并计算正弦合成波</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fft_parameters</span> <span class="o">=</span> <span class="n">fft_parameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_sin_combine</span><span class="p">()</span>
+
+    <span class="c"># 计算正弦合成波，计算2个周期</span>
+    <span class="k">def</span> <span class="nf">plot_sin_combine</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">index</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">fft_combine</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fft_parameters</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">N</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_data</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="s">&quot;y2&quot;</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>               
+
+    <span class="c"># 返回一个ufunc计算指定参数的三角波</span>
+    <span class="k">def</span> <span class="nf">triangle_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wave_width</span>
+        <span class="n">c0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">length_c</span>
+        <span class="n">hc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">height_c</span>
+
+        <span class="k">def</span> <span class="nf">trifunc</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">-</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="c"># 三角波的周期为1，因此只取x坐标的小数部分进行计算</span>
+            <span class="k">if</span> <span class="n">x</span> <span class="o">&gt;=</span> <span class="n">c</span><span class="p">:</span> <span class="n">r</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="k">elif</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="n">c0</span><span class="p">:</span> <span class="n">r</span> <span class="o">=</span> <span class="n">x</span> <span class="o">/</span> <span class="n">c0</span> <span class="o">*</span> <span class="n">hc</span>
+            <span class="k">else</span><span class="p">:</span> <span class="n">r</span> <span class="o">=</span> <span class="p">(</span><span class="n">c</span><span class="o">-</span><span class="n">x</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">c</span><span class="o">-</span><span class="n">c0</span><span class="p">)</span> <span class="o">*</span> <span class="n">hc</span>
+            <span class="k">return</span> <span class="n">r</span>
+
+        <span class="c"># 用trifunc函数创建一个ufunc函数，可以直接对数组进行计算, 不过通过此函数</span>
+        <span class="c"># 计算得到的是一个Object数组，需要进行类型转换</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">frompyfunc</span><span class="p">(</span><span class="n">trifunc</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>    
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">triangle</span> <span class="o">=</span> <span class="n">TriangleWave</span><span class="p">()</span>
+    <span class="n">triangle</span><span class="o">.</span><span class="n">configure_traits</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h4>上一篇文章</h4>
+            <p class="topless"><a href="example_code_list.html"
+                                  title="上一篇文章">源程序集</a></p>
+            <h4>下一篇文章</h4>
+            <p class="topless"><a href="example_mpl_figure_editor.html"
+                                  title="下一篇文章">在traitsUI中使用的matplotlib控件</a></p>
+          <div id="searchbox" style="display: none">
+            <h3>快速搜索</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="搜索" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              中文搜索请尽量用空格分开单个的单词，例如搜索"科学 计算"，而不是"科学计算"
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="example_mpl_figure_editor.html" title="在traitsUI中使用的matplotlib控件"
+             >下一篇</a></li>
+        <li class="right" >
+          <a href="example_code_list.html" title="源程序集"
+             >上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li>
+          <li><a href="example_code_list.html" >源程序集</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+    &copy; 2009, <a href="http://hyry.dip.jp/blogt.py">HYRY Studio</a>
+      由 <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.4. 编译
+    </div>
+  </body>
+</html>

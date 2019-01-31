@@ -1,0 +1,137 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Trait事件处理 &mdash; 用Python做科学计算</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link type="text/css" href="_static/jquery-ui-1.7.2.custom.css" rel="stylesheet" />	
+    <link type="text/css" href="_static/comments.css" rel="stylesheet" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '#',
+        VERSION:     '1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/jquery-ui-1.7.2.custom.min.js"></script>
+    <script type="text/javascript" src="_static/pydoc.js"></script>
+    <link rel="top" title="用Python做科学计算" href="index.html" />
+    <link rel="up" title="Traits使用手册" href="traits_manual_index.html" />
+    <link rel="下一篇" title="设计自己的Trait编辑器" href="traitsui_manual_custom_editor.html" />
+    <link rel="上一篇" title="定义Traits" href="traits_manual_defining.html" /> 
+
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-10837468-1");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="traitsui_manual_custom_editor.html" title="设计自己的Trait编辑器"
+             accesskey="N">下一篇</a></li>
+        <li class="right" >
+          <a href="traits_manual_defining.html" title="定义Traits"
+             accesskey="P">上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li>
+          <li><a href="traits_manual_index.html" accesskey="U">Traits使用手册</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="trait">
+<h1>Trait事件处理<a class="headerlink" href="#trait" title="Permalink to this headline">¶</a></h1>
+<p>当物体的某个属性的值发生变化的时候，程序中的其它的部分可能需要响应这个变化。这种事件驱动的技术在界面程序的编写中非常常见，而Traits库给trait属性提供了事件处理功能，让我们能将事件驱动模型运用到更广泛的场景中去。</p>
+<p>我们可以使用如下多种方法让程序监听trait属性值的变化：</p>
+<ul class="simple">
+<li><strong>静态命名</strong> : 通过编写特定名称的函数处理trait属性值变化</li>
+<li><strong>静态修饰</strong> : 用修饰函数 &#64;on_trait_change</li>
+<li><strong>动态监听</strong> : 调用on_trait_change()或者on_trait_event()将trait属性(事件源)和处理函数联系起来</li>
+</ul>
+<div class="section" id="id1">
+<h2>静态命名的事件处理<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">首页目录</a></h3>
+            <ul>
+<li><a class="reference external" href="#">Trait事件处理</a><ul>
+<li><a class="reference external" href="#id1">静态命名的事件处理</a></li>
+</ul>
+</li>
+</ul>
+
+            <h4>上一篇文章</h4>
+            <p class="topless"><a href="traits_manual_defining.html"
+                                  title="上一篇文章">定义Traits</a></p>
+            <h4>下一篇文章</h4>
+            <p class="topless"><a href="traitsui_manual_custom_editor.html"
+                                  title="下一篇文章">设计自己的Trait编辑器</a></p>
+          <div id="searchbox" style="display: none">
+            <h3>快速搜索</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="搜索" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              中文搜索请尽量用空格分开单个的单词，例如搜索"科学 计算"，而不是"科学计算"
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="traitsui_manual_custom_editor.html" title="设计自己的Trait编辑器"
+             >下一篇</a></li>
+        <li class="right" >
+          <a href="traits_manual_defining.html" title="定义Traits"
+             >上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li>
+          <li><a href="traits_manual_index.html" >Traits使用手册</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+    &copy; 2009, <a href="http://hyry.dip.jp/blogt.py">HYRY Studio</a>
+      由 <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.4. 编译
+    </div>
+  </body>
+</html>

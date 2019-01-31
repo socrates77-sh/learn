@@ -1,0 +1,152 @@
+############
+Ctypes和NumPy
+############
+
+
+用ctypes加速计算
+===========
+
+Ctypes是Python处理动态链接库的标准扩展模块，在Windows下使用它可以直接调用C语言编写的DLL动态链接库。由于对传递的参数没有类型和越界检查，因此如果编写的代码有问题的话，很可能会造成程序崩溃。当将数组数据使用指针传递时，出错误的风险将更加大。
+
+为了让程序更加安全，通常会用Python代码对Ctypes调用进行包装，在调用Ctypes之前，在Python级别对数据类型和越界进行检查。这样做会使得调用接口部分比其它的一些手工编写的扩展模块速度要慢，但是如果C语言的代码段处理相当多的数据的话，接口调用部分的速度损失是可以忽略不计的。
+
+用ctypes调用DLL
+============
+
+为了使用CTypes，你必须依次完成以下步骤：
+
+* 编写动态连接库程序
+
+* 载入动态连接库
+
+* 将Python的对象转换为ctypes所能识别的参数
+
+* 使用ctypes的参数调用动态连接库中的函数
+
+下面我们来看看如何用ctypes调用动态链接库。
+
+numpy对ctypes的支持
+===============
+
+为了方便动态连接库的载入，numpy提供了一个便捷函数ctypeslib.load_library。它有两个参数，第一个参数是库的文件名，第二个参数是库所在的路径。函数返回的是一个ctypes的对象。通过此对象的属性可以直接到动态连接库所提供的函数。
+
+例如如果我们有一个库名为test_sum.dll，其中提供了一个函数mysum :
+
+.. code-block:: c
+
+    double mysum(double a[], long n)
+    {
+        double sum = 0;
+        int i;
+        for(i=0;i<n;i++) sum += a[i];
+        return sum;
+    }
+    
+的话，我们可以使用如下语句载入此库：
+
+    >>> from ctypes import *
+    >>> sum_test = np.ctypeslib.load_library("sum_test", ".")
+    >>> print sum_test.mysum
+    <_FuncPtr object at 0x037D7210>
+     
+要正确调用sum函数，还必须对其参数类型进行说明，下面的语句描述了sum函数的两个参数的类型和返回值的类型进行描述：
+
+    >>> sum_test.mysum.argtypes = [POINTER(c_double), c_long]
+    >>> sum_test.mysum.restype = c_double
+    
+接下来就可以正常调用sum函数了：
+    
+    >>> x = np.arange(1, 101, 1.0)
+    >>> sum_test.mysum(x.ctypes.data_as(POINTER(c_double)), len(x))
+    5050.0
+    
+每次调用sum都需要进行类型转换时比较麻烦的事情，因此可以编写一个Python的mysum函数，将C语言的mysum函数包装起来: ::
+
+    def mysum(x):
+        return sum_test.mysum(x.ctypes.data_as(POINTER(c_double)), len(x))
+        
+在上面的例子中，test_sum.mysum的参数值使用标准的ctypes类型声明：用POINTER(c_double)声明mysum函数的第一个参数是一个指向double的指针；然后调用数组x的x.ctypes.data_as函数将x转换为一个指向double的指针类型。
+
+由于数组的元素在内存中的存储可以是不连续的，而且可以是多维数组，因此我们不能指望前面的mysum函数能够处理所有的情况：
+
+    >>> x = np.arange(1,11,1.0)
+    >>>  mysum(x[::2])
+    15.0
+    >>> sum(x[::2])
+    25.0
+    
+由于x[::2]和x共同一块内存空间，而x[::2]中的元素是不连续的，每个元素之间的间隔为16byptes(2个double的大小)。因此将它传递给mysum的话，实际上计算的是x数组中前5项的和：1+2+3+4+5=15，而实际上我们希望的结果是：1+3+5+7+9=25。
+
+为了对传递的数组参数进行更加详细的描述，numpy库提供了ndpointer函数。ndpointer函数对restype和argtypes中的数组参数进行描述，他有如下4个参数：
+
+* **dtype** : 数组的元素类型
+* **ndim** : 数组的维数
+* **shape** : 数组的形状，各个轴的长度
+* **flags** : 数组的标志
+
+例如： ::
+
+    test_sum.mysum.argtypes = [
+        np.ctypeslib.ndpointer(dtype=np.float64, ndim=1, flags="C_CONTIGUOUS"),
+        c_long
+    ]
+
+描述了sumfunc函数的参数为一个元素类型为double的、一维的、连续的元素按C语言规定排列的数组。
+
+这时传递给mysum函数的第一个参数可以直接是数组，因此无需再编写一个Python函数对其进行包装： ::
+
+    >>> sum_test.mysum(x,len(x))
+    55.0
+    >>> sum_test.mysum(x[::2],len(x)/2)
+    ArgumentError: argument 1: <type 'exceptions.TypeError'>: 
+    array must have flags ['C_CONTIGUOUS']
+    
+我们注意到如果参数数组不是连续空间的话，mysum函数的调用会抛出异常错误，提醒我们其参数需要C语言排列的连续数组。    
+
+如果我们希望它能够处理多维、不连续的数组的话，就需要把数组的shape和strides属性都传递给过去。假设我们想写一个通用的mysum2函数，它可以对二维数组的所有元素进行求和。下面是C语言的程序：
+
+.. code-block:: c
+
+    double mysum2(double a[], int strides[], int shapes[])
+    {
+        double sum = 0;
+        int i, j, M, N, S0, S1;
+        M = shape[0]; N=shape[1];
+        S0 = strides[0] / sizeof(double);
+        S1 = strides[1] / sizeof(double);
+    
+        for(i=0;i<M;i++){
+            for(j=0;j<N;j++){
+                sum += a[i*S0 + j*S1];
+            }
+        }
+        return sum;
+    }
+    
+mysum2函数有3个参数，第一个参数a[]指向保存数组数据的内存块；第二个参数astrides指向保存数组各个轴元素之间的间隔(以byte为单位)；第三个参数dims指向保存数组各个轴长度的数组。
+
+由于strides保存的是以byte为单位的间隔长度，因此需要除以sizeof(double)计算出以double为单位的间隔长度S0和S1。这样二维数组a中的第i行、第j列的元素可以通过a[i*S0 + j*S1]来存取。下面用ctypes对mysum2函数进行包装： ::
+
+    sum_test.mysum2.restype = c_double
+    sum_test.mysum2.argtypes = [
+        np.ctypeslib.ndpointer(dtype=np.float64, ndim=2),
+        POINTER(c_int),
+        POINTER(c_int)
+    ]
+    
+    def mysum2(x):
+        return sum_test.mysum2(x, x.ctypes.strides, x.ctypes.shape)
+
+在mysum2函数中，为了将数组x的strides和shape属性传递给C语言的函数，可以使用x.ctypes中提供的strides和shape属性。注意不能直接传递x.strides和x.shape，因为这些是python的tuple对象，而x.ctypes.shape得到的是ctypes包装的整数数组： ::
+
+    >>> x = np.zeros((3,4), np.float)
+    >>> x.ctypes.shape
+    <numpy.core._internal.c_long_Array_2 object at 0x020B4DF0>   
+    >>> s = x.ctypes.shape   
+    >>> s[0]
+    3   
+    >>> s[1]
+    4
+    
+可以看出x.ctypes.shape是一个有两个元素的C语言长整型数组。虽然我们也可以在Python中通过下标读取其各个元素的值，但是通常它们是作为参数传递给C语言函数用的。
+

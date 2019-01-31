@@ -1,0 +1,17 @@
+.. raw:: html
+
+  <table class="docutils">
+    <thead valign="bottom"> 
+    <tr><th class="head">Category</th> 
+    <th class="head">Attributes</th> 
+    <th class="head">Description</th> 
+    </tr> 
+    </thead>  
+    <tbody>
+    <tr>
+    <td>内容</td>
+    <td>Item</td>
+    <td>我们分别创建两个Group传递给View，每个Group中仍然通过Item创建控件，通过Group的关键字参数指定其label和show_border属性。由于View中的所有内容都是Group，它自动地将两个Group放到Tab中，对两个Group进行分标签显示。</td>
+    </tr>
+    </tbody>
+  </table> 

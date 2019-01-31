@@ -1,0 +1,339 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>用Python做科学计算 &mdash; 用Python做科学计算</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link type="text/css" href="_static/jquery-ui-1.7.2.custom.css" rel="stylesheet" />	
+    <link type="text/css" href="_static/comments.css" rel="stylesheet" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '#',
+        VERSION:     '1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/jquery-ui-1.7.2.custom.min.js"></script>
+    <script type="text/javascript" src="_static/pydoc.js"></script>
+    <link rel="top" title="用Python做科学计算" href="#" />
+    <link rel="下一篇" title="软件包的安装和介绍" href="install.html" /> 
+
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-10837468-1");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="install.html" title="软件包的安装和介绍"
+             accesskey="N">下一篇</a></li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="#">用Python做科学计算</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="python">
+<h1>用Python做科学计算<a class="headerlink" href="#python" title="Permalink to this headline">¶</a></h1>
+<div class="topic">
+<p class="topic-title first">版权声明</p>
+<p>本书的著作权归作者(HYRY Studio)所有。你可以：</p>
+<ul class="simple">
+<li>下载、保存以及打印本书</li>
+<li>网络链接、转载本书的部分或者全部内容，但是必须在明显处提供读者访问本书发布网站的链接</li>
+<li>在你的程序中任意使用本书所附的程序代码，但是由本书的程序所引起的任何问题，作者不承担任何责任</li>
+</ul>
+<p>你不可以：</p>
+<ul class="simple">
+<li>以任何形式出售本书的电子版或者打印版</li>
+<li>擅自印刷、出版本书</li>
+<li>以纸媒出版为目的，改写、改编以及摘抄本书的内容</li>
+<li>在课程设计、毕业设计以及作业中大段摘抄本书文字，或直接使用本书的程序代码</li>
+</ul>
+</div>
+<div class="topic">
+<p class="topic-title first">使用说明</p>
+<p>本书使用<a class="reference external" href="http://docutils.sourceforge.net/rst.html">reStructuredText</a>编写，采用<a class="reference external" href="http://sphinx.pocoo.org">Sphinx</a>发布。在此基础上添加了评论功能，你可以在hyry.dip.jp的在线版本中点击章节标题前面的评论按钮，对每个章节进行评论。推荐使用IE7.0以上、FireFox、Google Chome等浏览器阅读本书。</p>
+<p>本书有两个镜像地址：</p>
+<ul class="simple">
+<li><a class="reference external" href="http://hyry.dip.jp/pydoc">http://hyry.dip.jp/pydoc</a> (每日更新)</li>
+<li><a class="reference external" href="http://pyscin.appspot.com/html/index.html">http://pyscin.appspot.com/html/index.html</a> (每周更新)</li>
+</ul>
+<p>请使用下面的链接下载各种打包版本，其中Html打包版本格式最为正确，CHM和PDF版都多少有些问题。</p>
+<p><a class="reference external" href="http://hyry.dip.jp/files/scipydoc.zip">下载Html打包版</a> <a class="reference external" href="http://hyry.dip.jp/files/scipydoc.chm">下载CHM版</a> <a class="reference external" href="http://hyry.dip.jp/files/scipydoc.pdf">下载PDF版</a> <a class="reference external" href="http://hyry.dip.jp/files/scipycode.zip">下载源代码</a></p>
+<p>另外，你还可以通过<a class="reference external" href="http://docs.google.com/leaf?id=0B6aBwV_8NoD-ZjBkNmYxMjUtMTVkOC00MGI1LTg2M2UtMTk0MzhiMzRiNWZi&amp;hl=en">Google文档</a>和 <a class="reference external" href="http://www.zoomquiet.org/share/doc/HYRY-scipydoc/">ZoomQuiet.org</a>(国内下载快速)下载PDF版本</p>
+<p>请查看 <a class="reference external" href="update_list.html"><em>最近更新</em></a> 了解最新添加的内容</p>
+</div>
+<div class="topic">
+<p class="topic-title first">关于HYRY Studio</p>
+<ul class="simple">
+<li>HYRY Studio首页： <a class="reference external" href="http://hyry.dip.jp">http://hyry.dip.jp</a></li>
+<li>博客地址： <a class="reference external" href="http://hyry.dip.jp/blogt.py">http://hyry.dip.jp/blogt.py</a></li>
+</ul>
+</div>
+<p>Python是一种面向对象的、动态的程序设计语言。具有非常简洁而清晰的语法，适合于完成各种高层任务。它既可以用来快速开发程序脚本，也可以用来开发大规模的软件。</p>
+<p>随着NumPy, SciPy, Matplotlib, Enthought librarys等众多程序库的开发，Python越来越适合于做科学计算、绘制高质量的2D和3D图像。和科学计算领域最流行的商业软件Matlab相比，Python是一门通用的程序设计语言，比Matlab所采用的脚本语言的应用范围更广泛，有更多的程序库的支持。虽然Matlab中的许多高级功能和toolbox目前还是无法替代的，不过在日常的科研开发之中仍然有很多的工作是可以用Python代劳的。</p>
+<p>本书将介绍如何用Python开发科学计算的应用程序，除了介绍数值计算之外，我们还将着重介绍如何制作交互式的2D、3D图像；如何设计精巧的程序界面；如何和C语言所编写的高速计算程序结合；如何编写声音、图像处理算法。</p>
+<p>阅读本书你需要学习过Python语言的一些基础知识，对面向对象的程序开发有所了解。有关Python语言基础的知识，可以参考：</p>
+<p>啄木鸟社区的Python图书概览： <a class="reference external" href="http://wiki.woodpecker.org.cn/moin/PyBooks">http://wiki.woodpecker.org.cn/moin/PyBooks</a></p>
+<p>本书中的所有示例均在Windows XP系统下采用Python(x,y)通过测试。如果你觉得安装众多的Python程序库很麻烦，不妨下载安装Python(x,y)。请阅读：<a class="reference external" href="install.html"><em>软件包的安装和介绍</em></a></p>
+<div class="section" id="id2">
+<h2>基础篇<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+科学计算所用到的各种库的入门介绍<ul>
+<li class="toctree-l1"><a class="reference external" href="install.html">软件包的安装和介绍</a><ul>
+<li class="toctree-l2"><a class="reference external" href="install.html#id2">安装软件包</a></li>
+<li class="toctree-l2"><a class="reference external" href="install.html#id7">函数库介绍</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="numpy_intro.html">NumPy-快速处理数据</a><ul>
+<li class="toctree-l2"><a class="reference external" href="numpy_intro.html#ndarray">ndarray对象</a></li>
+<li class="toctree-l2"><a class="reference external" href="numpy_intro.html#ufunc">ufunc运算</a></li>
+<li class="toctree-l2"><a class="reference external" href="numpy_intro.html#id8">矩阵运算</a></li>
+<li class="toctree-l2"><a class="reference external" href="numpy_intro.html#id9">文件存取</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="scipy_intro.html">SciPy-数值计算库</a><ul>
+<li class="toctree-l2"><a class="reference external" href="scipy_intro.html#id1">最小二乘拟合</a></li>
+<li class="toctree-l2"><a class="reference external" href="scipy_intro.html#id2">函数最小值</a></li>
+<li class="toctree-l2"><a class="reference external" href="scipy_intro.html#id3">非线性方程组求解</a></li>
+<li class="toctree-l2"><a class="reference external" href="scipy_intro.html#b-spline">B-Spline样条曲线</a></li>
+<li class="toctree-l2"><a class="reference external" href="scipy_intro.html#id4">数值积分</a></li>
+<li class="toctree-l2"><a class="reference external" href="scipy_intro.html#id5">解常微分方程组</a></li>
+<li class="toctree-l2"><a class="reference external" href="scipy_intro.html#id6">滤波器设计</a></li>
+<li class="toctree-l2"><a class="reference external" href="scipy_intro.html#weavec">用Weave嵌入C语言</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="sympy_intro.html">SymPy-符号运算好帮手</a><ul>
+<li class="toctree-l2"><a class="reference external" href="sympy_intro.html#id1">封面上的经典公式</a></li>
+<li class="toctree-l2"><a class="reference external" href="sympy_intro.html#id2">球体体积</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="matplotlib_intro.html">matplotlib-绘制精美的图表</a><ul>
+<li class="toctree-l2"><a class="reference external" href="matplotlib_intro.html#id2">快速绘图</a></li>
+<li class="toctree-l2"><a class="reference external" href="matplotlib_intro.html#id4">绘制多轴图</a></li>
+<li class="toctree-l2"><a class="reference external" href="matplotlib_intro.html#id5">配置文件</a></li>
+<li class="toctree-l2"><a class="reference external" href="matplotlib_intro.html#artist">Artist对象</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="traits_intro.html">Traits-为Python添加类型定义</a><ul>
+<li class="toctree-l2"><a class="reference external" href="traits_intro.html#id1">背景</a></li>
+<li class="toctree-l2"><a class="reference external" href="traits_intro.html#traits">Traits是什么</a></li>
+<li class="toctree-l2"><a class="reference external" href="traits_intro.html#trait">动态添加Trait属性</a></li>
+<li class="toctree-l2"><a class="reference external" href="traits_intro.html#property">Property属性</a></li>
+<li class="toctree-l2"><a class="reference external" href="traits_intro.html#id2">Trait属性监听</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="traitsUI_intro.html">TraitsUI-轻松制作用户界面</a><ul>
+<li class="toctree-l2"><a class="reference external" href="traitsUI_intro.html#id1">缺省界面</a></li>
+<li class="toctree-l2"><a class="reference external" href="traitsUI_intro.html#id2">自定义界面</a></li>
+<li class="toctree-l2"><a class="reference external" href="traitsUI_intro.html#id3">配置视图</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="chaco_intro.html">Chaco-交互式图表</a><ul>
+<li class="toctree-l2"><a class="reference external" href="chaco_intro.html#id1">面向脚本绘图</a></li>
+<li class="toctree-l2"><a class="reference external" href="chaco_intro.html#id2">面向应用绘图</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="tvtk_intro.html">TVTK-三维可视化数据</a><ul>
+<li class="toctree-l2"><a class="reference external" href="tvtk_intro.html#id1">TVTK使用简介</a></li>
+<li class="toctree-l2"><a class="reference external" href="tvtk_intro.html#id7">TVTK的改进</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="mlab_and_mayavi.html">Mayavi-更方便的可视化</a><ul>
+<li class="toctree-l2"><a class="reference external" href="mlab_and_mayavi.html#mlab">用mlab快速绘图</a></li>
+<li class="toctree-l2"><a class="reference external" href="mlab_and_mayavi.html#id1">Mayavi应用程序</a></li>
+<li class="toctree-l2"><a class="reference external" href="mlab_and_mayavi.html#id2">将Mayavi嵌入到界面中</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="vpython_intro.html">Visual-制作3D演示动画</a><ul>
+<li class="toctree-l2"><a class="reference external" href="vpython_intro.html#id1">场景、物体和照相机</a></li>
+<li class="toctree-l2"><a class="reference external" href="vpython_intro.html#id2">简单动画</a></li>
+<li class="toctree-l2"><a class="reference external" href="vpython_intro.html#id3">盒子中反弹的球</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="opencv_intro.html">OpenCV-图像处理和计算机视觉</a><ul>
+<li class="toctree-l2"><a class="reference external" href="opencv_intro.html#id1">读写图像和视频文件</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="id3">
+<h2>手册篇<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+各个库的用户使用手册的翻译<ul>
+<li class="toctree-l1"><a class="reference external" href="traits_manual_index.html">Traits使用手册</a><ul>
+<li class="toctree-l2"><a class="reference external" href="traits_manual_index.html#id1">traits</a></li>
+<li class="toctree-l2"><a class="reference external" href="traits_manual_index.html#traits-ui">traits.ui</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="visual_manual_index.html">Visual使用手册</a><ul>
+<li class="toctree-l2"><a class="reference external" href="visual_manual_display.html">场景窗口</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="id4">
+<h2>实战篇<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+用所学到的东西解决实际问题<ul>
+<li class="toctree-l1"><a class="reference external" href="wave_pyaudio.html">声音的输入输出</a><ul>
+<li class="toctree-l2"><a class="reference external" href="wave_pyaudio.html#wave">读写Wave文件</a></li>
+<li class="toctree-l2"><a class="reference external" href="wave_pyaudio.html#pyaudio">用pyAudio播放和录音</a></li>
+<li class="toctree-l2"><a class="reference external" href="wave_pyaudio.html#pymediamp3">用pyMedia播放Mp3</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="filters.html">数字信号系统</a><ul>
+<li class="toctree-l2"><a class="reference external" href="filters.html#firiir">FIR和IIR滤波器</a></li>
+<li class="toctree-l2"><a class="reference external" href="filters.html#fir">FIR滤波器设计</a></li>
+<li class="toctree-l2"><a class="reference external" href="filters.html#iir">IIR滤波器设计</a></li>
+<li class="toctree-l2"><a class="reference external" href="filters.html#id6">滤波器的频率响应</a></li>
+<li class="toctree-l2"><a class="reference external" href="filters.html#id7">二次均衡器设计工具</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="fft_study.html">FFT演示程序</a><ul>
+<li class="toctree-l2"><a class="reference external" href="fft_study.html#id1">FFT知识复习</a></li>
+<li class="toctree-l2"><a class="reference external" href="fft_study.html#id2">合成时域信号</a></li>
+<li class="toctree-l2"><a class="reference external" href="fft_study.html#id3">三角波FFT演示程序</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="frequency_process.html">频域信号处理</a><ul>
+<li class="toctree-l2"><a class="reference external" href="frequency_process.html#id2">观察信号的频谱</a></li>
+<li class="toctree-l2"><a class="reference external" href="frequency_process.html#id5">快速卷积</a></li>
+<li class="toctree-l2"><a class="reference external" href="frequency_process.html#hilbert">Hilbert变换</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="ctypes_numpy.html">Ctypes和NumPy</a><ul>
+<li class="toctree-l2"><a class="reference external" href="ctypes_numpy.html#ctypes">用ctypes加速计算</a></li>
+<li class="toctree-l2"><a class="reference external" href="ctypes_numpy.html#ctypesdll">用ctypes调用DLL</a></li>
+<li class="toctree-l2"><a class="reference external" href="ctypes_numpy.html#numpyctypes">numpy对ctypes的支持</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="fast_nlms_in_python.html">自适应滤波器和NLMS模拟</a><ul>
+<li class="toctree-l2"><a class="reference external" href="fast_nlms_in_python.html#id1">自适应滤波器简介</a></li>
+<li class="toctree-l2"><a class="reference external" href="fast_nlms_in_python.html#id5">NLMS计算公式</a></li>
+<li class="toctree-l2"><a class="reference external" href="fast_nlms_in_python.html#numpy">NumPy实现</a></li>
+<li class="toctree-l2"><a class="reference external" href="fast_nlms_in_python.html#dll">DLL函数的编写</a></li>
+<li class="toctree-l2"><a class="reference external" href="fast_nlms_in_python.html#ctypespython">ctypes的python接口</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="double_pendulum.html">单摆和双摆模拟</a><ul>
+<li class="toctree-l2"><a class="reference external" href="double_pendulum.html#id2">单摆模拟</a></li>
+<li class="toctree-l2"><a class="reference external" href="double_pendulum.html#id4">双摆模拟</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="fractal_chaos.html">分形与混沌</a><ul>
+<li class="toctree-l2"><a class="reference external" href="fractal_chaos.html#mandelbrot">Mandelbrot集合</a></li>
+<li class="toctree-l2"><a class="reference external" href="fractal_chaos.html#ifs">迭代函数系统(IFS)</a></li>
+<li class="toctree-l2"><a class="reference external" href="fractal_chaos.html#l-system">L-System分形</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="id5">
+<h2>附录<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="pydoc_write_tools.html">关于本书的编写</a><ul>
+<li class="toctree-l2"><a class="reference external" href="pydoc_write_tools.html#id2">本书的编写工具</a></li>
+<li class="toctree-l2"><a class="reference external" href="pydoc_write_tools.html#id3">问题与解决方案</a></li>
+<li class="toctree-l2"><a class="reference external" href="pydoc_write_tools.html#rest">ReST使用心得</a></li>
+<li class="toctree-l2"><a class="reference external" href="pydoc_write_tools.html#id16">未解决的问题</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="update_list.html">最近更新</a></li>
+</ul>
+</div>
+<div class="section" id="id6">
+<h2>源程序集<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="example_code_list.html">源程序集</a></li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="#">首页目录</a></h3>
+            <ul>
+<li><a class="reference external" href="#">用Python做科学计算</a><ul>
+<li><a class="reference external" href="#id2">基础篇</a><ul>
+</ul>
+</li>
+<li><a class="reference external" href="#id3">手册篇</a><ul>
+</ul>
+</li>
+<li><a class="reference external" href="#id4">实战篇</a><ul>
+</ul>
+</li>
+<li><a class="reference external" href="#id5">附录</a><ul>
+</ul>
+</li>
+<li><a class="reference external" href="#id6">源程序集</a><ul>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            <h4>下一篇文章</h4>
+            <p class="topless"><a href="install.html"
+                                  title="下一篇文章">软件包的安装和介绍</a></p>
+          <div id="searchbox" style="display: none">
+            <h3>快速搜索</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="搜索" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              中文搜索请尽量用空格分开单个的单词，例如搜索"科学 计算"，而不是"科学计算"
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="install.html" title="软件包的安装和介绍"
+             >下一篇</a></li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="#">用Python做科学计算</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+    &copy; 2009, <a href="http://hyry.dip.jp/blogt.py">HYRY Studio</a>
+      由 <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.4. 编译
+    </div>
+  </body>
+</html>

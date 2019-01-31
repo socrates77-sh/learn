@@ -1,0 +1,13 @@
+############
+CSV文件数据图形化工具
+############
+
+相关文档： :doc:`traitsui_manual_custom_editor`
+
+采用 :doc:`example_mpl_figure_editor` 制作的CSV文件数据绘图工具。
+
+.. image:: images/traitsui_manual_03.png
+.. image:: images/traitsui_manual_04.png
+
+.. literalinclude:: examples/traitsUI_csv_viewer.py
+

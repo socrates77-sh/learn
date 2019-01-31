@@ -1,0 +1,12 @@
+#######
+二次均衡器设计
+#######
+
+相关文档： :doc:`filters`
+
+用Traits.UI和Chaco制作的二次均衡器的设计工具，用户可以任意添加二次滤波器，并且调整其中心频率、增益和Q值，并即时查看组合之后的最终频率响应。
+
+.. image:: images/filter_equalizer_designer.png
+
+.. literalinclude:: examples/equalizer_designer.py
+

@@ -1,0 +1,793 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>matplotlib-绘制精美的图表 &mdash; 用Python做科学计算</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link type="text/css" href="_static/jquery-ui-1.7.2.custom.css" rel="stylesheet" />	
+    <link type="text/css" href="_static/comments.css" rel="stylesheet" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '#',
+        VERSION:     '1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/jquery-ui-1.7.2.custom.min.js"></script>
+    <script type="text/javascript" src="_static/pydoc.js"></script>
+    <link rel="top" title="用Python做科学计算" href="index.html" />
+    <link rel="下一篇" title="Traits-为Python添加类型定义" href="traits_intro.html" />
+    <link rel="上一篇" title="SymPy-符号运算好帮手" href="sympy_intro.html" /> 
+
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-10837468-1");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="traits_intro.html" title="Traits-为Python添加类型定义"
+             accesskey="N">下一篇</a></li>
+        <li class="right" >
+          <a href="sympy_intro.html" title="SymPy-符号运算好帮手"
+             accesskey="P">上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="matplotlib">
+<h1>matplotlib-绘制精美的图表<a class="headerlink" href="#matplotlib" title="Permalink to this headline">¶</a></h1>
+<p><a class="reference external" href="http://matplotlib.sourceforge.net/">matplotlib</a> 是python最著名的绘图库，它提供了一整套和matlab相似的命令API，十分适合交互式地进行制图。而且也可以方便地将它作为绘图控件，嵌入GUI应用程序中。</p>
+<p>它的文档相当完备，并且 <a class="reference external" href="http://matplotlib.sourceforge.net/gallery.html">Gallery页面</a> 中有上百幅缩略图，打开之后都有源程序。因此如果你需要绘制某种类型的图，只需要在这个页面中浏览/复制/粘贴一下，基本上都能搞定。</p>
+<p>本章节作为matplotlib的入门介绍，将较为深入地挖掘几个例子，从中理解和学习matplotlib绘图的一些基本概念。</p>
+<div class="section" id="id2">
+<h2>快速绘图<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>matplotlib的pyplot子库提供了和matlab类似的绘图API，方便用户快速绘制2D图表。让我们先来看一个简单的例子：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+
+<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s">&quot;$sin(x)$&quot;</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="s">&quot;red&quot;</span><span class="p">,</span><span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">z</span><span class="p">,</span><span class="s">&quot;b--&quot;</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s">&quot;$cos(x^2)$&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">&quot;Time(s)&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">&quot;Volt&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">&quot;PyPlot First Example&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="o">-</span><span class="mf">1.2</span><span class="p">,</span><span class="mf">1.2</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="figure" id="fig-pyplotsimpleplot">
+<img alt="_images/pyplot_simple_plot.png" src="_images/pyplot_simple_plot.png" />
+<p class="caption">调用pyplot库快速将数据绘制成曲线图</p>
+</div>
+<p>matplotlib中的快速绘图的函数库可以通过如下语句载入：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+</pre></div>
+</div>
+<div class="topic">
+<p class="topic-title first">pylab模块</p>
+<p>matplotlib还提供了名为pylab的模块，其中包括了许多numpy和pyplot中常用的函数，方便用户快速进行计算和绘图，可以用于IPython中的快速交互式使用。</p>
+</div>
+<p>接下来调用figure创建一个绘图对象，并且使它成为当前的绘图对象。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>也可以不创建绘图对象直接调用接下来的plot函数直接绘图，matplotlib会为我们自动创建一个绘图对象。如果需要同时绘制多幅图表的话，可以是给figure传递一个整数参数指定图标的序号，如果所指定序号的绘图对象已经存在的话，将不创建新的对象，而只是让它成为当前绘图对象。</p>
+<p>通过figsize参数可以指定绘图对象的宽度和高度，单位为英寸；dpi参数指定绘图对象的分辨率，即每英寸多少个像素，缺省值为80。因此本例中所创建的图表窗口的宽度为8*80 = 640像素。</p>
+<p>但是用工具栏中的保存按钮保存下来的png图像的大小是800*400像素。这是因为保存图表用的函数savefig使用不同的DPI配置，savefig函数也有一个dpi参数，如果不设置的话，将使用matplotlib配置文件中的配置，此配置可以通过如下语句进行查看，关于配置文件将在后面的章节进行介绍：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">matplotlib</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">matplotlib</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s">&quot;savefig.dpi&quot;</span><span class="p">]</span>
+<span class="go">100</span>
+</pre></div>
+</div>
+<p>下面的两行程序通过调用plot函数在当前的绘图对象中进行绘图：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s">&quot;$sin(x)$&quot;</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="s">&quot;red&quot;</span><span class="p">,</span><span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">z</span><span class="p">,</span><span class="s">&quot;b--&quot;</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s">&quot;$cos(x^2)$&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>plot函数的调用方式很灵活，第一句将x,y数组传递给plot之后，用关键字参数指定各种属性：</p>
+<ul class="simple">
+<li><strong>label</strong> : 给所绘制的曲线一个名字，此名字在图示(legend)中显示。只要在字符串前后添加&quot;$&quot;符号，matplotlib就会使用其内嵌的latex引擎绘制的数学公式。</li>
+<li><strong>color</strong> : 指定曲线的颜色</li>
+<li><strong>linewidth</strong> : 指定曲线的宽度</li>
+</ul>
+<p>第二句直接通过第三个参数&quot;b--&quot;指定曲线的颜色和线型，这个参数称为格式化参数，它能够通过一些易记的符号快速指定曲线的样式。其中b表示蓝色，&quot;--&quot;表示线型为虚线。在IPython中输入 &quot;plt.plot?&quot; 可以查看格式化字符串的详细配置。</p>
+<p>接下来通过一系列函数设置绘图对象的各个属性：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">&quot;Time(s)&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">&quot;Volt&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">&quot;PyPlot First Example&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="o">-</span><span class="mf">1.2</span><span class="p">,</span><span class="mf">1.2</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><strong>xlabel</strong> : 设置X轴的文字</li>
+<li><strong>ylabel</strong> : 设置Y轴的文字</li>
+<li><strong>title</strong> : 设置图表的标题</li>
+<li><strong>ylim</strong> : 设置Y轴的范围</li>
+<li><strong>legend</strong> : 显示图示</li>
+</ul>
+<p>最后调用plt.show()显示出我们创建的所有绘图对象。</p>
+<div class="section" id="id3">
+<h3>配置属性<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<p>matplotlib所绘制的图的每个组成部分都对应有一个对象，我们可以通过调用这些对象的属性设置方法set_*或者pyplot的属性设置函数setp设置其属性值。例如plot函数返回一个 matplotlib.lines.Line2D 对象的列表，下面的例子显示如何设置Line2D对象的属性：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">line</span><span class="p">,</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="o">*</span><span class="n">x</span><span class="p">)</span> <span class="c"># plot返回一个列表，通过line,获取其第一个元素</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c"># 调用Line2D对象的set_*方法设置属性值</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">line</span><span class="o">.</span><span class="n">set_antialiased</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="c"># 同时绘制sin和cos两条曲线，lines是一个有两个Line2D对象的列表</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">lines</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">x</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="c">#</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c"># 调用setp函数同时配置多个Line2D对象的多个属性值</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">setp</span><span class="p">(</span><span class="n">lines</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s">&quot;r&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>这段例子中，通过调用Line2D对象line的set_antialiased方法，关闭对象的反锯齿效果。或者通过调用plt.setp函数配置多个Line2D对象的颜色和线宽属性。</p>
+<p>同样我们可以通过调用Line2D对象的get_*方法，或者plt.getp函数获取对象的属性值：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">line</span><span class="o">.</span><span class="n">get_linewidth</span><span class="p">()</span>
+<span class="go">1.0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">getp</span><span class="p">(</span><span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s">&quot;color&quot;</span><span class="p">)</span> <span class="c"># 返回color属性</span>
+<span class="go">&#39;r&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">getp</span><span class="p">(</span><span class="n">lines</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="c"># 输出全部属性</span>
+<span class="go">alpha = 1.0</span>
+<span class="go">animated = False</span>
+<span class="go">antialiased or aa = True</span>
+<span class="go">axes = Axes(0.125,0.1;0.775x0.8)</span>
+<span class="gp">... </span><span class="o">...</span>
+</pre></div>
+</div>
+<p>注意getp函数只能对一个对象进行操作，它有两种用法：</p>
+<ul class="simple">
+<li>指定属性名：返回对象的指定属性的值</li>
+<li>不指定属性名：打印出对象的所有属性和其值</li>
+</ul>
+<p>matplotlib的整个图表为一个Figure对象，此对象在调用plt.figure函数时返回，我们也可以通过plt.gcf函数获取当前的绘图对象：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">gcf</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">getp</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+<span class="go">alpha = 1.0</span>
+<span class="go">animated = False</span>
+<span class="gp">...</span>
+</pre></div>
+</div>
+<p>Figure对象有一个axes属性，其值为AxesSubplot对象的列表，每个AxesSubplot对象代表图表中的一个子图，前面所绘制的图表只包含一个子图，当前子图也可以通过plt.gca获得：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">getp</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="s">&quot;axes&quot;</span><span class="p">)</span>
+<span class="go">[&lt;matplotlib.axes.AxesSubplot object at 0x05CDD170&gt;]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span>
+<span class="go">&lt;matplotlib.axes.AxesSubplot object at 0x05CDD170&gt;</span>
+</pre></div>
+</div>
+<p>用plt.getp可以发现AxesSubplot对象有很多属性，例如它的lines属性为此子图所包括的 Line2D 对象列表：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">alllines</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">getp</span><span class="p">(</span><span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">(),</span> <span class="s">&quot;lines&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">alllines</span>
+<span class="go">&lt;a list of 3 Line2D objects&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">alllines</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">line</span> <span class="c"># 其中的第一条曲线就是最开始绘制的那条曲线</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+<p>通过这种方法我们可以很容易地查看对象的属性和它们之间的包含关系，找到需要配置的属性。</p>
+</div>
+</div>
+<div class="section" id="id4">
+<h2>绘制多轴图<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<p>一个绘图对象(figure)可以包含多个轴(axis)，在Matplotlib中用轴表示一个绘图区域，可以将其理解为子图。上面的第一个例子中，绘图对象只包括一个轴，因此只显示了一个轴(子图)。我们可以使用subplot函数快速绘制有多个轴的图表。subplot函数的调用形式如下：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">subplot</span><span class="p">(</span><span class="n">numRows</span><span class="p">,</span> <span class="n">numCols</span><span class="p">,</span> <span class="n">plotNum</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>subplot将整个绘图区域等分为numRows行 * numCols列个子区域，然后按照从左到右，从上到下的顺序对每个子区域进行编号，左上的子区域的编号为1。如果numRows，numCols和plotNum这三个数都小于10的话，可以把它们缩写为一个整数，例如subplot(323)和subplot(3,2,3)是相同的。subplot在plotNum指定的区域中创建一个轴对象。如果新创建的轴和之前创建的轴重叠的话，之前的轴将被删除。</p>
+<p>下面的程序创建3行2列共6个轴，通过axisbg参数给每个轴设置不同的背景颜色。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">color</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="s">&quot;rgbyck&quot;</span><span class="p">):</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">320</span><span class="o">+</span><span class="n">idx</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">axisbg</span><span class="o">=</span><span class="n">color</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="figure" id="pyplotsubplot01">
+<img alt="_images/pyplot_subplot01.png" src="_images/pyplot_subplot01.png" style="width: 14cm;" />
+<p class="caption">用subplot函数将Figure分为六个子图区域</p>
+</div>
+<p>如果希望某个轴占据整个行或者列的话，可以如下调用subplot：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">221</span><span class="p">)</span> <span class="c"># 第一行的左图</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">222</span><span class="p">)</span> <span class="c"># 第一行的右图</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">212</span><span class="p">)</span> <span class="c"># 第二整行</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="figure" id="pyplotsubplot02">
+<img alt="_images/pyplot_subplot02.png" src="_images/pyplot_subplot02.png" style="width: 14cm;" />
+<p class="caption">将Figure分为三个子图区域</p>
+</div>
+<p>当绘图对象中有多个轴的时候，可以通过工具栏中的Configure Subplots按钮，交互式地调节轴之间的间距和轴与边框之间的距离。如果希望在程序中调节的话，可以调用subplots_adjust函数，它有left, right, bottom, top, wspace, hspace等几个关键字参数，这些参数的值都是0到1之间的小数，它们是以绘图区域的宽高为1进行正规化之后的坐标或者长度。</p>
+</div>
+<div class="section" id="id5">
+<h2>配置文件<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
+<p>一幅图有许多需要配置的属性，例如颜色、字体、线型等等。我们在绘图时，并没有一一对这些属性进行配置，许多都直接采用了Matplotlib的缺省配置。Matplotlib将缺省配置保存在一个文件中，通过更改这个文件，我们可以修改这些属性的缺省值。</p>
+<p>Matplotlib 使用配置文件 matplotlibrc 时的搜索顺序如下：</p>
+<ul class="simple">
+<li><strong>当前路径</strong> : 程序的当前路径</li>
+<li><strong>用户配置路径</strong> : 通常为 HOME/.matplotlib/，可以通过环境变量MATPLOTLIBRC修改</li>
+<li><strong>系统配置路径</strong> : 保存在 matplotlib的安装目录下的 mpl-data 下</li>
+</ul>
+<p>通过下面的语句可以获取用户配置路径：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">matplotlib</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">matplotlib</span><span class="o">.</span><span class="n">get_configdir</span><span class="p">()</span>
+<span class="go">&#39;C:\\Documents and Settings\\zhang\\.matplotlib&#39;</span>
+</pre></div>
+</div>
+<p>通过下面的语句可以获得目前使用的配置文件的路径：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">matplotlib</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">matplotlib</span><span class="o">.</span><span class="n">matplotlib_fname</span><span class="p">()</span>
+<span class="go">&#39;C:\\Python26\\lib\\site-packages\\matplotlib\\mpl-data\\matplotlibrc&#39;</span>
+</pre></div>
+</div>
+<p>由于在当前路径和用户配置路径中都没有找到位置文件，因此最后使用的是系统配置路径下的配置文件。如果你将matplotlibrc复制一份到脚本的当前目录下：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">os</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>
+<span class="go">&#39;C:\\zhang\\doc&#39;</span>
+</pre></div>
+</div>
+<p>复制配置文件之后再运行:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">matplotlib</span><span class="o">.</span><span class="n">matplotlib_fname</span><span class="p">()</span>
+<span class="go">&#39;C:\\zhang\\doc\\matplotlibrc&#39;</span>
+</pre></div>
+</div>
+<p>如果你用文本编辑器打开此配置文件的话，你会发现它实际上是定义了一个字典。为了对众多的配置进行区分，关键字可以用点分开。</p>
+<p>配置文件的读入可以使用 rc_params 函数，它返回一个配置字典：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">matplotlib</span><span class="o">.</span><span class="n">rc_params</span><span class="p">()</span>
+<span class="go">{&#39;agg.path.chunksize&#39;: 0,</span>
+<span class="go"> &#39;axes.axisbelow&#39;: False,</span>
+<span class="go"> &#39;axes.edgecolor&#39;: &#39;k&#39;,</span>
+<span class="go"> &#39;axes.facecolor&#39;: &#39;w&#39;,</span>
+<span class="go"> ... ...</span>
+</pre></div>
+</div>
+<p>在matplotlib模块载入的时候会调用rc_params，并把得到的配置字典保存到rcParams变量中：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">matplotlib</span><span class="o">.</span><span class="n">rcParams</span>
+<span class="go">{&#39;agg.path.chunksize&#39;: 0,</span>
+<span class="go">&#39;axes.axisbelow&#39;: False,</span>
+<span class="gp">... </span><span class="o">...</span>
+</pre></div>
+</div>
+<p>matplotlib将使用rcParams中的配置进行绘图。用户可以直接修改此字典中的配置，所做的改变会反映到此后所绘制的图中。例如下面的脚本所绘制的线将带有圆形的点标识符：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">matplotlib</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s">&quot;lines.marker&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&quot;o&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pylab</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pylab</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pylab</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>为了方便配置，可以使用rc函数，下面的例子同时配置点标识符、线宽和颜色：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">matplotlib</span><span class="o">.</span><span class="n">rc</span><span class="p">(</span><span class="s">&quot;lines&quot;</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s">&quot;x&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s">&quot;red&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>如果希望恢复到缺省的配置(matplotlib载入时从配置文件读入的配置)的话，可以调用 rcdefaults 函数。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">matplotlib</span><span class="o">.</span><span class="n">rcdefaults</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>如果手工修改了配置文件，希望重新从配置文件载入最新的配置的话，可以调用：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">matplotlib</span><span class="o">.</span><span class="n">rcParams</span><span class="o">.</span><span class="n">update</span><span class="p">(</span> <span class="n">matplotlib</span><span class="o">.</span><span class="n">rc_params</span><span class="p">()</span> <span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="artist">
+<h2>Artist对象<a class="headerlink" href="#artist" title="Permalink to this headline">¶</a></h2>
+<p>matplotlib API包含有三层：</p>
+<ul class="simple">
+<li><strong>backend_bases.FigureCanvas</strong> : 图表的绘制领域</li>
+<li><strong>backend_bases.Renderer</strong> : 知道如何在FigureCanvas上如何绘图</li>
+<li><strong>artist.Artist</strong> : 知道如何使用Renderer在FigureCanvas上绘图</li>
+</ul>
+<p>FigureCanvas和Renderer需要处理底层的绘图操作，例如使用wxPython在界面上绘图，或者使用PostScript绘制PDF。Artist则处理所有的高层结构，例如处理图表、文字和曲线等的绘制和布局。通常我们只和Artist打交道，而不需要关心底层的绘制细节。</p>
+<p>Artists分为简单类型和容器类型两种。简单类型的Artists为标准的绘图元件，例如Line2D、 Rectangle、 Text、AxesImage 等等。而容器类型则可以包含许多简单类型的Artists，使它们组织成一个整体，例如Axis、 Axes、Figure等。</p>
+<p>直接使用Artists创建图表的标准流程如下：</p>
+<ul class="simple">
+<li>创建Figure对象</li>
+<li>用Figure对象创建一个或者多个Axes或者Subplot对象</li>
+<li>调用Axies等对象的方法创建各种简单类型的Artists</li>
+</ul>
+<p>下面首先调用pyplot.figure辅助函数创建Figure对象，然后调用Figure对象的add_axes方法在其中创建一个Axes对象，add_axes的参数是一个形如[left, bottom, width, height]的列表，这些数值分别指定所创建的Axes对象相对于fig的位置和大小，取值范围都在0到1之间：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_axes</span><span class="p">([</span><span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>然后我们调用ax的plot方法绘图，创建一条曲线，并且返回此曲线对象(Line2D)。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">line</span><span class="p">,</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">],[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ax</span><span class="o">.</span><span class="n">lines</span>
+<span class="go">[&lt;matplotlib.lines.Line2D object at 0x0637A3D0&gt;]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">line</span>
+<span class="go">&lt;matplotlib.lines.Line2D object at 0x0637A3D0&gt;</span>
+</pre></div>
+</div>
+<p>ax.lines是一个为包含ax的所有曲线的列表，后续的ax.plot调用会往此列表中添加新的曲线。如果想删除某条曲线的话，直接从此列表中删除即可。</p>
+<p>Axes对象还包括许多其它的Artists对象，例如我们可以通过调用set_xlabel设置其X轴上的标题：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s">&quot;time&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>如果我们查看set_xlabel的源代码的话，会发现它是通过调用下面的语句实现的：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="bp">self</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_label_text</span><span class="p">(</span><span class="n">xlabel</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>如果我们一直跟踪下去，会发现Axes的xaxis属性是一个XAxis对象：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span>
+<span class="go">&lt;matplotlib.axis.XAxis object at 0x06343230&gt;</span>
+</pre></div>
+</div>
+<p>XAxis的label属性是一个Text对象：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">label</span>
+<span class="go">&lt;matplotlib.text.Text object at 0x06343290&gt;</span>
+</pre></div>
+</div>
+<p>而Text对象的_text属性为我们设置的值：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">_text</span>
+<span class="go">&#39;time&#39;</span>
+</pre></div>
+</div>
+<p>这些对象都是Artists，因此也可以调用它们的属性获取函数来获得相应的属性：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">get_text</span><span class="p">()</span>
+<span class="go">&#39;time&#39;</span>
+</pre></div>
+</div>
+<div class="section" id="id6">
+<h3>Artist的属性<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+<p>图表中的每个元素都用一个matplotlib的Artist对象表示，而每个Artist对象都有一大堆属性控制其显示效果。例如Figure对象和Axes对象都有patch属性作为其背景，它的值是一个Rectangle对象。通过设置此它的一些属性可以修改Figrue图表的背景颜色或者透明度等属性，下面的例子将图表的背景颜色设置为绿色：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span><span class="o">.</span><span class="n">patch</span><span class="o">.</span><span class="n">set_color</span><span class="p">(</span><span class="s">&quot;g&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>patch的color属性通过set_color函数进行设置，属性修改之后并不会立即反映到图表的显示上，还需要调用fig.canvas.draw()函数才能够更新显示。</p>
+<p>下面是Artist对象都具有的一些属性：</p>
+<ul class="simple">
+<li>alpha : 透明度，值在0到1之间，0为完全透明，1为完全不透明</li>
+<li>animated : 布尔值，在绘制动画效果时使用</li>
+<li>axes : 此Artist对象所在的Axes对象，可能为None</li>
+<li>clip_box : 对象的裁剪框</li>
+<li>clip_on : 是否裁剪</li>
+<li>clip_path : 裁剪的路径</li>
+<li>contains : 判断指定点是否在对象上的函数</li>
+<li>figure : 所在的Figure对象，可能为None</li>
+<li>label : 文本标签</li>
+<li>picker : 控制Artist对象选取</li>
+<li>transform : 控制偏移旋转</li>
+<li>visible : 是否可见</li>
+<li>zorder : 控制绘图顺序</li>
+</ul>
+<p>Artist对象的所有属性都通过相应的 get_* 和 set_* 函数进行读写，例如下面的语句将alpha属性设置为当前值的一半：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span><span class="o">.</span><span class="n">set_alpha</span><span class="p">(</span><span class="mf">0.5</span><span class="o">*</span><span class="n">fig</span><span class="o">.</span><span class="n">get_alpha</span><span class="p">())</span>
+</pre></div>
+</div>
+<p>如果你想用一条语句设置多个属性的话，可以使用set函数：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>使用前面介绍的 matplotlib.pyplot.getp 函数可以方便地输出Artist对象的所有属性名和值。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">getp</span><span class="p">(</span><span class="n">fig</span><span class="o">.</span><span class="n">patch</span><span class="p">)</span>
+<span class="go">    aa = True</span>
+<span class="go">    alpha = 1.0</span>
+<span class="go">    animated = False</span>
+<span class="go">    antialiased or aa = True</span>
+<span class="go">    ... ...</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="figure">
+<h3>Figure容器<a class="headerlink" href="#figure" title="Permalink to this headline">¶</a></h3>
+<p>现在我们知道如何观察和修改已知的某个Artist对象的属性，接下来要解决如何找到指定的Artist对象。前面我们介绍过Artist对象有容器类型和简单类型两种，这一节让我们来详细看看容器类型的内容。</p>
+<p>最大的Artist容器是matplotlib.figure.Figure，它包括组成图表的所有元素。图表的背景是一个Rectangle对象，用Figure.patch属性表示。当你通过调用add_subplot或者add_axes方法往图表中添加轴(子图时)，这些子图都将添加到Figure.axes属性中，同时这两个方法也返回添加进axes属性的对象，注意返回值的类型有所不同，实际上AxesSubplot是Axes的子类。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ax1</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">211</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ax2</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_axes</span><span class="p">([</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ax1</span>
+<span class="go">&lt;matplotlib.axes.AxesSubplot object at 0x056BCA90&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ax2</span>
+<span class="go">&lt;matplotlib.axes.Axes object at 0x056BC910&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span><span class="o">.</span><span class="n">axes</span>
+<span class="go">[&lt;matplotlib.axes.AxesSubplot object at 0x056BCA90&gt;,</span>
+<span class="go">&lt;matplotlib.axes.Axes object at 0x056BC910&gt;]</span>
+</pre></div>
+</div>
+<p>为了支持pylab中的gca()等函数，Figure对象内部保存有当前轴的信息，因此不建议直接对Figure.axes属性进行列表操作，而应该使用add_subplot, add_axes, delaxes等方法进行添加和删除操作。但是使用for循环对axes中的每个元素进行操作是没有问题的，下面的语句打开所有子图的栅格。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">ax</span> <span class="ow">in</span> <span class="n">fig</span><span class="o">.</span><span class="n">axes</span><span class="p">:</span> <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Figure对象可以拥有自己的文字、线条以及图像等简单类型的Artist。缺省的坐标系统为像素点，但是可以通过设置Artist对象的transform属性修改坐标系的转换方式。最常用的Figure对象的坐标系是以左下角为坐标原点(0,0)，右上角为坐标(1,1)。下面的程序创建并添加两条直线到fig中：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">matplotlib.lines</span> <span class="kn">import</span> <span class="n">Line2D</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">line1</span> <span class="o">=</span> <span class="n">Line2D</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">],[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="n">transform</span><span class="o">=</span><span class="n">fig</span><span class="o">.</span><span class="n">transFigure</span><span class="p">,</span> <span class="n">figure</span><span class="o">=</span><span class="n">fig</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s">&quot;r&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">line2</span> <span class="o">=</span> <span class="n">Line2D</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">],[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="n">transform</span><span class="o">=</span><span class="n">fig</span><span class="o">.</span><span class="n">transFigure</span><span class="p">,</span> <span class="n">figure</span><span class="o">=</span><span class="n">fig</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s">&quot;g&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span><span class="o">.</span><span class="n">lines</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">line1</span><span class="p">,</span> <span class="n">line2</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="figure" id="pyplotartist01">
+<img alt="_images/pyplot_artist01.png" src="_images/pyplot_artist01.png" style="width: 10cm;" />
+<p class="caption">在Figure对象中手工绘制直线</p>
+</div>
+<p>注意为了让所创建的Line2D对象使用fig的坐标，我们将fig.TransFigure赋给Line2D对象的transform属性；为了让Line2D对象知道它是在fig对象中，我们还设置其figure属性为fig；最后还需要将创建的两个Line2D对象添加到fig.lines属性中去。</p>
+<p>Figure对象有如下属性包含其它的Artist对象：</p>
+<ul class="simple">
+<li>axes : Axes对象列表</li>
+<li>patch : 作为背景的Rectangle对象</li>
+<li>images : FigureImage对象列表，用来显示图片</li>
+<li>legends : Legend对象列表</li>
+<li>lines : Line2D对象列表</li>
+<li>patches : patch对象列表</li>
+<li>texts : Text对象列表，用来显示文字</li>
+</ul>
+</div>
+<div class="section" id="axes">
+<h3>Axes容器<a class="headerlink" href="#axes" title="Permalink to this headline">¶</a></h3>
+<p>Axes容器是整个matplotlib库的核心，它包含了组成图表的众多Artist对象，并且有许多方法函数帮助我们创建、修改这些对象。和Figure一样，它有一个patch属性作为背景，当它是笛卡尔坐标时，patch属性是一个Rectangle对象，而当它是极坐标时，patch属性则是Circle对象。例如下面的语句设置Axes对象的背景颜色为绿色：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ax</span><span class="o">.</span><span class="n">patch</span><span class="o">.</span><span class="n">set_facecolor</span><span class="p">(</span><span class="s">&quot;green&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>当你调用Axes的绘图方法（例如plot），它将创建一组Line2D对象，并将所有的关键字参数传递给这些Line2D对象，并将它们添加进Axes.lines属性中，最后返回所创建的Line2D对象列表：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">line</span><span class="p">,</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="s">&quot;-&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s">&quot;blue&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">line</span>
+<span class="go">&lt;matplotlib.lines.Line2D object at 0x03007030&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ax</span><span class="o">.</span><span class="n">lines</span>
+<span class="go">[&lt;matplotlib.lines.Line2D object at 0x03007030&gt;]</span>
+</pre></div>
+</div>
+<p>注意plot返回的是一个Line2D对象的列表，因为我们可以传递多组X,Y轴的数据，一次绘制多条曲线。</p>
+<p>与plot方法类似，绘制直方图的方法bar和绘制柱状统计图的方法hist将创建一个Patch对象的列表，每个元素实际上都是Patch的子类Rectangle，并且将所创建的Patch对象都添加进Axes.patches属性中：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">n</span><span class="p">,</span> <span class="n">bins</span><span class="p">,</span> <span class="n">rects</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">1000</span><span class="p">),</span> <span class="mi">50</span><span class="p">,</span> <span class="n">facecolor</span><span class="o">=</span><span class="s">&quot;blue&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">rects</span>
+<span class="go">&lt;a list of 50 Patch objects&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">rects</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="go">&lt;matplotlib.patches.Rectangle object at 0x05BC2350&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ax</span><span class="o">.</span><span class="n">patches</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="go">&lt;matplotlib.patches.Rectangle object at 0x05BC2350&gt;</span>
+</pre></div>
+</div>
+<p>一般我们不会直接对Axes.lines或者Axes.patches属性进行操作，而是调用add_line或者add_patch等方法，这些方法帮助我们完成许多属性设置工作：</p>
+<blockquote>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">rect</span> <span class="o">=</span> <span class="n">matplotlib</span><span class="o">.</span><span class="n">patches</span><span class="o">.</span><span class="n">Rectangle</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">width</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">rect</span><span class="o">.</span><span class="n">get_axes</span><span class="p">()</span> <span class="c"># rect的axes属性为空</span>
+<span class="go">None</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">rect</span><span class="o">.</span><span class="n">get_transform</span><span class="p">()</span> <span class="c"># rect的transform属性为缺省值</span>
+<span class="go">BboxTransformTo(Bbox(array([[  1.,   1.],</span>
+<span class="go">       [  6.,  13.]])))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ax</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">rect</span><span class="p">)</span> <span class="c"># 将rect添加进ax</span>
+<span class="go">&lt;matplotlib.patches.Rectangle object at 0x05C34E50&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">rect</span><span class="o">.</span><span class="n">get_axes</span><span class="p">()</span> <span class="c"># 于是rect的axes属性就是ax</span>
+<span class="go">&lt;matplotlib.axes.AxesSubplot object at 0x05C09CB0&gt;</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="c"># rect的transform属性和ax的transData相同</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">rect</span><span class="o">.</span><span class="n">get_transform</span><span class="p">()</span>
+<span class="gp">... </span><span class="c"># 太长，省略</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ax</span><span class="o">.</span><span class="n">transData</span>
+<span class="gp">... </span><span class="c"># 太长，省略</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">ax</span><span class="o">.</span><span class="n">get_xlim</span><span class="p">()</span> <span class="c"># ax的X轴范围为0到1，无法显示完整的rect</span>
+<span class="go">(0.0, 1.0)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ax</span><span class="o">.</span><span class="n">dataLim</span><span class="o">.</span><span class="n">_get_bounds</span><span class="p">()</span> <span class="c"># 数据的范围和rect的大小一致</span>
+<span class="go">(1.0, 1.0, 5.0, 12.0)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ax</span><span class="o">.</span><span class="n">autoscale_view</span><span class="p">()</span> <span class="c"># 自动调整坐标轴范围</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ax</span><span class="o">.</span><span class="n">get_xlim</span><span class="p">()</span> <span class="c"># 于是X轴可以完整显示rect</span>
+<span class="go">(1.0, 6.0)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</blockquote>
+<p>通过上面的例子我们可以看出，add_patch方法帮助我们设置了rect的axes和transform属性。</p>
+<p>下面详细列出Axes包含各种Artist对象的属性：</p>
+<ul class="simple">
+<li>artists : Artist对象列表</li>
+<li>patch : 作为Axes背景的Patch对象，可以是Rectangle或者Circle</li>
+<li>collections : Collection对象列表</li>
+<li>images : AxesImage对象列表</li>
+<li>legends : Legend对象列表</li>
+<li>lines : Line2D对象列表</li>
+<li>patches : Patch对象列表</li>
+<li>texts : Text对象列表</li>
+<li>xaxis : XAxis对象</li>
+<li>yaxis : YAxis对象</li>
+</ul>
+<p>下面列出Axes的创建Artist对象的方法：</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="30%" />
+<col width="39%" />
+<col width="32%" />
+</colgroup>
+<tbody valign="top">
+<tr><td>Axes的方法</td>
+<td>所创建的对象</td>
+<td>添加进的列表</td>
+</tr>
+<tr><td>annotate</td>
+<td>Annotate</td>
+<td>texts</td>
+</tr>
+<tr><td>bars</td>
+<td>Rectangle</td>
+<td>patches</td>
+</tr>
+<tr><td>errorbar</td>
+<td>Line2D, Rectangle</td>
+<td>lines,patches</td>
+</tr>
+<tr><td>fill</td>
+<td>Polygon</td>
+<td>patches</td>
+</tr>
+<tr><td>hist</td>
+<td>Rectangle</td>
+<td>patches</td>
+</tr>
+<tr><td>imshow</td>
+<td>AxesImage</td>
+<td>images</td>
+</tr>
+<tr><td>legend</td>
+<td>Legend</td>
+<td>legends</td>
+</tr>
+<tr><td>plot</td>
+<td>Line2D</td>
+<td>lines</td>
+</tr>
+<tr><td>scatter</td>
+<td>PolygonCollection</td>
+<td>Collections</td>
+</tr>
+<tr><td>text</td>
+<td>Text</td>
+<td>texts</td>
+</tr>
+</tbody>
+</table>
+<p>下面以绘制散列图(scatter)为例，验证一下：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">20</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">20</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="c"># 返回值为CircleCollection对象</span>
+<span class="go">&lt;matplotlib.collections.CircleCollection object at 0x06004230&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ax</span><span class="o">.</span><span class="n">collections</span> <span class="c"># 返回的对象已经添加进了collections列表中</span>
+<span class="go">[&lt;matplotlib.collections.CircleCollection object at 0x06004230&gt;]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fig</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span><span class="o">.</span><span class="n">get_sizes</span><span class="p">()</span> <span class="c"># 获得Collection的点数</span>
+<span class="go">20</span>
+</pre></div>
+</div>
+<div class="figure" id="fig-pyplotartist02">
+<img alt="_images/pyplot_artist02.png" src="_images/pyplot_artist02.png" style="width: 14cm;" />
+<p class="caption">用scatter函数绘制散列图</p>
+</div>
+</div>
+<div class="section" id="axis">
+<h3>Axis容器<a class="headerlink" href="#axis" title="Permalink to this headline">¶</a></h3>
+<p id="sec-matplotlib-axis">Axis容器包括坐标轴上的刻度线、刻度文本、坐标网格以及坐标轴标题等内容。刻度包括主刻度和副刻度，分别通过Axis.get_major_ticks和Axis.get_minor_ticks方法获得。每个刻度线都是一个XTick或者YTick对象，它包括实际的刻度线和刻度文本。为了方便访问刻度线和文本，Axis对象提供了get_ticklabels和get_ticklines方法分别直接获得刻度线和刻度文本：</p>
+<blockquote>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">],[</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">])</span>
+<span class="go">[&lt;matplotlib.lines.Line2D object at 0x0AD3B670&gt;]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">axis</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span><span class="o">.</span><span class="n">xaxis</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">axis</span><span class="o">.</span><span class="n">get_ticklocs</span><span class="p">()</span> <span class="c"># 获得刻度的位置列表</span>
+<span class="go">array([ 1. ,  1.5,  2. ,  2.5,  3. ])</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">axis</span><span class="o">.</span><span class="n">get_ticklabels</span><span class="p">()</span> <span class="c"># 获得刻度标签列表</span>
+<span class="go">&lt;a list of 5 Text major ticklabel objects&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">get_text</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">axis</span><span class="o">.</span><span class="n">get_ticklabels</span><span class="p">()]</span> <span class="c"># 获得刻度的文本字符串</span>
+<span class="go">[u&#39;1.0&#39;, u&#39;1.5&#39;, u&#39;2.0&#39;, u&#39;2.5&#39;, u&#39;3.0&#39;]</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">axis</span><span class="o">.</span><span class="n">get_ticklines</span><span class="p">()</span> <span class="c"># 获得主刻度线列表，图的上下刻度线共10条</span>
+<span class="go">&lt;a list of 10 Line2D ticklines objects&gt;</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">axis</span><span class="o">.</span><span class="n">get_ticklines</span><span class="p">(</span><span class="n">minor</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span> <span class="c"># 获得副刻度线列表</span>
+<span class="go">&lt;a list of 0 Line2D ticklines objects&gt;</span>
+</pre></div>
+</div>
+</blockquote>
+<p>获得刻度线或者刻度标签之后，可以设置其各种属性，下面设置刻度线为绿色粗线，文本为红色并且旋转45度：</p>
+<blockquote>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">axis</span><span class="o">.</span><span class="n">get_ticklabels</span><span class="p">():</span>
+<span class="gp">... </span>    <span class="n">label</span><span class="o">.</span><span class="n">set_color</span><span class="p">(</span><span class="s">&quot;red&quot;</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">label</span><span class="o">.</span><span class="n">set_rotation</span><span class="p">(</span><span class="mi">45</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">label</span><span class="o">.</span><span class="n">set_fontsize</span><span class="p">(</span><span class="mi">16</span><span class="p">)</span>
+<span class="gp">...</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">axis</span><span class="o">.</span><span class="n">get_ticklines</span><span class="p">():</span>
+<span class="gp">... </span>    <span class="n">line</span><span class="o">.</span><span class="n">set_color</span><span class="p">(</span><span class="s">&quot;green&quot;</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">line</span><span class="o">.</span><span class="n">set_markersize</span><span class="p">(</span><span class="mi">25</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">line</span><span class="o">.</span><span class="n">set_markeredgewidth</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+</pre></div>
+</div>
+</blockquote>
+<p>最终的结果图如下：</p>
+<div class="figure" id="fig-pyplotaxis01">
+<img alt="_images/pyplot_axis01.png" src="_images/pyplot_axis01.png" style="width: 14cm;" />
+<p class="caption">手工配置X轴的刻度线和刻度文本的样式</p>
+</div>
+<p>上面的例子中，获得的副刻度线列表为空，这是因为用于计算副刻度的对象缺省为NullLocator，它不产生任何刻度线；而计算主刻度的对象为AutoLocator，它会根据当前的缩放等配置自动计算刻度的位置：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">axis</span><span class="o">.</span><span class="n">get_minor_locator</span><span class="p">()</span> <span class="c"># 计算副刻度的对象</span>
+<span class="go">&lt;matplotlib.ticker.NullLocator instance at 0x0A014300&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">axis</span><span class="o">.</span><span class="n">get_major_locator</span><span class="p">()</span> <span class="c"># 计算主刻度的对象</span>
+<span class="go">&lt;matplotlib.ticker.AutoLocator instance at 0x09281B20&gt;</span>
+</pre></div>
+</div>
+<p>我们可以使用程序为Axis对象设置不同的Locator对象，用来手工设置刻度的位置；设置Formatter对象用来控制刻度文本的显示。下面的程序设置X轴的主刻度为pi/4，副刻度为pi/20，并且主刻度上的文本以pi为单位：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">pl</span>
+<span class="kn">from</span> <span class="nn">matplotlib.ticker</span> <span class="kn">import</span> <span class="n">MultipleLocator</span><span class="p">,</span> <span class="n">FuncFormatter</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span>
+
+<span class="k">def</span> <span class="nf">pi_formatter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">pos</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    比较罗嗦地将数值转换为以pi/4为单位的刻度文本</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">x</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">4</span><span class="p">))</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="k">if</span> <span class="n">m</span><span class="o">%</span><span class="mi">2</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="n">m</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">n</span><span class="o">/</span><span class="mi">2</span>
+    <span class="k">if</span> <span class="n">m</span><span class="o">%</span><span class="mi">2</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="n">m</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">n</span><span class="o">/</span><span class="mi">2</span>
+    <span class="k">if</span> <span class="n">m</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s">&quot;0&quot;</span>
+    <span class="k">if</span> <span class="n">m</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s">&quot;$\pi$&quot;</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s">r&quot;$</span><span class="si">%d</span><span class="s"> \pi$&quot;</span> <span class="o">%</span> <span class="n">m</span>
+    <span class="k">if</span> <span class="n">m</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s">r&quot;$\frac{\pi}{</span><span class="si">%d</span><span class="s">}$&quot;</span> <span class="o">%</span> <span class="n">n</span>
+    <span class="k">return</span> <span class="s">r&quot;$\frac{</span><span class="si">%d</span><span class="s"> \pi}{</span><span class="si">%d</span><span class="s">}$&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="n">n</span><span class="p">)</span>
+
+<span class="c"># 设置两个坐标轴的范围</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="o">-</span><span class="mf">1.5</span><span class="p">,</span><span class="mf">1.5</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+
+<span class="c"># 设置图的底边距</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">subplots_adjust</span><span class="p">(</span><span class="n">bottom</span> <span class="o">=</span> <span class="mf">0.15</span><span class="p">)</span>
+
+<span class="n">pl</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span> <span class="c">#开启网格</span>
+
+<span class="c"># 主刻度为pi/4</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_major_locator</span><span class="p">(</span> <span class="n">MultipleLocator</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">4</span><span class="p">)</span> <span class="p">)</span>
+
+<span class="c"># 主刻度文本用pi_formatter函数计算</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_major_formatter</span><span class="p">(</span> <span class="n">FuncFormatter</span><span class="p">(</span> <span class="n">pi_formatter</span> <span class="p">)</span> <span class="p">)</span>
+
+<span class="c"># 副刻度为pi/20</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_minor_locator</span><span class="p">(</span> <span class="n">MultipleLocator</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">20</span><span class="p">)</span> <span class="p">)</span>
+
+<span class="c"># 设置刻度文本的大小</span>
+<span class="k">for</span> <span class="n">tick</span> <span class="ow">in</span> <span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">get_major_ticks</span><span class="p">():</span>
+    <span class="n">tick</span><span class="o">.</span><span class="n">label1</span><span class="o">.</span><span class="n">set_fontsize</span><span class="p">(</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>关于刻度的定位和文本格式的东西都在matplotlib.ticker中定义，程序中使用到如下两个类：</p>
+<ul class="simple">
+<li><strong>MultipleLocator</strong> : 以指定值的整数倍为刻度放置刻度线</li>
+<li><strong>FuncFormatter</strong> : 使用指定的函数计算刻度文本，他会传递给所指定的函数两个参数：刻度值和刻度序号，程序中通过比较笨的办法计算出刻度值所对应的刻度文本</li>
+</ul>
+<p>此外还有很多预定义的Locator和Formatter类，详细内容请参考相应的API文档。</p>
+<div class="figure" id="fig-pyplotaxis02">
+<img alt="_images/pyplot_axis02.png" src="_images/pyplot_axis02.png" style="width: 14cm;" />
+<p class="caption">手工配置X轴的刻度线的位置和文本，并开启副刻度</p>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">首页目录</a></h3>
+            <ul>
+<li><a class="reference external" href="#">matplotlib-绘制精美的图表</a><ul>
+<li><a class="reference external" href="#id2">快速绘图</a><ul>
+<li><a class="reference external" href="#id3">配置属性</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#id4">绘制多轴图</a></li>
+<li><a class="reference external" href="#id5">配置文件</a></li>
+<li><a class="reference external" href="#artist">Artist对象</a><ul>
+<li><a class="reference external" href="#id6">Artist的属性</a></li>
+<li><a class="reference external" href="#figure">Figure容器</a></li>
+<li><a class="reference external" href="#axes">Axes容器</a></li>
+<li><a class="reference external" href="#axis">Axis容器</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            <h4>上一篇文章</h4>
+            <p class="topless"><a href="sympy_intro.html"
+                                  title="上一篇文章">SymPy-符号运算好帮手</a></p>
+            <h4>下一篇文章</h4>
+            <p class="topless"><a href="traits_intro.html"
+                                  title="下一篇文章">Traits-为Python添加类型定义</a></p>
+          <div id="searchbox" style="display: none">
+            <h3>快速搜索</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="搜索" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              中文搜索请尽量用空格分开单个的单词，例如搜索"科学 计算"，而不是"科学计算"
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="traits_intro.html" title="Traits-为Python添加类型定义"
+             >下一篇</a></li>
+        <li class="right" >
+          <a href="sympy_intro.html" title="SymPy-符号运算好帮手"
+             >上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+    &copy; 2009, <a href="http://hyry.dip.jp/blogt.py">HYRY Studio</a>
+      由 <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.4. 编译
+    </div>
+  </body>
+</html>

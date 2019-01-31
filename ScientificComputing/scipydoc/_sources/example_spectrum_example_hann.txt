@@ -1,0 +1,10 @@
+##########
+频谱泄漏和hann窗
+##########
+
+相关文档： :doc:`frequency_process`
+
+对于8kHz取样频率的200Hz 300Hz的叠加波形进行512点FFT计算其频谱，比较矩形窗和hann窗的频谱泄漏。
+
+.. literalinclude:: examples/spectrum_example_hann.py
+

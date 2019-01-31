@@ -1,0 +1,400 @@
+#######
+单摆和双摆模拟
+#######
+
+
+单摆模拟
+====
+
+由一根不可伸长、质量不计的绳子，上端固定，下端系一质点，这样的装置叫做单摆。
+
+.. _fig-simplependlum:
+
+.. figure:: images/simple_pendulum.png
+
+    单摆装置示意图
+
+根据牛顿力学定律，我们可以列出如下微分方程：
+
+.. math::
+
+    {d^2\theta\over dt^2}+{g\over \ell} \sin\theta=0
+
+其中 :math:`\theta` 为单摆的摆角， :math:`\ell` 为单摆的长度， g为重力加速度。
+
+此微分方程的符号解无法直接求出，因此只能调用odeint对其求数值解。
+
+odeint函数的调用参数如下： ::
+
+    odeint(func, y0, t, ...)
+    
+其中func是一个Python的函数对象，用来计算微分方程组中每个未知函数的导数，y0为微分方程组中每个未知函数的初始值，t为需要进行数值求解的时间点。它返回的是一个二维数组result，其第0轴的长度为t的长度，第1轴的长度为变量的个数，因此 result[:, i] 为第i个未知函数的解。
+
+计算微分的func函数的调用参数为： func(y, t)，其中y是一个数组，为每个未知函数在t时刻的值，而func的返回值也是数组，它为每个未知函数在t时刻的导数。
+
+odeint要求每个微分方程只包含一阶导数，因此我们需要对前面的微分方程做如下的变形：
+
+.. math::
+
+    {d\theta(t)\over dt} = v(t)
+    
+.. math::
+
+    {dv(t)\over dt} = -{g\over \ell} \sin\theta(t)
+    
+下面是利用odeint计算单摆轨迹的程序：
+
+.. literalinclude:: examples/simple_pendulum_odeint.py
+    
+odeint函数还有一个关键字参数args，其值为一个组元，这些值都会作为额外的参数传递给func函数。程序使用这种方式将单摆的长度传递给pendulum_equations函数。
+
+.. _fig-simplependulum01:
+
+.. figure:: images/simple_pendulum01.png
+    :width: 14cm
+
+    初始角度为1弧度的单摆摆动角度和时间的关系
+
+计算摆动周期
+++++++
+
+高中物理课介绍过当最大摆动角度很小时，单摆的摆动周期可以使用如下公式计算：
+
+.. math::
+
+    T_0 = 2\pi\sqrt{\frac{\ell}{g}}
+    
+这是因为当 :math:`\theta << 1` 时， :math:`\sin\theta\approx\theta` ， 这样微分方程就变成了：
+
+.. math::
+
+    {d^2\theta\over dt^2}+{g\over \ell}\theta=0
+    
+此微分方程的解是一个简谐震动方程，很容易计算其摆动周期。但是当初始摆角增大时，上述的近似处理会带来无法忽视的误差。下面让我们来看看如何用数值计算的方法求出单摆在任意初始摆角时的摆动周期。
+
+要计算摆动周期只需要计算从最大摆角到0摆角所需的时间，摆动周期是此时间的4倍。为了计算出这个时间值，首先需要定义一个函数pendulum_th计算任意时刻的摆角： ::
+
+    def pendulum_th(t, l, th0):
+        track = odeint(pendulum_equations, (th0, 0), [0, t], args=(l,))
+        return track[-1, 0]
+        
+pendulum_th函数计算长度为l初始角度为th0的单摆在时刻t的摆角。此函数仍然使用odeint进行微分方程组求解，只是我们只需要计算时刻t的摆角，因此传递给odeint的时间序列为[0, t]。 odeint内部会对时间进行细分，保证最终的解是正确的。
+
+接下来只需要找到第一个时pendulum_th的结果为0的时间即可。这相当于对pendulum_th函数求解，可以使用 scipy.optimize.fsolve 函数对这种非线性方程进行求解。 ::
+
+    def pendulum_period(l, th0):
+        t0 = 2*np.pi*sqrt( l/g ) / 4
+        t = fsolve( pendulum_th, t0, args = (l, th0) )
+        return t*4
+
+和odeint一样，我们通过fsolve的args关键字参数将额外的参数传递给pendulum_th函数。fsolve求解时需要一个初始值尽量接近真实的解，用小角度单摆的周期的1/4作为这个初始值是一个很不错的选择。下面利用pendulum_period函数计算出初始摆动角度从0到90度的摆动周期： ::
+ 
+    ths = np.arange(0, np.pi/2.0, 0.01)
+    periods = [pendulum_period(1, th) for th in ths]
+    
+为了验证fsolve求解摆动周期的正确性，我从维基百科中找到摆动周期的精确解：
+
+.. math::
+
+    T = 4\sqrt{\ell\over g}K\left(\sin{\theta_0\over 2} \right)
+
+其中的函数K为第一类完全椭圆积分函数，其定义如下：
+
+.. math::
+
+    K(k) = \int_0^{\pi/2} \frac{{\rm{d}}\theta}{\sqrt{1-k^2 \sin^2\theta}}
+
+我们可以用 scipy.special.ellipk 来计算此函数的值： ::
+
+    periods2 = 4*sqrt(1.0/g)*ellipk(np.sin(ths/2)**2)
+    
+下图比较两种计算方法，我们看到其结果是完全一致的：
+
+.. _fig-simplependulum02:
+
+.. figure:: images/simple_pendulum02.png
+    :width: 14cm
+
+    单摆的摆动周期和初始角度的关系
+
+完整的程序请参见： :doc:`example_simple_pendulum_period`
+
+双摆模拟
+====
+
+接下来让我们来看看如何对双摆系统进行模拟。双摆系统的如下图所示，
+
+.. _fig-doublependulum01:
+
+.. figure:: images/double_pendulum01.png
+
+    双摆装置示意图
+
+两根长度为L1和L2的无质量的细棒的顶端有质量分别为m1和m2的两个球，初始角度为 :math:`\theta_1` 和 :math:`\theta_2` ， 要求计算从此初始状态释放之后的两个球的运动轨迹。
+
+公式推导
+++++
+
+本节首先介绍如何利用拉格朗日力学获得双摆系统的微分方程组。
+
+.. topic:: 拉格朗日力学(摘自维基百科)
+
+    拉格朗日力学是分析力学中的一种。於 1788 年由拉格朗日所创立，拉格朗日力学是对经典力学的一种的新的理论表述。
+    
+    经典力学最初的表述形式由牛顿建立，它着重於分析位移，速度，加速度，力等矢量间的关系，又称为矢量力学。拉格朗日引入了广义坐标的概念，又运用达朗贝尔原理，求得与牛顿第二定律等价的拉格朗日方程。不仅如此，拉格朗日方程具有更普遍的意义，适用范围更广泛。还有，选取恰当的广义坐标，可以大大地简化拉格朗日方程的求解过程。
+
+假设杆L1连接的球体的坐标为x1和y1，杆L2连接的球体的坐标为x2和y2，那么x1,y1,x2,y2和两个角度之间有如下关系：
+
+.. math::
+
+    x_1 &= L_1 \sin(\theta_1)
+    
+.. math::
+     
+    y_1 &= -L_1 \cos(\theta_1)
+    
+.. math::    
+
+    x_2 &= L_1 \sin(\theta_1) + L_2 \sin(\theta_2)
+    
+.. math::    
+    
+    y_2 &= -L_1 \cos(\theta_1) - L_2 \cos(\theta_2)
+    
+根据拉格朗日量的公式：
+
+.. math::
+
+    \mathcal{L}=T-V
+
+其中T为系统的动能，V为系统的势能，可以得到如下公式：
+
+.. math::
+
+    \mathcal{L} = \frac{m_1}{2} ( {\dot x_1}^2 + {\dot y_1}^2 ) + \frac{m_2}{2} ( {\dot x_2}^2 + {\dot y_2}^2 ) - m_1 g y_1 - m_2 g y_2
+    
+其中正号的项目为两个小球的动能，符号的项目为两个小球的势能。
+
+将前面的坐标和角度之间的关系公式带入之后整理可得：
+
+.. math::
+
+    \mathcal{L} = \frac{m_1+m_2}{2} L_1^2 {\dot \theta_1}^2 + \frac{m_2}{2} L_2^2 {\dot \theta_2}^2 + m_2 L_1 L_2 {\dot \theta_1} {\dot \theta_2} \cos(\theta_1 - \theta_2) + 
+    
+    (m_1 + m_2) g L_1 \cos(\theta_1) + m_2 g L_2 \cos(\theta_2)
+ 
+对于变量 :math:`\theta_1` 的拉格朗日方程：
+
+.. math::
+
+    \frac{d}{dt}\frac{\partial \mathcal{L}}{\partial \dot \theta_1} - \frac{\partial \mathcal{L}}{\partial \theta_1} = 0
+
+得到：
+
+.. math::
+
+    L_1 [(m_1+m_2)L_1{\ddot \theta_1} + m_2 L_2 \cos(\theta_1 - \theta_2) {\ddot \theta_2} + m_2 L_2 \sin(\theta_1 - \theta_2) {\dot \theta_2}^2 + (m_1+m_2) g \sin(\theta_1)] = 0
+    
+对于变量 :math:`\theta_2` 的拉格朗日方程：
+
+.. math::
+
+    \frac{d}{dt}\frac{\partial \mathcal{L}}{\partial \dot \theta_2} - \frac{\partial \mathcal{L}}{\partial \theta_2} = 0
+
+得到：
+    
+.. math::
+
+    m_2 L_2 [L_2 {\ddot \theta_2} + L_1 \cos(\theta_1 - \theta_2) {\ddot \theta_1} - L_1 \sin(\theta_1 - \theta_2) {\dot \theta_1}^2 + g \sin(\theta_2)] = 0
+
+这一计算过程可以用sympy进行推导：
+
+.. literalinclude:: examples/double_pendulum_solver.py
+
+执行此程序之后，eq1对应于 :math:`\theta_1` 的拉格朗日方程， eq2对应于 :math:`\theta_2` 的方程。
+
+由于sympy只能对符号变量求导数，即只能计算 D(L, t), 而不能计算D(f, v(t))。 因此在求偏导数之前，将偏导数变量置换为一个tmp变量，然后对tmp变量求导数，例如下面的程序行对D(v(t), t)求偏导数，即计算 :math:`\partial \mathcal{L} / \partial \dot v` ::
+
+     L.subs(D(v(t), t), tmp).diff(tmp).subs(tmp, D(v(t), t))
+     
+而在计算 :math:`\partial \mathcal{L} / \partial v` 时，需要将v(t)替换为v之后再进行微分计算。由于将v(t)替换为v的同时，会将 D(v(t), t) 中的也进行替换，这是我们不希望的结果，因此先将 D(v(t), t) 替换为tmp，微分计算完毕之后再替换回去： ::
+
+    L.subs(D(v(t), t), tmp).subs(v(t), v).diff(v).subs(v, v(t)).subs(tmp, D(v(t), t))
+    
+最后得到的eq1, eq2的值为：
+  
+    >>> eq1
+    ddth1*(m1*l1**2 + m2*l1**2) + 
+    ddth2*(l1*l2*m2*cos(th1)*cos(th2) + l1*l2*m2*sin(th1)*sin(th2)) +
+    dth2**2*(l1*l2*m2*cos(th2)*sin(th1) - l1*l2*m2*cos(th1)*sin(th2)) +
+    g*l1*m1*sin(th1) + g*l1*m2*sin(th1)
+    >>> eq2
+    ddth1*(l1*l2*m2*cos(th1)*cos(th2) + l1*l2*m2*sin(th1)*sin(th2)) +
+    dth1**2*(l1*l2*m2*cos(th1)*sin(th2) - l1*l2*m2*cos(th2)*sin(th1)) +
+    g*l2*m2*sin(th2) + ddth2*m2*l2**2
+    
+结果看上去挺复杂，其实只要运用如下的三角公式就和前面的结果一致了：
+
+.. math::
+
+    \sin \left(x+y\right)=\sin x \cos y + \cos x \sin y
+    
+    \cos \left(x+y\right)=\cos x \cos y - \sin x \sin y
+    
+    \sin \left(x-y\right)=\sin x \cos y - \cos x \sin y
+    
+    \cos \left(x-y\right)=\cos x \cos y + \sin x \sin y
+
+微分方程的数值解
+++++++++
+
+接下来要做的事情就是对如下的微分方程求数值解：
+
+.. math::
+
+    (m_1+m_2)L_1{\ddot \theta_1} + m_2 L_2 \cos(\theta_1 - \theta_2) {\ddot \theta_2} + m_2 L_2 \sin(\theta_1 - \theta_2) {\dot \theta_2}^2 + (m_1+m_2) g \sin(\theta_1) = 0
+        
+.. math::
+
+    L_2 {\ddot \theta_2} + L_1 \cos(\theta_1 - \theta_2) {\ddot \theta_1} - L_1 \sin(\theta_1 - \theta_2) {\dot \theta_1}^2 + g \sin(\theta_2) = 0
+
+由于方程中包含二阶导数，因此无法直接使用odeint函数进行数值求解，我们很容易将其改写为4个一阶微分方程组，4个未知变量为： :math:`\theta_1, \theta_2, v_1, v_2` ， 其中 :math:`v_1, v_2` 为两个杆转动的角速度。
+
+.. math::
+
+    \dot \theta_1 = v_1
+
+.. math::
+    
+    \dot \theta_2 = v_2
+
+.. math::
+    
+    (m_1+m_2)L_1{\dot v_1} + m_2 L_2 \cos(\theta_1 - \theta_2) {\dot v_2} + m_2 L_2 \sin(\theta_1 - \theta_2) {\dot \theta_2}^2 + (m_1+m_2) g \sin(\theta_1) = 0
+
+.. math::
+
+    L_2 {\dot v_2} + L_1 \cos(\theta_1 - \theta_2) {\dot v_1} - L_1 \sin(\theta_1 - \theta_2) {\dot \theta_1}^2 + g \sin(\theta_2) = 0
+    
+下面的程序利用 scipy.integrate.odeint 对此微分方程组进行数值求解：
+
+.. literalinclude:: examples/double_pendulum_odeint.py
+
+程序中的 DoublePendulum.equations 函数计算各个未知函数的导数，其输入参数w数组中的变量依次为： 
+
+* th1: 上球角度
+* th2: 下球角度
+* v1: 上球角速度
+* v2: 下球角速度
+
+返回值为每个变量的导数：
+
+* dth1: 上球角速度
+* dth2: 下球角速度
+* dv1: 上球角加速度
+* dv2: 下球角加速度
+
+其中dth1和dth2很容易计算，它们直接等于传入的角速度变量： ::
+
+        dth1 = v1
+        dth2 = v2
+    
+为了计算dv1和dv2，需要将微分方程组进行变形为如下格式 :
+
+.. math::
+
+    \dot v_1 = ...
+    
+    \dot v_2 = ...
+    
+如果我们希望让程序做这个事情的话，可以计算出 dv1 和 dv2 的系数，然后调用 linalg.solve 求解线型方程组： ::
+
+        #eq of th1
+        a = l1*l1*(m1+m2)  # dv1 parameter
+        b = l1*m2*l2*cos(th1-th2) # dv2 paramter
+        c = l1*(m2*l2*sin(th1-th2)*dth2*dth2 + (m1+m2)*g*sin(th1))
+        
+        #eq of th2
+        d = m2*l2*l1*cos(th1-th2) # dv1 parameter
+        e = m2*l2*l2 # dv2 parameter
+        f = m2*l2*(-l1*sin(th1-th2)*dth1*dth1 + g*sin(th2))
+        
+        dv1, dv2 = np.linalg.solve([[a,b],[d,e]], [-c,-f])
+    
+上面的程序相当于将原始的微分方程组变换为
+
+.. math::
+
+    a \dot v_1 + b \dot v_2 + c = 0
+    
+    d \dot v_1 + e \dot v_2 + f = 0 
+    
+程序绘制的小球运动轨迹如下：
+
+.. _fig-doublependulum02:
+
+.. figure:: images/double_pendulum02.png
+    :width: 14cm
+
+    初始角度微小时的双摆的摆动轨迹
+    
+.. _fig-doublependulum03:    
+    
+.. figure:: images/double_pendulum03.png
+    :width: 14cm
+
+    大初始角度时双摆的摆动轨迹呈现混沌现象
+
+可以看出当初始角度很大的时候，摆动出现混沌现象。
+
+动画显示
+++++
+
+计算出小球的轨迹之后我们很容易将结果可视化，制作成动画效果。制作动画可以有多种选择：
+
+* visual库可以制作3D动画
+
+* pygame制作快速的2D动画
+
+* tkinter或者wxpython直接在界面上绘制动画
+
+这里介绍如何使用matplotlib制作动画。整个动画绘制程序如下：
+
+.. literalinclude:: examples/double_pendulum_animation.py
+
+程序中强制使用WXAgg进行后台绘制： ::
+
+    matplotlib.use('WXAgg')
+    
+然后启动wx库中的时间事件调用update_line函数重新设置两条直线的端点位置： ::
+
+    import wx
+    id = wx.NewId()
+    actor = fig.canvas.manager.frame
+    timer = wx.Timer(actor, id=id)
+    timer.Start(1)
+    wx.EVT_TIMER(actor, id, update_line) 
+    
+在update_line函数中，每次轨迹数组播放完毕之后，就调用： ::
+
+    if idx == len(x1):
+        x1, y1, x2, y2 = double_pendulum_odeint(pendulum, 0, 1, 0.05)
+        idx = 0
+        
+重新生成下一秒钟的轨迹。由于在 double_pendulum_odeint 函数中会将odeint计算的最终的状态赋给 pendulum.init_status ，因此连续调用 double_pendulum_odeint 函数可以生成连续的运动轨迹 ::
+
+    def double_pendulum_odeint(pendulum, ts, te, tstep):
+        ...
+        track = odeint(pendulum.equations, pendulum.init_status, t)
+        ...
+        pendulum.init_status = track[-1,:].copy()
+        return [x1, y1, x2, y2]
+
+程序的动画效果如下图所示：
+
+.. _fig-doublependulum04:
+
+.. figure:: images/double_pendulum04.png
+
+    双摆的摆动动画效果截图
+

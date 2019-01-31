@@ -1,0 +1,360 @@
+########
+定义Traits
+########
+
+在Python程序中按照下面的步骤使用Traits库：
+
+1. 从 enthought.traits.api 中载入你所需要的对象
+
+2. 定义你想使用的traits
+
+3. 从HasTraits类继承一个新类，在其中使用你定义的traits声明trait属性
+
+通常第2、3步是放在一起的，也就是说定义traits的同时定义trait属性，在本手册中的大部分例子都是采用这种方式： ::
+
+    from enthought.traits.api import HasTraits, Float
+    
+    class Person(HasTraits):
+        weight = Float(50.0)
+        
+这段程序定义了一个从HasTraits类继承的Person类，在其内部声明了一个名为weight的trait属性，其类型为浮点数，初始值为50.0。trait属性像类的属性一样定义，像实例的属性一样使用。下面我们来看看如何使用trait属性：
+
+    >>> joe = Person()
+    >>> joe.weight
+    50.0
+    >>> joe.weight = 70.5
+    >>> joe.weight = 70
+    >>> joe.weight = "89"
+    Traceback (most recent call last):
+      File "...trait_handlers.py", line 175, in error value )
+    TraitError: The 'weight' trait of a Person instance must be a float, 
+    but a value of '89' <type 'str'> was specified.
+
+由于joe是Person类的实例，因此它有一个名为weight的trait属性，并且初始值为50.0。由于weight是使用Float声明的，我们能将浮点数赋值给它，由于整数可以不丢失精度的转换为浮点数，因此整数也可以赋值给它。然而，把浮点数赋值给整数trait属性将会产生错误。由于字符串无法转换为浮点数，因此赋值为字符串产生错误，错误的提示信息告诉我们它需要浮点数。
+
+有时候我们希望trait属性能够自动的进行强制类型转换，这样我们就可以将字符串赋值给类型为float的trait属性，省去了手工转换的麻烦。这种强制类型转换的trait属性都用Casting trait声明，所有的Casting trait都是以 **C** 开头的： ::
+
+    from enthought.traits.api import HasTraits, CFloat
+    
+    class Person(HasTraits):
+        cweight = CFloat(50.0)
+        
+::
+        
+    >>> bill = Person()
+    >>> bill.cweight = "90"
+    >>> bill.cweight
+    90.0
+    >>> bill.cweight = "abc"
+    Traceback (most recent call last)
+    ...
+    
+这段程序用CFloat声明了一个强制类型转换的trait属性cweight。我们可以将能转换为浮点数的字符串"90"赋值给它，但是 "abc" 这样的字符串赋值仍然会抛出异常。 我们可以想象CFloat的内部处理：它先将传入的值用内部函数float()进行强制类型转换，然后把结果赋值给trait属性。  
+
+我们也可以先单独定义一个traits，然后用它来声明多个类的多个trait属性，下面是一个例子： ::
+
+    from enthought.traits.api import HasTraits, Range
+    
+    coefficient = Range(-1.0, 1.0, 0.0)
+    
+    class quadratic(HasTraits):
+        c2 = coefficient
+        c1 = coefficient
+        c0 = coefficient
+        x  = Range(-100.0, 100.0, 0.0)
+
+在这个例子中，我们需要定义多个trait属性，其类型都为Range(具有取值范围的浮点值)，并且范围都是-1.0到1.0，初始值为0.0。为了体现代码重用，我们先用coefficient = Range(-1.0, 1.0, 0.0)定义了一个traits，然后在quadratic类中使用它定义三个trait属性：c0, c1, c2。
+
+预定义的Traits
+==========
+
+Traits库为Python的许多数据类型提供了预定义的trait类型。HasTraits派生的类中用trait类型名直接定义trait属性，这个类的所有实例都将拥有一个初始化为缺省值的属性，例如： ::
+
+    class Person(HasTraits):
+        age = Float
+        
+上面的例子为Person类定义了一个age属性，其类型为浮点数，并且被初始化为0.0(Float的缺省值)。如果你希望用别的值初始化trait属性的话，可以把这个值当作参数传递给trait类型： ::
+
+    age = Float(10.0)
+    
+几乎所有的trait类型都是可以带括号调用的，它可以接受缺省值或者其它的参数；还可以通过关键字参数接受元数据。 .. TODO:: 插入元数据链接
+
+简单类型
+----
+
+对于每个Python的简单数据类型都对应两种trait类型：强制类型和自动转换类型。它们的区别在于：
+
+* **强制型Trait** : 当这样trait属性被赋值为类型不匹配的数据时，会产生错误
+* **自动型Trait** : 类型不匹配时会自动调用此类型对应的Pyton内置的转换函数进行类型转换
+
+============== ============= ====================== ====================== ==============
+强制型Trait    自动型Trait    Python对应的数据类型   内置缺省值             自动转换函数
+============== ============= ====================== ====================== ==============
+Bool           CBool         Boolean                False                   bool()
+Complex        CComplex      Complex number         0+0j                    complex()
+Float          CFloat        Floating point number  0.0                     float()
+Int            CInt          Plain integer          0                       int()
+Long           CLong         Long integer           0L                      int()
+Str            CStr          String                 ''                       str()
+Unicode        CUnicode      Unicode                u''                     unicode()
+============== ============= ====================== ====================== ==============
+
+下面的例子演示了强制型Trait和自动型Trait之间的区别：
+
+    >>> from enthought.traits.api import HasTraits, Float, CFloat
+    >>> class Person ( HasTraits ):
+    ...     weight  = Float
+    ...     cweight = CFloat
+    >>> bill = Person()
+    >>> bill.weight  = 180    # OK, 整数和浮点数匹配(转换为浮点数而不丢失信息)
+    >>> bill.cweight = 180    # OK, 
+    >>> bill.weight  = '180'  # Error, 字符串和浮点数不匹配
+    Traceback (most recent call last):
+    ...
+    >>> bill.cweight = '180'  # OK, 调用float('180')转换为浮点
+    >>> print bill.cweight
+    180.0
+
+其它类型
+----
+
+除了简单类型以外，Traits库还定义了许多其他的常用的数据类型。几乎所有的Trait类型都可以直接使用其名称或者当作函数调用，并且可以接受多种参数。
+
+* **Any** : 任何对象； ::
+
+    Any( [value = None, **metadata] )
+
+* **Array** : numpy的数组； ::
+        
+    Array( [dtype = None, shape = None, value = None, typecode = None, **metadata] )
+
+* **Button** : 按钮类型，通常用来触发事件，参数都是用来描述界面中的按钮的样式；  ::
+
+    Button( [label ="", image = None, style = "button", orientation = "vertical", width_padding = 7, height_padding = 5, **metadata] ) 
+
+* **Callable** : 可调用对象； ::
+    
+    Callable( [value = None, **metadata] )
+
+* **CArray** : 可自动转换类型的numpy数组； 调用的参数和Array相同
+
+* **Class** : Python老式类； ::
+
+    Class( [value, **metadata] )
+
+* **Code** : 某种编程语言的字符串； ::
+
+    Code( [value = "", minlen = 0, maxlen = sys.maxint, regex = "", **metadata] )
+
+* **Color** : 界面库中所采用的颜色对象； ::
+
+    Color( [*args, **metadata] )
+
+* **CSet** :  自动转换类型的集合对象； ::
+
+    CSet( [trait = None, value = None, items = True, **metadata] )  
+
+* **Constant** : 常量对象，其值不能改变，必须指定初始值； ::
+
+    Constant( value*[, ***metadata] )
+
+* **Dict** : 字典对象，系统还定义了一系列关键字为字符串的字典trait类型：DictStrAny, DictStrBool, ...； ::
+
+    Dict( [key_trait = None, value_trait = None, value = None, items = True, **metadata] )
+
+* **Directory** : 表示某个目录的路径的字符串； ::
+
+    Directory( [value ="", auto_set = False, entries = 10, exists = False, **metadata] )
+
+* **Disallow** : 表示不容许任何值，在带有通配符的trait属性定义中使用
+
+* **Either** : 多个trait类型的复合对象，例如 Either(Str, Float) 表示其定义的属性类型可以是字符串或者浮点数； ::
+
+    Either( val1*[, *val2, ..., valN, **metadata] )
+    
+* **Enum** : 枚举数据，其值可以是候选值中的一个； ::
+
+    Enum( values*[, ***metadata] )        
+
+* **Event** : 触发事件用的对象； ::
+
+    Event( [trait = None, **metadata] )
+
+* **Expression** : Python的表达式对象； ::
+
+    Expression( [value ="0", **metadata] )
+
+* **File** : 表示包括路径的文件名的字符串；  ::
+
+    File( [value = "", filter = None, auto_set = False, entries = 10, exists = False, **metadata ] )
+
+* **Font** : 界面库中表示字体的对象； ::
+
+    Font( [*args, **metadata] )
+
+This和self
+.........
+
+在预定义的traits中，This和self需要单独说明一下。它们所定义的属性必须是包含此属性的类(或派生类)的对象。This的缺省值为None，而self的缺省值则是包含属性的对象本身。
+
+下面来看一个例子： ::
+
+    class Employee(HasTraits):
+        manager = self
+        
+定义了一个Employee类，它有一个manager属性，其类型为Employee，缺省值为对象本身：
+
+    >>> e = Employee()
+    >>> e.manager
+    <__main__.Employee object at 0x05DB72A0>
+    >>> e
+    <__main__.Employee object at 0x05DB72A0> 
+
+如果用This定义的话，那么缺省值为None。
+
+一般来说，属性为某个类的实例时可以这样定义： ::
+
+    manager = Instance(Empolyee)
+    
+但是对于这个例子中，在定义manager属性时，Empolyee还不存在，因此无法如此定义。如果你喜欢这种方式的话，可以用Instance("Empolyee")来定义，当两个类的属性交叉引用时，可以使用这种字符串的方式来定义。
+
+This和self不但可以表示类本身，还可以表示派生的类：
+
+    >>> from enthought.traits.api import HasTraits, This
+    >>> class Employee(HasTraits):
+    ...    manager = This
+    ...
+    >>> class Executive(Employee):
+    ...  pass
+    ...
+    >>> fred = Employee()
+    >>> mary = Executive()
+    >>> fred.manager = mary 
+    >>> mary.manager = fred
+
+列出可能的值
+......
+
+使用Enum可以定义枚举类型，在Enum的定义中给出所有可能的值，这些值必须是Python的简单数据类型，例如字符串、整数、浮点数等等，各个可能的值的类型可以不一样。可以直接将可能的值作为参数，或者将其包在某个list中，第一个值为缺省值： ::
+
+    class Items(HasTraits):
+        count = Enum(None, 0, 1, 2, 3, "many")
+        # 或者：
+        # count = Enum([None, 0, 1, 2, 3, "many"]) 
+        
+下面是运行结果： ::
+        
+    >>> item = Items()
+    >>> item.count = 2
+    >>> item.count = "many"
+    >>> item.count = 5
+    Traceback (most recent call last): ...
+     
+如果你希望候选值是可以变化的话，可以用values关键字指定定义侯选值的属性名： ::
+
+    class Items(HasTraits):
+        count_list = List([None, 0, 1, 2, 3, "many"])
+        count = Enum(values="count_list") 
+
+我们定义一个count_list列表，然后在Enum定义中用values关键字指定候选值为count_list属性。
+
+::
+
+    >>> item = Items()
+    >>> item.count = 5
+    Traceback (most recent call last)
+    #... 略去错误提示，此错误提示无法显示侯选值列表
+    >>> item.count_list.append(5)
+    >>> item.count = 5
+    >>> item.count
+    5
+
+Trait的元数据
+=========
+
+Trait对象可以有元数据属性，这些属性保存在HasTraits对象的trait字典中，为了解释什么是trait字典和元数据，让我们先来看一个例子： ::
+
+    from enthought.traits.api import *
+
+    class MetadataTest(HasTraits):
+        i = Int(99)
+        s = Str("test", desc="a string trait property")
+        
+    test = MetadataTest()
+    
+在IPython中运行了上面的程序之后，我们对test进行如下操作：
+
+    >>> test.traits()
+    {'i': <enthought.traits.traits.CTrait object at 0x05D44EA0>, 
+    'trait_added': <enthought.traits.traits.CTrait object at 0x05D17CE8>, 
+    's': <enthought.traits.traits.CTrait object at 0x05D44EF8>, 
+    'trait_modified': <enthought.traits.traits.CTrait object at 0x05D17C90>}
+    
+    >>> test.trait("i")
+    <enthought.traits.traits.CTrait object at 0x05D44EA0>
+    
+    >>> test.trait("s").desc
+    'a string trait property'
+    
+通过调用HasTraits对象的traits方法可以得到一个包含其所有trait对象的字典。请注意，trait属性和trait对象是两个东西： 
+
+* **trait属性** : 用于保存实际的值，例如：test.i, test.s
+
+* **trait对象** : 用于描述trait属性，例如：test.trait("i"), test.trait("s")
+
+也就是说对于每一个trait属性都有一个与之对应的trait对象描述它。而元数据就是保存在trait对象中的额外的描述属性用的数据。我们看到test的trait对象除了i和s之外，还有trait_added和trait_modified，着两个在HasTraits类中定义。
+
+元数据可以分为三类：
+
+* **内部属性** : 这些属性是trait对象自带的，只读不能写
+
+* **识别属性** : 这些属性是可以自由地设置的，它们可以改变trait的一些行为
+
+* **任意属性** : 用户自己添加的属性，需要自己编写程序使用它们
+
+内部元数据
+-----
+
+下面的这些元数据属性在Traits库内部使用，用户可以读取它们的值。
+
+* **array** : 是否是数组，不是数组的trait对象没有此属性
+
+* **default** : 对应的trait属性的缺省值。也就是说： trait属性的缺省值是保存在与其对应的trait对象的元数据属性default中的：
+
+    >>> test.trait("i").default
+    99
+
+* **default_kind** : 一个描述缺省值的类型的字符串，其值可以是 value, list, dict, self, factory, method等：
+
+    >>> test.trait("i").default_kind
+    'value'
+    
+* **inner_traits** : 内部的trait对象，在List, Dict等中使用，表示List和Dict内部对象的类型
+
+* **trait_type** : 描述trait属性的数据类型的对象。下面的例子中，得到的就是定义trait属性时所用的Int类的对象：
+
+    >>> test.trait("i").trait_type
+    <enthought.traits.trait_types.Int object at 0x05DBD2D0>
+    
+* **type** : trait属性的分类，可以是constant, delegate, event, property, trait
+
+    >>> test.trait("i").type
+    'trait'
+
+能识别的元数据
+-------
+
+下面的元数据属性不是预定义的，但是可以被HasTraits对象使用：
+
+* **desc** : 描述trait属性用的字符串，在界面中使用
+
+* **editor** : 指定一个生成界面时用何种TraitEditor编辑对应的trait属性
+
+* **label** : 界面中的trait属性编辑器的标签中的字符串
+
+* **rich_compare** : 指定判断trait属性值发生变化的方式。True(缺省)表示按值比较；Flase表示按照对象指针比较
+
+* **trait_value** : 指定trait属性是否接受TraitValu类的对象，缺省值为False。当它为True时，将trait属性设置为TraitValue()，将重置trait属性值为缺省值。
+
+* **transient** : 指定当对象被保存(持久化)时是否保存此trait属性值。对于大多数trait属性来说，它的缺省值都是True。
+

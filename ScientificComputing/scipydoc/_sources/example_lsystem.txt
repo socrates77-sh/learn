@@ -1,0 +1,10 @@
+##############
+绘制L-System的分形图
+##############
+
+相关文档： :ref:`L-System分形 <sec-lsystem>`
+
+.. image:: images/fractal_lsystem03.png
+
+.. literalinclude:: examples/l_system.py
+

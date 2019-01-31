@@ -1,0 +1,12 @@
+#########################
+在traitsUI中使用的matplotlib控件
+#########################
+
+相关文档： :doc:`traitsui_manual_custom_editor`
+
+在traitsUI所产生的界面中嵌入matplotlib的控件。
+
+.. image:: images/traitsui_manual_02.png
+
+.. literalinclude:: examples/mpl_figure_editor.py
+

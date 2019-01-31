@@ -1,0 +1,12 @@
+#########
+单摆摆动周期的计算
+#########
+
+相关文档： :doc:`double_pendulum`
+
+本程序利用odeint和fsolve计算单摆的摆动周期，并且和精确值进行比较。
+
+.. image:: images/simple_pendulum02.png
+
+.. literalinclude:: examples/simple_pendulum_period.py
+

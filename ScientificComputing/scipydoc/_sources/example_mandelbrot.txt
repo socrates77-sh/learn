@@ -1,0 +1,30 @@
+##############
+绘制Mandelbrot集合
+##############
+
+相关文档： :ref:`Mandelbrot集合 <sec-mandelbrot>`
+
+.. image:: images/fractal_mandelbrot01.png
+
+纯Python计算版本
+===========
+
+.. literalinclude:: examples/mandelbrot_python.py
+
+Weave版本
+=======
+
+.. literalinclude:: examples/mandelbrot_weave.py
+
+NumPy加速版本
+=========
+
+.. literalinclude:: examples/mandelbrot_numpy.py
+
+平滑版本
+====
+
+.. image:: images/fractal_mandelbrot02.png
+
+.. literalinclude:: examples/mandelbrot_smooth_python.py
+

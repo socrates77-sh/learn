@@ -1,0 +1,10 @@
+###########
+NLMS算法的模拟测试
+###########
+
+相关文档： :doc:`fast_nlms_in_python`
+
+测试NLMS在系统辨识、信号预测和信号均衡方面的应用。 
+
+.. literalinclude:: examples/nlms_test.py
+

@@ -1,0 +1,835 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>SciPy-数值计算库 &mdash; 用Python做科学计算</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link type="text/css" href="_static/jquery-ui-1.7.2.custom.css" rel="stylesheet" />	
+    <link type="text/css" href="_static/comments.css" rel="stylesheet" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '#',
+        VERSION:     '1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/jquery-ui-1.7.2.custom.min.js"></script>
+    <script type="text/javascript" src="_static/pydoc.js"></script>
+    <link rel="top" title="用Python做科学计算" href="index.html" />
+    <link rel="下一篇" title="SymPy-符号运算好帮手" href="sympy_intro.html" />
+    <link rel="上一篇" title="NumPy-快速处理数据" href="numpy_intro.html" /> 
+
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-10837468-1");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="sympy_intro.html" title="SymPy-符号运算好帮手"
+             accesskey="N">下一篇</a></li>
+        <li class="right" >
+          <a href="numpy_intro.html" title="NumPy-快速处理数据"
+             accesskey="P">上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="scipy">
+<h1>SciPy-数值计算库<a class="headerlink" href="#scipy" title="Permalink to this headline">¶</a></h1>
+<p>SciPy函数库在NumPy库的基础上增加了众多的数学、科学以及工程计算中常用的库函数。例如线性代数、常微分方程数值求解、信号处理、图像处理、稀疏矩阵等等。由于其涉及的领域众多、本书没有能力对其一一的进行介绍。作为入门介绍，让我们看看如何用SciPy进行插值处理、信号滤波以及用C语言加速计算。</p>
+<div class="section" id="id1">
+<h2>最小二乘拟合<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>假设有一组实验数据(x[i], y[i])，我们知道它们之间的函数关系:y = f(x)，通过这些已知信息，需要确定函数中的一些参数项。例如，如果f是一个线型函数f(x) = k*x+b，那么参数k和b就是我们需要确定的值。如果将这些参数用 <strong>p</strong> 表示的话，那么我们就是要找到一组 <strong>p</strong> 值使得如下公式中的S函数最小：</p>
+<div class="math">
+<p><img src="_images/math/8da054a2d9fb73326f9fc0a3141cea13d49db11f.png" alt="S(\mathbf{p}) = \sum_{i=1}^m [y_i - f(x_i, \mathbf{p}) ]^2" /></p>
+</div><p>这种算法被称之为最小二乘拟合(Least-square fitting)。</p>
+<p>scipy中的子函数库optimize已经提供了实现最小二乘拟合算法的函数leastsq。下面是用leastsq进行数据拟合的一个例子：</p>
+<div class="highlight-python"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39</pre></div></td><td class="code"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">leastsq</span>
+<span class="kn">import</span> <span class="nn">pylab</span> <span class="kn">as</span> <span class="nn">pl</span>
+
+<span class="k">def</span> <span class="nf">func</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    数据拟合所用的函数: A*sin(2*pi*k*x + theta)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">A</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="n">p</span>
+    <span class="k">return</span> <span class="n">A</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="n">k</span><span class="o">*</span><span class="n">x</span><span class="o">+</span><span class="n">theta</span><span class="p">)</span>   
+
+<span class="k">def</span> <span class="nf">residuals</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    实验数据x, y和拟合函数之间的差，p为拟合需要找到的系数</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">y</span> <span class="o">-</span> <span class="n">func</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+
+<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="n">A</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">theta</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="mf">0.34</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">6</span> <span class="c"># 真实数据的函数参数</span>
+<span class="n">y0</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">[</span><span class="n">A</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">theta</span><span class="p">])</span> <span class="c"># 真实数据</span>
+<span class="n">y1</span> <span class="o">=</span> <span class="n">y0</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="c"># 加入噪声之后的实验数据    </span>
+
+<span class="n">p0</span> <span class="o">=</span> <span class="p">[</span><span class="mi">7</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="c"># 第一次猜测的函数拟合参数</span>
+
+<span class="c"># 调用leastsq进行数据拟合</span>
+<span class="c"># residuals为计算误差的函数</span>
+<span class="c"># p0为拟合参数的初始值</span>
+<span class="c"># args为需要拟合的实验数据</span>
+<span class="n">plsq</span> <span class="o">=</span> <span class="n">leastsq</span><span class="p">(</span><span class="n">residuals</span><span class="p">,</span> <span class="n">p0</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">y1</span><span class="p">,</span> <span class="n">x</span><span class="p">))</span>
+
+<span class="k">print</span> <span class="s">u&quot;真实参数:&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">A</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">theta</span><span class="p">]</span> 
+<span class="k">print</span> <span class="s">u&quot;拟合参数&quot;</span><span class="p">,</span> <span class="n">plsq</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="c"># 实验数据拟合后的参数</span>
+
+<span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;真实数据&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;带噪声的实验数据&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">func</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">plsq</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;拟合数据&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</td></tr></table></div>
+<p>这个例子中我们要拟合的函数是一个正弦波函数，它有三个参数 <strong>A</strong>, <strong>k</strong>, <strong>theta</strong> ，分别对应振幅、频率、相角。假设我们的实验数据是一组包含噪声的数据 x, y1，其中y1是在真实数据y0的基础上加入噪声的到了。</p>
+<p>通过leastsq函数对带噪声的实验数据x, y1进行数据拟合，可以找到x和真实数据y0之间的正弦关系的三个参数： A, k, theta。下面是程序的输出：</p>
+<div class="highlight-python"><pre>&gt;&gt;&gt; 真实参数: [10, 0.34000000000000002, 0.52359877559829882]
+&gt;&gt;&gt; 拟合参数 [-9.84152775  0.33829767 -2.68899335]</pre>
+</div>
+<div class="figure" id="fig-scipyintro01">
+<img alt="_images/scipy_intro_01.png" src="_images/scipy_intro_01.png" style="width: 14cm;" />
+<p class="caption">调用leastsq函数对噪声正弦波数据进行曲线拟合</p>
+</div>
+<p>我们看到拟合参数虽然和真实参数完全不同，但是由于正弦函数具有周期性，实际上拟合参数得到的函数和真实参数对应的函数是一致的。</p>
+</div>
+<div class="section" id="id2">
+<h2>函数最小值<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>optimize库提供了几个求函数最小值的算法：fmin, fmin_powell, fmin_cg, fmin_bfgs。下面的程序通过求解卷积的逆运算演示fmin的功能。</p>
+<p>对于一个离散的线性时不变系统h, 如果它的输入是x，那么其输出y可以用x和h的卷积表示：</p>
+<div class="math">
+<p><img src="_images/math/159673c4e6ee1e18a973109af28beb92dd6865b3.png" alt="y = x * h" /></p>
+</div><p>现在的问题是如果已知系统的输入x和输出y，如何计算系统的传递函数h；或者如果已知系统的传递函数h和系统的输出y，如何计算系统的输入x。这种运算被称为反卷积运算，是十分困难的，特别是在实际的运用中，测量系统的输出总是存在误差的。</p>
+<p>下面用fmin计算反卷积，这种方法只能用在很小规模的数列之上，因此没有很大的实用价值，不过用来评价fmin函数的性能还是不错的。</p>
+<div class="highlight-python"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48</pre></div></td><td class="code"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="c"># 本程序用各种fmin函数求卷积的逆运算</span>
+
+<span class="kn">import</span> <span class="nn">scipy.optimize</span> <span class="kn">as</span> <span class="nn">opt</span> 
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span> 
+
+<span class="k">def</span> <span class="nf">test_fmin_convolve</span><span class="p">(</span><span class="n">fminfunc</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">yn</span><span class="p">,</span> <span class="n">x0</span><span class="p">):</span> 
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    x (*) h = y, (*)表示卷积</span>
+<span class="sd">    yn为在y的基础上添加一些干扰噪声的结果</span>
+<span class="sd">    x0为求解x的初始值</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">convolve_func</span><span class="p">(</span><span class="n">h</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        计算 yn - x (*) h 的power</span>
+<span class="sd">        fmin将通过计算使得此power最小</span>
+<span class="sd">        &quot;&quot;&quot;</span> 
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">yn</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">h</span><span class="p">))</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> 
+
+    <span class="c"># 调用fmin函数，以x0为初始值</span>
+    <span class="n">h0</span> <span class="o">=</span> <span class="n">fminfunc</span><span class="p">(</span><span class="n">convolve_func</span><span class="p">,</span> <span class="n">x0</span><span class="p">)</span> 
+
+    <span class="k">print</span> <span class="n">fminfunc</span><span class="o">.</span><span class="n">__name__</span> 
+    <span class="k">print</span> <span class="s">&quot;---------------------&quot;</span> 
+    <span class="c"># 输出 x (*) h0 和 y 之间的相对误差</span>
+    <span class="k">print</span> <span class="s">&quot;error of y:&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">h0</span><span class="p">)</span><span class="o">-</span><span class="n">y</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">y</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> 
+    <span class="c"># 输出 h0 和 h 之间的相对误差</span>
+    <span class="k">print</span> <span class="s">&quot;error of h:&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">h0</span><span class="o">-</span><span class="n">h</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">h</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> 
+    <span class="k">print</span> 
+
+<span class="k">def</span> <span class="nf">test_n</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">nscale</span><span class="p">):</span> 
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    随机产生x, h, y, yn, x0等数列，调用各种fmin函数求解b</span>
+<span class="sd">    m为x的长度, n为h的长度, nscale为干扰的强度</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> 
+    <span class="n">h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> 
+    <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span> 
+    <span class="n">yn</span> <span class="o">=</span> <span class="n">y</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">))</span> <span class="o">*</span> <span class="n">nscale</span>
+    <span class="n">x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> 
+
+    <span class="n">test_fmin_convolve</span><span class="p">(</span><span class="n">opt</span><span class="o">.</span><span class="n">fmin</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">yn</span><span class="p">,</span> <span class="n">x0</span><span class="p">)</span> 
+    <span class="n">test_fmin_convolve</span><span class="p">(</span><span class="n">opt</span><span class="o">.</span><span class="n">fmin_powell</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">yn</span><span class="p">,</span> <span class="n">x0</span><span class="p">)</span> 
+    <span class="n">test_fmin_convolve</span><span class="p">(</span><span class="n">opt</span><span class="o">.</span><span class="n">fmin_cg</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">yn</span><span class="p">,</span> <span class="n">x0</span><span class="p">)</span>
+    <span class="n">test_fmin_convolve</span><span class="p">(</span><span class="n">opt</span><span class="o">.</span><span class="n">fmin_bfgs</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">yn</span><span class="p">,</span> <span class="n">x0</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">test_n</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span> 
+</pre></div>
+</td></tr></table></div>
+<p>下面是程序的输出：</p>
+<div class="highlight-none"><div class="highlight"><pre>fmin
+ーーーーーーーーーーー
+error of y: 0.00568756699607
+error of h: 0.354083287918
+
+fmin_powell
+ーーーーーーーーーーー
+error of y: 0.000116114709857
+error of h: 0.000258897894009
+
+fmin_cg
+ーーーーーーーーーーー
+error of y: 0.000111220299615
+error of h: 0.000211404733439
+
+fmin_bfgs
+ーーーーーーーーーーー
+error of y: 0.000111220251551
+error of h: 0.000211405138529
+</pre></div>
+</div>
+</div>
+<div class="section" id="id3">
+<h2>非线性方程组求解<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<p>optimize库中的fsolve函数可以用来对非线性方程组进行求解。它的基本调用形式如下：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">fsolve</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">x0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>func(x)是计算方程组误差的函数，它的参数x是一个矢量，表示方程组的各个未知数的一组可能解，func返回将x代入方程组之后得到的误差；x0为未知数矢量的初始值。如果要对如下方程组进行求解的话：</p>
+<ul class="simple">
+<li>f1(u1,u2,u3) = 0</li>
+<li>f2(u1,u2,u3) = 0</li>
+<li>f3(u1,u2,u3) = 0</li>
+</ul>
+<p>那么func可以如下定义：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">func</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="n">u1</span><span class="p">,</span><span class="n">u2</span><span class="p">,</span><span class="n">u3</span> <span class="o">=</span> <span class="n">x</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">f1</span><span class="p">(</span><span class="n">u1</span><span class="p">,</span><span class="n">u2</span><span class="p">,</span><span class="n">u3</span><span class="p">),</span> <span class="n">f2</span><span class="p">(</span><span class="n">u1</span><span class="p">,</span><span class="n">u2</span><span class="p">,</span><span class="n">u3</span><span class="p">),</span> <span class="n">f3</span><span class="p">(</span><span class="n">u1</span><span class="p">,</span><span class="n">u2</span><span class="p">,</span><span class="n">u3</span><span class="p">)]</span>
+</pre></div>
+</div>
+<p>下面是一个实际的例子，求解如下方程组的解：</p>
+<ul class="simple">
+<li>5*x1 + 3 = 0</li>
+<li>4*x0*x0 - 2*sin(x1*x2) = 0</li>
+<li>x1*x2 - 1.5 = 0</li>
+</ul>
+<p>程序如下：</p>
+<div class="highlight-python"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17</pre></div></td><td class="code"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">fsolve</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">sin</span><span class="p">,</span><span class="n">cos</span>
+
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="n">x0</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">x1</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">x2</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="mi">5</span><span class="o">*</span><span class="n">x1</span><span class="o">+</span><span class="mi">3</span><span class="p">,</span>
+        <span class="mi">4</span><span class="o">*</span><span class="n">x0</span><span class="o">*</span><span class="n">x0</span> <span class="o">-</span> <span class="mi">2</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">x1</span><span class="o">*</span><span class="n">x2</span><span class="p">),</span>
+        <span class="n">x1</span><span class="o">*</span><span class="n">x2</span> <span class="o">-</span> <span class="mf">1.5</span>
+    <span class="p">]</span>
+
+<span class="n">result</span> <span class="o">=</span> <span class="n">fsolve</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
+
+<span class="k">print</span> <span class="n">result</span>
+<span class="k">print</span> <span class="n">f</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+</pre></div>
+</td></tr></table></div>
+<p>输出为：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">[</span><span class="o">-</span><span class="mf">0.70622057</span> <span class="o">-</span><span class="mf">0.6</span>        <span class="o">-</span><span class="mf">2.5</span>       <span class="p">]</span>
+<span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">9.1260332624187868e-14</span><span class="p">,</span> <span class="mf">5.3290705182007514e-15</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>由于fsolve函数在调用函数f时，传递的参数为数组，因此如果直接使用数组中的元素计算的话，计算速度将会有所降低，因此这里先用float函数将数组中的元素转换为Python中的标准浮点数，然后调用标准math库中的函数进行运算。</p>
+<p>在对方程组进行求解时，fsolve会自动计算方程组的雅可比矩阵，如果方程组中的未知数很多，而与每个方程有关的未知数较少时，即雅可比矩阵比较稀疏时，传递一个计算雅可比矩阵的函数将能大幅度提高运算速度。笔者在一个模拟计算的程序中需要大量求解近有50个未知数的非线性方程组的解。每个方程平均与6个未知数相关，通过传递雅可比矩阵的计算函数使计算速度提高了4倍。</p>
+<div class="topic">
+<p class="topic-title first">雅可比矩阵</p>
+<p>雅可比矩阵是一阶偏导数以一定方式排列的矩阵，它给出了可微分方程与给定点的最优线性逼近，因此类似于多元函数的导数。例如前面的函数f1,f2,f3和未知数u1,u2,u3的雅可比矩阵如下：</p>
+<div class="math">
+<p><img src="_images/math/0e0589610ac2875dcd7d12db88259d4076bd8fe7.png" alt="\begin{bmatrix}
+\dfrac{\partial f1}{\partial u1} &amp; \dfrac{\partial f1}{\partial u2} &amp; \dfrac{\partial f1}{\partial u3} \\[9pt]
+\dfrac{\partial f2}{\partial u1} &amp; \dfrac{\partial f2}{\partial u2} &amp; \dfrac{\partial f2}{\partial u3} \\[9pt]
+\dfrac{\partial f3}{\partial u1} &amp; \dfrac{\partial f3}{\partial u2} &amp; \dfrac{\partial f3}{\partial u3} \\
+\end{bmatrix}" /></p>
+</div></div>
+<p>使用雅可比矩阵的fsolve实例如下，计算雅可比矩阵的函数j通过fprime参数传递给fsolve，函数j和函数f一样，有一个未知数的解矢量参数x，函数j计算非线性方程组在矢量x点上的雅可比矩阵。由于这个例子中未知数很少，因此程序计算雅可比矩阵并不能带来计算速度的提升。</p>
+<div class="highlight-python"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26</pre></div></td><td class="code"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">fsolve</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">sin</span><span class="p">,</span><span class="n">cos</span>
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="n">x0</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">x1</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">x2</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="mi">5</span><span class="o">*</span><span class="n">x1</span><span class="o">+</span><span class="mi">3</span><span class="p">,</span>
+        <span class="mi">4</span><span class="o">*</span><span class="n">x0</span><span class="o">*</span><span class="n">x0</span> <span class="o">-</span> <span class="mi">2</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">x1</span><span class="o">*</span><span class="n">x2</span><span class="p">),</span>
+        <span class="n">x1</span><span class="o">*</span><span class="n">x2</span> <span class="o">-</span> <span class="mf">1.5</span>
+    <span class="p">]</span>
+    
+<span class="k">def</span> <span class="nf">j</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="n">x0</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">x1</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">x2</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>    
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">8</span><span class="o">*</span><span class="n">x0</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="o">*</span><span class="n">x2</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">x1</span><span class="o">*</span><span class="n">x2</span><span class="p">),</span> <span class="o">-</span><span class="mi">2</span><span class="o">*</span><span class="n">x1</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">x1</span><span class="o">*</span><span class="n">x2</span><span class="p">)],</span>
+        <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">x1</span><span class="p">]</span>
+    <span class="p">]</span>
+ 
+<span class="n">result</span> <span class="o">=</span> <span class="n">fsolve</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="n">fprime</span><span class="o">=</span><span class="n">j</span><span class="p">)</span>
+<span class="k">print</span> <span class="n">result</span>
+<span class="k">print</span> <span class="n">f</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+</pre></div>
+</td></tr></table></div>
+</div>
+<div class="section" id="b-spline">
+<h2>B-Spline样条曲线<a class="headerlink" href="#b-spline" title="Permalink to this headline">¶</a></h2>
+<p>interpolate库提供了许多对数据进行插值运算的函数。下面是使用直线和B-Spline对正弦波上的点进行插值的例子。</p>
+<div class="highlight-python"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18</pre></div></td><td class="code"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pylab</span> <span class="kn">as</span> <span class="nn">pl</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">interpolate</span> 
+
+<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">+</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">4</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+<span class="n">x_new</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">+</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">4</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="n">f_linear</span> <span class="o">=</span> <span class="n">interpolate</span><span class="o">.</span><span class="n">interp1d</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+<span class="n">tck</span> <span class="o">=</span> <span class="n">interpolate</span><span class="o">.</span><span class="n">splrep</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+<span class="n">y_bspline</span> <span class="o">=</span> <span class="n">interpolate</span><span class="o">.</span><span class="n">splev</span><span class="p">(</span><span class="n">x_new</span><span class="p">,</span> <span class="n">tck</span><span class="p">)</span>
+
+<span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="s">&quot;o&quot;</span><span class="p">,</span>  <span class="n">label</span><span class="o">=</span><span class="s">u&quot;原始数据&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x_new</span><span class="p">,</span> <span class="n">f_linear</span><span class="p">(</span><span class="n">x_new</span><span class="p">),</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;线性插值&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x_new</span><span class="p">,</span> <span class="n">y_bspline</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;B-spline插值&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</td></tr></table></div>
+<div class="figure" id="fig-scipyintro02">
+<img alt="_images/scipy_intro_02.png" src="_images/scipy_intro_02.png" style="width: 14cm;" />
+<p class="caption">使用interpolate库对正弦波数据进行线性插值和B-Spline插值</p>
+</div>
+<p>在这段程序中，通过interp1d函数直接得到一个新的线性插值函数。而B-Spline插值运算需要先使用splrep函数计算出B-Spline曲线的参数，然后将参数传递给splev函数计算出各个取样点的插值结果。</p>
+</div>
+<div class="section" id="id4">
+<h2>数值积分<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<p id="sec-spherevolume">数值积分是对定积分的数值求解，例如可以利用数值积分计算某个形状的面积。下面让我们来考虑一下如何计算半径为1的半圆的面积，根据圆的面积公式，其面积应该等于PI/2。单位半圆曲线可以用下面的函数表示：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">half_circle</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="mf">0.5</span>
+</pre></div>
+</div>
+<p>下面的程序使用经典的分小矩形计算面积总和的方式，计算出单位半圆的面积：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">N</span> <span class="o">=</span> <span class="mi">10000</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">N</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dx</span> <span class="o">=</span> <span class="mf">2.0</span><span class="o">/</span><span class="n">N</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y</span> <span class="o">=</span> <span class="n">half_circle</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dx</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">y</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span> <span class="c"># 面积的两倍</span>
+<span class="go">3.1412751679988937</span>
+</pre></div>
+</div>
+<p>利用上述方式计算出的圆上一系列点的坐标，还可以用numpy.trapz进行数值积分：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">trapz</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span> <span class="c"># 面积的两倍</span>
+<span class="go">3.1415893269316042</span>
+</pre></div>
+</div>
+<p>此函数计算的是以x,y为顶点坐标的折线与X轴所夹的面积。同样的分割点数，trapz函数的结果更加接近精确值一些。</p>
+<p>如果我们调用scipy.integrate库中的quad函数的话，将会得到非常精确的结果：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">integrate</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pi_half</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span> <span class="n">integrate</span><span class="o">.</span><span class="n">quad</span><span class="p">(</span><span class="n">half_circle</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pi_half</span><span class="o">*</span><span class="mi">2</span>
+<span class="go">3.1415926535897984</span>
+</pre></div>
+</div>
+<p>多重定积分的求值可以通过多次调用quad函数实现，为了调用方便，integrate库提供了dblquad函数进行二重定积分，tplquad函数进行三重定积分。下面以计算单位半球体积为例说明dblquad函数的用法。</p>
+<p>单位半球上的点(x,y,z)符合如下方程：</p>
+<div class="math">
+<p><img src="_images/math/1e414ba0be0f7d1437383a5556c220ab7510beff.png" alt="x^2 + y^2 + z^2 = 1" /></p>
+</div><p>因此可以如下定义通过(x,y)坐标计算球面上点的z值的函数：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">half_sphere</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span><span class="o">-</span><span class="n">y</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="mf">0.5</span>
+</pre></div>
+</div>
+<p>X-Y轴平面与此球体的交线为一个单位圆，因此积分区间为此单位圆，可以考虑为X轴坐标从-1到1进行积分，而Y轴从 -half_circle(x) 到 half_circle(x) 进行积分，于是可以调用dblquad函数：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">integrate</span><span class="o">.</span><span class="n">dblquad</span><span class="p">(</span><span class="n">half_sphere</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span>
+<span class="go">    lambda x:-half_circle(x),</span>
+<span class="go">    lambda x:half_circle(x))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">(</span><span class="mf">2.0943951023931988</span><span class="p">,</span> <span class="mf">2.3252456653390915e-14</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="mi">4</span><span class="o">/</span><span class="mi">3</span><span class="o">/</span><span class="mi">2</span> <span class="c"># 通过球体体积公式计算的半球体积</span>
+<span class="go">2.0943951023931953</span>
+</pre></div>
+</div>
+<p>dblquad函数的调用方式为：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">dblquad</span><span class="p">(</span><span class="n">func2d</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">gfun</span><span class="p">,</span> <span class="n">hfun</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>对于func2d(x,y)函数进行二重积分，其中a,b为变量x的积分区间，而gfun(x)到hfun(x)为变量y的积分区间。</p>
+<p>半球体积的积分的示意图如下：</p>
+<div class="figure" id="fig-mayavi2sphere">
+<img alt="_images/mayavi2_sphere.png" src="_images/mayavi2_sphere.png" />
+<p class="caption">半球体积的双重定积分示意图</p>
+</div>
+<p>X轴的积分区间为-1.0到1.0，对于X=x0时，通过对Y轴的积分计算出切面的面积，因此Y轴的积分区间如图中红色点线所示。</p>
+</div>
+<div class="section" id="id5">
+<h2>解常微分方程组<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
+<p>scipy.integrate库提供了数值积分和常微分方程组求解算法odeint。下面让我们来看看如何用odeint计算洛仑兹吸引子的轨迹。洛仑兹吸引子由下面的三个微分方程定义：</p>
+<div class="math">
+<p><img src="_images/math/a782b9635503dcc4bf75e540b7090ede53a36cfa.png" alt="\frac{dx}{dt} = \sigma (y - x)" /></p>
+</div><div class="math">
+<p><img src="_images/math/ceef48a9a48807e014e3eac403cae178b058f1e6.png" alt="\frac{dy}{dt} = x (\rho - z) - y" /></p>
+</div><div class="math">
+<p><img src="_images/math/7faa9906de5c97c093fc70f4190d54ef69dfd4d9.png" alt="\frac{dz}{dt} = xy - \beta z" /></p>
+</div><p>洛仑兹吸引子的详细介绍: <a class="reference external" href="http://bzhang.lamost.org/website/archives/lorenz_attactor">http://bzhang.lamost.org/website/archives/lorenz_attactor</a></p>
+<p>这三个方程定义了三维空间中各个坐标点上的速度矢量。从某个坐标开始沿着速度矢量进行积分，就可以计算出无质量点在此空间中的运动轨迹。其中 <img class="math" src="_images/math/fa35d9fc104207e09a712110ac81612c5b279a6c.png" alt="\sigma"/>, <img class="math" src="_images/math/0027034d8a10372a06deaf4f4084c01956587479.png" alt="\rho"/>, <img class="math" src="_images/math/fdb63b9e51abe6bbb16acfb5d7b773ddbb5bf4a8.png" alt="\beta"/> 为三个常数，不同的参数可以计算出不同的运动轨迹： x(t), y(t), z(t)。 当参数为某些值时，轨迹出现馄饨现象：即微小的初值差别也会显著地影响运动轨迹。下面是洛仑兹吸引子的轨迹计算和绘制程序：</p>
+<div class="highlight-python"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25</pre></div></td><td class="code"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="kn">from</span> <span class="nn">scipy.integrate</span> <span class="kn">import</span> <span class="n">odeint</span> 
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span> 
+
+<span class="k">def</span> <span class="nf">lorenz</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span> 
+    <span class="c"># 给出位置矢量w，和三个参数p, r, b计算出</span>
+    <span class="c"># dx/dt, dy/dt, dz/dt的值</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span> <span class="o">=</span> <span class="n">w</span>
+    <span class="c"># 直接与lorenz的计算公式对应 </span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">p</span><span class="o">*</span><span class="p">(</span><span class="n">y</span><span class="o">-</span><span class="n">x</span><span class="p">),</span> <span class="n">x</span><span class="o">*</span><span class="p">(</span><span class="n">r</span><span class="o">-</span><span class="n">z</span><span class="p">)</span><span class="o">-</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="o">*</span><span class="n">y</span><span class="o">-</span><span class="n">b</span><span class="o">*</span><span class="n">z</span><span class="p">])</span> 
+
+<span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">)</span> <span class="c"># 创建时间点 </span>
+<span class="c"># 调用ode对lorenz进行求解, 用两个不同的初始值 </span>
+<span class="n">track1</span> <span class="o">=</span> <span class="n">odeint</span><span class="p">(</span><span class="n">lorenz</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.00</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span> <span class="n">t</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="mf">10.0</span><span class="p">,</span> <span class="mf">28.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">))</span> 
+<span class="n">track2</span> <span class="o">=</span> <span class="n">odeint</span><span class="p">(</span><span class="n">lorenz</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.01</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span> <span class="n">t</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="mf">10.0</span><span class="p">,</span> <span class="mf">28.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">))</span> 
+
+<span class="c"># 绘图</span>
+<span class="kn">from</span> <span class="nn">mpl_toolkits.mplot3d</span> <span class="kn">import</span> <span class="n">Axes3D</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span> 
+
+<span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">Axes3D</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">track1</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">track1</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span> <span class="n">track1</span><span class="p">[:,</span><span class="mi">2</span><span class="p">])</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">track2</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">track2</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span> <span class="n">track2</span><span class="p">[:,</span><span class="mi">2</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</td></tr></table></div>
+<div class="figure" id="fig-scipyintro03">
+<img alt="_images/scipy_intro_03.png" src="_images/scipy_intro_03.png" style="width: 14cm;" />
+<p class="caption">用odeint函数对洛仑兹吸引子微分方程进行数值求解所得到的运动轨迹</p>
+</div>
+<p>我们看到即使初始值只相差0.01，两条运动轨迹也是完全不同的。</p>
+<p>在程序中先定义一个lorenz函数，它的任务是计算出某个位置的各个方向的微分值，这个计算直接根据洛仑兹吸引子的公式得出。然后调用odeint，对微分方程求解，odeint有许多参数，这里用到的四个参数分别为：</p>
+<ol class="arabic simple">
+<li>lorenz， 它是计算某个位移上的各个方向的速度(位移的微分)</li>
+<li>(0.0, 1.0, 0.0)，位移初始值。计算常微分方程所需的各个变量的初始值</li>
+<li>t， 表示时间的数组，odeint对于此数组中的每个时间点进行求解，得出所有时间点的位置</li>
+<li>args， 这些参数直接传递给lorenz函数，因此它们都是常量</li>
+</ol>
+</div>
+<div class="section" id="id6">
+<h2>滤波器设计<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h2>
+<p>scipy.signal库提供了许多信号处理方面的函数。在这一节，让我们来看看如何利用signal库设计滤波器，查看滤波器的频率响应，以及如何使用滤波器对信号进行滤波。</p>
+<p>假设如下导入signal库:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">scipy.signal</span> <span class="kn">as</span> <span class="nn">signal</span>
+</pre></div>
+</div>
+<p>下面的程序设计一个带通IIR滤波器：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">iirdesign</span><span class="p">([</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">],</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">40</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>这个滤波器的通带为0.2*f0到0.5*f0，阻带为小于0.1*f0和大于0.6*f0，其中f0为1/2的信号取样频率，如果取样频率为8kHz的话，那么这个带通滤波器的通带为800Hz到2kHz。通带的最大增益衰减为2dB，阻带的最小增益衰减为40dB，即通带的增益浮动在2dB之内，阻带至少有40dB的衰减。</p>
+<p>iirdesgin返回的两个数组b和a， 它们分别是IIR滤波器的分子和分母部分的系数。其中a[0]恒等于1。</p>
+<p>下面通过调用freqz计算所得到的滤波器的频率响应：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">freqz</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>freqz返回两个数组w和h，其中w是圆频率数组，通过w/pi*f0可以计算出其对应的实际频率。h是w中的对应频率点的响应，它是一个复数数组，其幅值为滤波器的增益，相角为滤波器的相位特性。</p>
+<p>下面计算h的增益特性，并转换为dB度量。由于h中存在幅值几乎为0的值，因此先用clip函数对其裁剪之后，再调用对数函数，避免计算出错。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">power</span> <span class="o">=</span> <span class="mi">20</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">h</span><span class="p">),</span> <span class="mf">1e-8</span><span class="p">,</span> <span class="mf">1e100</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>通过下面的语句可以绘制出滤波器的增益特性图，这里假设取样频率为8kHz：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">w</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="mi">4000</span><span class="p">,</span> <span class="n">power</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>在实际运用中为了测量未知系统的频率特性，经常将频率扫描波输入到系统中，观察系统的输出，从而计算其频率特性。下面让我们来模拟这一过程。</p>
+<p>为了调用chirp函数以产生频率扫描波形的数据，首先需要产生一个等差数组代表取样时间，下面的语句产生2秒钟取样频率为8kHz的取样时间数组：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="mf">8000.0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>然后调用chirp得到2秒钟的频率扫描波形的数据：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">sweep</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">chirp</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">f0</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">t1</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n">f1</span><span class="o">=</span><span class="mf">4000.0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>频率扫描波的开始频率f0为0Hz，结束频率f1为4kHz，到达4kHz的时间为2秒，使用数组t作为取样时间点。</p>
+<p>下面通过调用lfilter函数计算sweep波形经过带通滤波器之后的结果：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">out</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">lfilter</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">sweep</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>lfilter内部通过如下算式计算IIR滤波器的输出：</p>
+<p>通过如下算式可以计算输入为x时的滤波器的输出，其中数组x代表输入信号，y代表输出信号：</p>
+<div class="math">
+<p><img src="_images/math/8c429be55d6571ecd8bf39cf20455defe09eadcd.png" alt="y[n] &amp; = b[0] x[n] + b[1] x[n-1] + \cdots + b[P] x[n-P] \\
+     &amp; - a[1] y[n-1] - a[2] y[n-2] - \cdots - a[Q] y[n-Q]" /></p>
+</div><p>为了和系统的增益特性图进行比较，需要获取输出波形的包络，因此下面先将输出波形数据转换为能量值：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">out</span> <span class="o">=</span> <span class="mi">20</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">out</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>为了计算包络，找到所有能量大于前后两个取样点(局部最大点)的下标：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">out</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="n">out</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">out</span><span class="p">[</span><span class="mi">2</span><span class="p">:]))[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+</pre></div>
+</div>
+<p>最后将时间转换为对应的频率，绘制所有局部最大点的能量值：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="n">index</span><span class="p">]</span><span class="o">/</span><span class="mf">2.0</span><span class="o">*</span><span class="mi">4000</span><span class="p">,</span> <span class="n">out</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="p">)</span>
+</pre></div>
+</div>
+<p>下图显示freqz计算的频谱和频率扫描波得到的频率特性，我们看到其结果是一致的。</p>
+<div class="figure" id="scipysignal01">
+<img alt="_images/scipy_signal01.png" src="_images/scipy_signal01.png" style="width: 14cm;" />
+<p class="caption">带通IIR滤波器的频率响应和频率扫描波计算的结果比较</p>
+</div>
+<p>计算此图的完整源程序请查看附录中的 <a class="reference external" href="example_scipy_signal.html"><em>带通滤波器设计</em></a> 。</p>
+</div>
+<div class="section" id="weavec">
+<h2>用Weave嵌入C语言<a class="headerlink" href="#weavec" title="Permalink to this headline">¶</a></h2>
+<p>Python作为动态语言其功能虽然强大，但是在数值计算方面有一个最大的缺点：速度不够快。在Python级别的循环和计算的速度只有C语言程序的百分之一。因此才有了NumPy, SciPy这样的函数库，将高度优化的C、Fortran的函数库进行包装，以供Python程序调用。如果这些高度优化的函数库无法实现我们的算法，必须从头开始写循环、计算的话，那么用Python来做显然是不合适的。因此SciPy提供了快速调用C++语言程序的方法-- Weave。下面是对NumPy的数组求和的例子：</p>
+<div class="highlight-python"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42</pre></div></td><td class="code"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="kn">import</span> <span class="nn">scipy.weave</span> <span class="kn">as</span> <span class="nn">weave</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<span class="k">def</span> <span class="nf">my_sum</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
+    <span class="n">n</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">))</span>
+    <span class="n">code</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">    int i;</span>
+
+<span class="s">    double counter;</span>
+<span class="s">    counter =0;</span>
+<span class="s">    for(i=0;i&lt;n;i++){</span>
+<span class="s">        counter=counter+a(i);</span>
+<span class="s">    }</span>
+<span class="s">    return_val=counter;</span>
+<span class="s">    &quot;&quot;&quot;</span>
+
+    <span class="n">err</span><span class="o">=</span><span class="n">weave</span><span class="o">.</span><span class="n">inline</span><span class="p">(</span>
+        <span class="n">code</span><span class="p">,[</span><span class="s">&#39;a&#39;</span><span class="p">,</span><span class="s">&#39;n&#39;</span><span class="p">],</span>
+        <span class="n">type_converters</span><span class="o">=</span><span class="n">weave</span><span class="o">.</span><span class="n">converters</span><span class="o">.</span><span class="n">blitz</span><span class="p">,</span>
+        <span class="n">compiler</span><span class="o">=</span><span class="s">&quot;gcc&quot;</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">err</span>
+
+<span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10000000</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+<span class="c"># 先调用一次my_sum，weave会自动对C语言进行编译，此后直接运行编译之后的代码</span>
+<span class="n">my_sum</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+
+<span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">clock</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span>
+    <span class="n">my_sum</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>  <span class="c"># 直接运行编译之后的代码</span>
+<span class="k">print</span> <span class="s">&quot;my_sum:&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">clock</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span> <span class="o">/</span> <span class="mf">100.0</span>
+
+<span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">clock</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="n">a</span> <span class="p">)</span> <span class="c"># numpy中的sum，其实现也是C语言级别</span>
+<span class="k">print</span> <span class="s">&quot;np.sum:&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">clock</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span> <span class="o">/</span> <span class="mf">100.0</span>
+
+<span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">clock</span><span class="p">()</span>
+<span class="k">print</span> <span class="nb">sum</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="c"># Python内部函数sum通过数组a的迭代接口访问其每个元素，因此速度很慢</span>
+<span class="k">print</span> <span class="s">&quot;sum:&quot;</span><span class="p">,</span> <span class="n">time</span><span class="o">.</span><span class="n">clock</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span>
+</pre></div>
+</td></tr></table></div>
+<p>此例子在我的电脑上的运行结果为：</p>
+<div class="highlight-python"><pre>my_sum: 0.0294527349146
+np.sum: 0.0527649547638
+sum: 9.11022322669</pre>
+</div>
+<p>可以看到用Weave编译的C语言程序比numpy自带的sum函数还要快。而Python的内部函数sum使用数组的迭代器接口进行运算，因此速度是Python语言级别的，只有Weave版本的1/300。</p>
+<p>weave.inline函数的第一个参数为需要执行的C++语言代码，第二个参数是一个列表，它告诉weave要把Python中的两个变量a和n传递给C++程序，注意我们用字符串表示变量名。converters.blitz是一个类型转换器，将numpy的数组类型转换为C++的blitz类。C++程序中的变量a不是一个数组，而是blitz类的实例，因此它使用a(i)获得其各个元素的值，而不是用a[i]。最后我们通过compiler参数告诉weave要采用gcc为C++编译器。如果你安装的是python(x,y)的话，gcc(mingw32)也一起安装好了，否则你可能需要手工安装gcc编译器或者微软的Visual C++。</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">在我的电脑上，虽然安装了Visual C++ 2008 Express，但仍然提示找不到合适的Visual C++编译器。似乎必须使用编译Python的编译器版本。因此还是用gcc来的方便。</p>
+</div>
+<p>本书的进阶部分还会对weave进行详细介绍。这段程序先给了我们一个定心丸：你再也不必担心Python的计算速度不够快了。</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">首页目录</a></h3>
+            <ul>
+<li><a class="reference external" href="#">SciPy-数值计算库</a><ul>
+<li><a class="reference external" href="#id1">最小二乘拟合</a></li>
+<li><a class="reference external" href="#id2">函数最小值</a></li>
+<li><a class="reference external" href="#id3">非线性方程组求解</a></li>
+<li><a class="reference external" href="#b-spline">B-Spline样条曲线</a></li>
+<li><a class="reference external" href="#id4">数值积分</a></li>
+<li><a class="reference external" href="#id5">解常微分方程组</a></li>
+<li><a class="reference external" href="#id6">滤波器设计</a></li>
+<li><a class="reference external" href="#weavec">用Weave嵌入C语言</a></li>
+</ul>
+</li>
+</ul>
+
+            <h4>上一篇文章</h4>
+            <p class="topless"><a href="numpy_intro.html"
+                                  title="上一篇文章">NumPy-快速处理数据</a></p>
+            <h4>下一篇文章</h4>
+            <p class="topless"><a href="sympy_intro.html"
+                                  title="下一篇文章">SymPy-符号运算好帮手</a></p>
+          <div id="searchbox" style="display: none">
+            <h3>快速搜索</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="搜索" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              中文搜索请尽量用空格分开单个的单词，例如搜索"科学 计算"，而不是"科学计算"
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="sympy_intro.html" title="SymPy-符号运算好帮手"
+             >下一篇</a></li>
+        <li class="right" >
+          <a href="numpy_intro.html" title="NumPy-快速处理数据"
+             >上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+    &copy; 2009, <a href="http://hyry.dip.jp/blogt.py">HYRY Studio</a>
+      由 <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.4. 编译
+    </div>
+  </body>
+</html>

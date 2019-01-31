@@ -1,0 +1,296 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>CSV文件数据图形化工具 &mdash; 用Python做科学计算</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link type="text/css" href="_static/jquery-ui-1.7.2.custom.css" rel="stylesheet" />	
+    <link type="text/css" href="_static/comments.css" rel="stylesheet" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '#',
+        VERSION:     '1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/jquery-ui-1.7.2.custom.min.js"></script>
+    <script type="text/javascript" src="_static/pydoc.js"></script>
+    <link rel="top" title="用Python做科学计算" href="index.html" />
+    <link rel="up" title="源程序集" href="example_code_list.html" />
+    <link rel="下一篇" title="NLMS算法的模拟测试" href="example_nlms_test.html" />
+    <link rel="上一篇" title="在traitsUI中使用的matplotlib控件" href="example_mpl_figure_editor.html" /> 
+
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-10837468-1");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="example_nlms_test.html" title="NLMS算法的模拟测试"
+             accesskey="N">下一篇</a></li>
+        <li class="right" >
+          <a href="example_mpl_figure_editor.html" title="在traitsUI中使用的matplotlib控件"
+             accesskey="P">上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li>
+          <li><a href="example_code_list.html" accesskey="U">源程序集</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="csv">
+<h1>CSV文件数据图形化工具<a class="headerlink" href="#csv" title="Permalink to this headline">¶</a></h1>
+<p>相关文档： <a class="reference external" href="traitsui_manual_custom_editor.html"><em>设计自己的Trait编辑器</em></a></p>
+<p>采用 <a class="reference external" href="example_mpl_figure_editor.html"><em>在traitsUI中使用的matplotlib控件</em></a> 制作的CSV文件数据绘图工具。</p>
+<img alt="_images/traitsui_manual_03.png" src="_images/traitsui_manual_03.png" />
+<img alt="_images/traitsui_manual_04.png" src="_images/traitsui_manual_04.png" />
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="kn">from</span> <span class="nn">matplotlib.figure</span> <span class="kn">import</span> <span class="n">Figure</span>
+<span class="kn">from</span> <span class="nn">mpl_figure_editor</span> <span class="kn">import</span> <span class="n">MPLFigureEditor</span>
+<span class="kn">from</span> <span class="nn">enthought.traits.ui.api</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">enthought.traits.api</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">import</span> <span class="nn">csv</span>
+
+<span class="k">class</span> <span class="nc">DataSource</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    数据源，data是一个字典，将字符串映射到列表</span>
+<span class="sd">    names是data中的所有字符串的列表</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">DictStrAny</span>
+    <span class="n">names</span> <span class="o">=</span> <span class="n">List</span><span class="p">(</span><span class="n">Str</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">load_csv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        从CSV文件读入数据，更新data和names属性</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="nb">file</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+        <span class="n">reader</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">DictReader</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">names</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">fieldnames</span>
+        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">reader</span><span class="o">.</span><span class="n">fieldnames</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">field</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">reader</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>        
+
+<span class="k">class</span> <span class="nc">Graph</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    绘图组件，包括左边的数据选择控件和右边的绘图控件</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">Str</span> <span class="c"># 绘图名，显示在标签页标题和绘图标题中</span>
+    <span class="n">data_source</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">DataSource</span><span class="p">)</span> <span class="c"># 保存数据的数据源</span>
+    <span class="n">figure</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">Figure</span><span class="p">)</span> <span class="c"># 控制绘图控件的Figure对象</span>
+    <span class="n">selected_xaxis</span> <span class="o">=</span> <span class="n">Str</span> <span class="c"># X轴所用的数据名</span>
+    <span class="n">selected_items</span> <span class="o">=</span> <span class="n">List</span> <span class="c"># Y轴所用的数据列表</span>
+
+    <span class="n">clear_button</span> <span class="o">=</span> <span class="n">Button</span><span class="p">(</span><span class="s">u&quot;清除&quot;</span><span class="p">)</span> <span class="c"># 快速清除Y轴的所有选择的数据</span>
+
+    <span class="n">view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span>
+        <span class="n">HSplit</span><span class="p">(</span> <span class="c"># HSplit分为左右两个区域，中间有可调节宽度比例的调节手柄</span>
+            <span class="c"># 左边为一个组</span>
+            <span class="n">VGroup</span><span class="p">(</span>
+                <span class="n">Item</span><span class="p">(</span><span class="s">&quot;name&quot;</span><span class="p">),</span>   <span class="c"># 绘图名编辑框</span>
+                <span class="n">Item</span><span class="p">(</span><span class="s">&quot;clear_button&quot;</span><span class="p">),</span> <span class="c"># 清除按钮</span>
+                <span class="n">Heading</span><span class="p">(</span><span class="s">u&quot;X轴数据&quot;</span><span class="p">),</span>  <span class="c"># 静态文本</span>
+                <span class="c"># X轴选择器，用EnumEditor编辑器，即ComboBox控件，控件中的候选数据从</span>
+                <span class="c"># data_source的names属性得到</span>
+                <span class="n">Item</span><span class="p">(</span><span class="s">&quot;selected_xaxis&quot;</span><span class="p">,</span> <span class="n">editor</span><span class="o">=</span>
+                    <span class="n">EnumEditor</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&quot;object.data_source.names&quot;</span><span class="p">,</span> <span class="n">format_str</span><span class="o">=</span><span class="s">u&quot;</span><span class="si">%s</span><span class="s">&quot;</span><span class="p">)),</span>
+                <span class="n">Heading</span><span class="p">(</span><span class="s">u&quot;Y轴数据&quot;</span><span class="p">),</span> <span class="c"># 静态文本</span>
+                <span class="c"># Y轴选择器，由于Y轴可以多选，因此用CheckBox列表编辑，按两列显示</span>
+                <span class="n">Item</span><span class="p">(</span><span class="s">&quot;selected_items&quot;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s">&quot;custom&quot;</span><span class="p">,</span> 
+                     <span class="n">editor</span><span class="o">=</span><span class="n">CheckListEditor</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&quot;object.data_source.names&quot;</span><span class="p">,</span> 
+                            <span class="n">cols</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">format_str</span><span class="o">=</span><span class="s">u&quot;</span><span class="si">%s</span><span class="s">&quot;</span><span class="p">)),</span>
+                <span class="n">show_border</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span> <span class="c"># 显示组的边框</span>
+                <span class="n">scrollable</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span>  <span class="c"># 组中的控件过多时，采用滚动条</span>
+                <span class="n">show_labels</span> <span class="o">=</span> <span class="bp">False</span> <span class="c"># 组中的所有控件都不显示标签</span>
+            <span class="p">),</span>
+            <span class="c"># 右边绘图控件</span>
+            <span class="n">Item</span><span class="p">(</span><span class="s">&quot;figure&quot;</span><span class="p">,</span> <span class="n">editor</span><span class="o">=</span><span class="n">MPLFigureEditor</span><span class="p">(),</span> <span class="n">show_label</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">600</span><span class="p">)</span>
+        <span class="p">)</span>        
+    <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_name_changed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        当绘图名发生变化时，更新绘图的标题</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">axe</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">axe</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_clear_button_fired</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        清除按钮的事件处理</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">selected_items</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_figure_default</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        figure属性的缺省值，直接创建一个Figure对象</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">figure</span> <span class="o">=</span> <span class="n">Figure</span><span class="p">()</span>
+        <span class="n">figure</span><span class="o">.</span><span class="n">add_axes</span><span class="p">([</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">,</span> <span class="mf">0.85</span><span class="p">])</span> <span class="c">#添加绘图区域，四周留有边距</span>
+        <span class="k">return</span> <span class="n">figure</span>
+
+    <span class="k">def</span> <span class="nf">_selected_items_changed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Y轴数据选择更新</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_selected_xaxis_changed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        X轴数据选择更新</span>
+<span class="sd">        &quot;&quot;&quot;</span>    
+        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        重新绘制所有的曲线</span>
+<span class="sd">        &quot;&quot;&quot;</span>    
+        <span class="n">axe</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">axe</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">xdata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_source</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">selected_xaxis</span><span class="p">]</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">return</span> 
+        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">selected_items</span><span class="p">:</span>
+            <span class="n">axe</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xdata</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_source</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">field</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="n">field</span><span class="p">)</span>
+        <span class="n">axe</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">selected_xaxis</span><span class="p">)</span>
+        <span class="n">axe</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">axe</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+
+
+<span class="k">class</span> <span class="nc">CSVGrapher</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    主界面包括绘图列表，数据源，文件选择器和添加绘图按钮</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">graph_list</span> <span class="o">=</span> <span class="n">List</span><span class="p">(</span><span class="n">Instance</span><span class="p">(</span><span class="n">Graph</span><span class="p">))</span> <span class="c"># 绘图列表</span>
+    <span class="n">data_source</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">DataSource</span><span class="p">)</span> <span class="c"># 数据源</span>
+    <span class="n">csv_file_name</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="nb">filter</span><span class="o">=</span><span class="p">[</span><span class="s">u&quot;*.csv&quot;</span><span class="p">])</span> <span class="c"># 文件选择</span>
+    <span class="n">add_graph_button</span> <span class="o">=</span> <span class="n">Button</span><span class="p">(</span><span class="s">u&quot;添加绘图&quot;</span><span class="p">)</span> <span class="c"># 添加绘图按钮</span>
+
+    <span class="n">view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span>
+        <span class="c"># 整个窗口分为上下两个部分</span>
+        <span class="n">VGroup</span><span class="p">(</span>
+            <span class="c"># 上部分横向放置控件，因此用HGroup</span>
+            <span class="n">HGroup</span><span class="p">(</span>
+                <span class="c"># 文件选择控件</span>
+                <span class="n">Item</span><span class="p">(</span><span class="s">&quot;csv_file_name&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;选择CSV文件&quot;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">400</span><span class="p">),</span>
+                <span class="c"># 添加绘图按钮</span>
+                <span class="n">Item</span><span class="p">(</span><span class="s">&quot;add_graph_button&quot;</span><span class="p">,</span> <span class="n">show_label</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+            <span class="p">),</span>
+            <span class="c"># 下部分是绘图列表，采用ListEditor编辑器显示</span>
+            <span class="n">Item</span><span class="p">(</span><span class="s">&quot;graph_list&quot;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s">&quot;custom&quot;</span><span class="p">,</span> <span class="n">show_label</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> 
+                 <span class="n">editor</span><span class="o">=</span><span class="n">ListEditor</span><span class="p">(</span>
+                     <span class="n">use_notebook</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="c"># 是用多标签页格式显示</span>
+                     <span class="n">deletable</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="c"># 可以删除标签页</span>
+                     <span class="n">dock_style</span><span class="o">=</span><span class="s">&quot;tab&quot;</span><span class="p">,</span> <span class="c"># 标签dock样式</span>
+                     <span class="n">page_name</span><span class="o">=</span><span class="s">&quot;.name&quot;</span><span class="p">)</span> <span class="c"># 标题页的文本使用Graph对象的name属性</span>
+                <span class="p">)</span>
+        <span class="p">),</span>
+        <span class="n">resizable</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span>
+        <span class="n">height</span> <span class="o">=</span> <span class="mf">0.8</span><span class="p">,</span>
+        <span class="n">width</span> <span class="o">=</span> <span class="mf">0.8</span><span class="p">,</span>
+        <span class="n">title</span> <span class="o">=</span> <span class="s">u&quot;CSV数据绘图器&quot;</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_csv_file_name_changed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        打开新文件时的处理，根据文件创建一个DataSource</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_source</span> <span class="o">=</span> <span class="n">DataSource</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_source</span><span class="o">.</span><span class="n">load_csv</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">csv_file_name</span><span class="p">)</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph_list</span><span class="p">[:]</span>
+
+    <span class="k">def</span> <span class="nf">_add_graph_button_changed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        添加绘图按钮的事件处理</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_source</span> <span class="o">!=</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">graph_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="n">Graph</span><span class="p">(</span><span class="n">data_source</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_source</span><span class="p">)</span> <span class="p">)</span>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">csv_grapher</span> <span class="o">=</span> <span class="n">CSVGrapher</span><span class="p">()</span>
+    <span class="n">csv_grapher</span><span class="o">.</span><span class="n">configure_traits</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h4>上一篇文章</h4>
+            <p class="topless"><a href="example_mpl_figure_editor.html"
+                                  title="上一篇文章">在traitsUI中使用的matplotlib控件</a></p>
+            <h4>下一篇文章</h4>
+            <p class="topless"><a href="example_nlms_test.html"
+                                  title="下一篇文章">NLMS算法的模拟测试</a></p>
+          <div id="searchbox" style="display: none">
+            <h3>快速搜索</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="搜索" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              中文搜索请尽量用空格分开单个的单词，例如搜索"科学 计算"，而不是"科学计算"
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="example_nlms_test.html" title="NLMS算法的模拟测试"
+             >下一篇</a></li>
+        <li class="right" >
+          <a href="example_mpl_figure_editor.html" title="在traitsUI中使用的matplotlib控件"
+             >上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li>
+          <li><a href="example_code_list.html" >源程序集</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+    &copy; 2009, <a href="http://hyry.dip.jp/blogt.py">HYRY Studio</a>
+      由 <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.4. 编译
+    </div>
+  </body>
+</html>

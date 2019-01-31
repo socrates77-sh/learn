@@ -1,0 +1,21 @@
+####
+源程序集
+####
+
+.. toctree::
+   :maxdepth: 1
+   
+   example_fft_triangle_GUI.rst
+   example_mpl_figure_editor.rst
+   example_traitsUI_csv_viewer.rst
+   example_nlms_test.rst
+   example_mayavi_embed_fieldviewer.rst
+   example_spectrum_example_hann.rst
+   example_spectrum_fft_convolve_timeit.rst
+   example_equalizer_designer.rst
+   example_simple_pendulum_period.rst
+   example_double_pendulum.rst
+   example_mandelbrot.rst
+   example_ifs.rst
+   example_lsystem.rst
+

@@ -1,0 +1,194 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>笔记 &mdash; 用Python做科学计算</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link type="text/css" href="_static/jquery-ui-1.7.2.custom.css" rel="stylesheet" />	
+    <link type="text/css" href="_static/comments.css" rel="stylesheet" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '#',
+        VERSION:     '1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/jquery-ui-1.7.2.custom.min.js"></script>
+    <script type="text/javascript" src="_static/pydoc.js"></script>
+    <link rel="top" title="用Python做科学计算" href="index.html" /> 
+
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-10837468-1");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="id1">
+<h1>笔记<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<p>这里是准备写入本书、但还需要整理的一些内容。</p>
+<div class="section" id="traits">
+<h2>Traits<a class="headerlink" href="#traits" title="Permalink to this headline">¶</a></h2>
+<p>Traits属性在类级别声明，在实例级别使用，其实现和类的__new__方法有关。</p>
+<p>Str Trait接收str或者unicode，用以解决wxPython等界面库中的一些关于字符串编码的麻烦。</p>
+</div>
+<div class="section" id="matplotlib">
+<h2>Matplotlib<a class="headerlink" href="#matplotlib" title="Permalink to this headline">¶</a></h2>
+<p>pylab集合了常用的数组处理、计算和绘图相关的函数，而matplotlib.pyplot则只是关于绘图的API。</p>
+<p>绘图中所有的元素都被称为artists，分为基本元件，和集合组件。</p>
+<p>matplotlib.get_configdir()得到用户matplotlibrc配置文件的地址，在此文件中的配置将覆盖全局配置文件中的配置。全局配置文件的地址通过matplotlib.matplotlib_fname()得到。matplotlib.rcParams是读取配置文件之后得到的配置字典。调用绘图函数是都会参照此字典中的配置，因此如果在运行绘图命令之前修改此配置字典的内容的话，可以修改此后所有的绘图是的缺省配置。</p>
+<p>subplot(211) 为了输入便捷，如果传进来的是一个3位数整数，那么百位数表示分几行，十位数表示分几列，个位数表示当前的格子位置。sharex参数可以指定和当前子图(axe)共享X轴范围的axe，sharex参数用来指定Y轴共享。</p>
+<p>figure.patch是图对象的背景容器，它包含多个子图(axe)。figure.axes可以获得figure包括的所有axe，figure.canvas...</p>
+<p>from matplotlib.artist import getp
+getp(o)可以获得对象o的所有属性，getp(o, &quot;linestyle&quot;)可以获得o的linestyle属性。</p>
+<p>matplotlib.mlab.csv2rec可以直接将CSV转换为numpy的结构数组。</p>
+<p>Line2D.set_data(), Line2D.get_data()</p>
+</div>
+<div class="section" id="ipython">
+<h2>IPython<a class="headerlink" href="#ipython" title="Permalink to this headline">¶</a></h2>
+<p>%colors命令修改颜色配置
+paste命令可以把剪切板中的文字直接贴入IPython运行
+run -i ...py 运行..py文件，并且直接使用ipython中的变量</p>
+</div>
+<div class="section" id="id2">
+<h2>包络检波<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>用Hilbert变换进行包络检波</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">scipy.fftpack</span> <span class="kn">as</span> <span class="nn">fftpack</span>
+<span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="mf">1000.0</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">100</span><span class="o">*</span><span class="n">t</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">5</span><span class="o">*</span><span class="n">t</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">fftpack</span><span class="o">.</span><span class="n">hilbert</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">,</span><span class="n">x</span><span class="o">*</span><span class="n">x</span><span class="o">+</span><span class="n">y</span><span class="o">*</span><span class="n">y</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="ivtk">
+<h2>IVTK<a class="headerlink" href="#ivtk" title="Permalink to this headline">¶</a></h2>
+<p>IVTK使得用Python开发VTK程序更加简单。它为我们提供了如下三个基本元素：</p>
+<ul class="simple">
+<li><strong>Scene</strong> : 这是一个PyFace的Scene控件，为所有的3D物体提供一个展示的场景。</li>
+<li><strong>命令行</strong> : 使用PyCrust提供了一个Python命令行空间，用户可以在此处直接输入Python语句操作场景中的物体。</li>
+<li><strong>流水线浏览器</strong> : 通过流水线浏览器可以直接观察到TVTK的流水线的各个组成部分，并且配置其各种属性。</li>
+</ul>
+<p>在 TVTK介绍 中已经介绍过如何在程序中使用ivtk。如果你想在IPython中(需要-wthread启动选项)中交互式地使用ivtk的话，可以通过viewer()函数调用它，下面是一个例子：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">enthought.tvtk.tools</span> <span class="kn">import</span> <span class="n">ivtk</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">enthought.tvtk.pyface</span> <span class="kn">import</span> <span class="n">actors</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">v</span> <span class="o">=</span> <span class="n">ivtk</span><span class="o">.</span><span class="n">viewer</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">v</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">add_actors</span><span class="p">(</span><span class="n">actors</span><span class="o">.</span><span class="n">cylinder_actor</span><span class="p">())</span>
+</pre></div>
+</div>
+<div class="figure" id="fig-tvtkandvtk02">
+<img alt="_images/tvtk_and_vtk_02.png" src="_images/tvtk_and_vtk_02.png" />
+<p class="caption">使用ivtk提供的流水线浏览器</p>
+</div>
+<p>这段程序通过ivtk.viewer函数产生一个ivtk窗口，然后调用其scene的add_actors方法添加一个圆柱actor。pyface.actors为我们提供了一些帮助函数用以快速产生各种基本形状的Actor。</p>
+</div>
+<div class="section" id="sphinx">
+<h2>Sphinx支持中文链接<a class="headerlink" href="#sphinx" title="Permalink to this headline">¶</a></h2>
+<p>C:Python26Libsite-packagesdocutilsnodes.py</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">make_id</span><span class="p">(</span><span class="n">string</span><span class="p">):</span>
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">string</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&quot;utf8&quot;</span><span class="p">)</span> <span class="c"># 修改此处</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>C:Python26Libsite-packagesdocutilswritershtml4css1__init__.py</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">=&quot;</span><span class="si">%s</span><span class="s">&quot;&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span>
+                          <span class="bp">self</span><span class="o">.</span><span class="n">attval</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&quot;utf8&quot;</span><span class="p">))))</span> <span class="c"># 修改此处</span>
+</pre></div>
+</div>
+<p>C:Python26Libsite-packagessphinxwritershtml.py</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">depart_title</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+    <span class="n">close_tag</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">add_permalinks</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">builder</span><span class="o">.</span><span class="n">add_permalinks</span> <span class="ow">and</span>
+        <span class="n">node</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">hasattr</span><span class="p">(</span><span class="s">&#39;ids&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">parent</span><span class="p">[</span><span class="s">&#39;ids&#39;</span><span class="p">]):</span>
+        <span class="n">aname</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">parent</span><span class="p">[</span><span class="s">&#39;ids&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&quot;utf8&quot;</span><span class="p">)</span> <span class="c"># 修改此处</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="latex">
+<h2>latex定义粗体<a class="headerlink" href="#latex" title="Permalink to this headline">¶</a></h2>
+<p>setromanfont[BoldFont={...}]{...}</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">首页目录</a></h3>
+            <ul>
+<li><a class="reference external" href="#">笔记</a><ul>
+<li><a class="reference external" href="#traits">Traits</a></li>
+<li><a class="reference external" href="#matplotlib">Matplotlib</a></li>
+<li><a class="reference external" href="#ipython">IPython</a></li>
+<li><a class="reference external" href="#id2">包络检波</a></li>
+<li><a class="reference external" href="#ivtk">IVTK</a></li>
+<li><a class="reference external" href="#sphinx">Sphinx支持中文链接</a></li>
+<li><a class="reference external" href="#latex">latex定义粗体</a></li>
+</ul>
+</li>
+</ul>
+
+          <div id="searchbox" style="display: none">
+            <h3>快速搜索</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="搜索" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              中文搜索请尽量用空格分开单个的单词，例如搜索"科学 计算"，而不是"科学计算"
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+    &copy; 2009, <a href="http://hyry.dip.jp/blogt.py">HYRY Studio</a>
+      由 <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.4. 编译
+    </div>
+  </body>
+</html>

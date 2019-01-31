@@ -1,0 +1,264 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>SymPy-符号运算好帮手 &mdash; 用Python做科学计算</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link type="text/css" href="_static/jquery-ui-1.7.2.custom.css" rel="stylesheet" />	
+    <link type="text/css" href="_static/comments.css" rel="stylesheet" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '#',
+        VERSION:     '1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/jquery-ui-1.7.2.custom.min.js"></script>
+    <script type="text/javascript" src="_static/pydoc.js"></script>
+    <link rel="top" title="用Python做科学计算" href="index.html" />
+    <link rel="下一篇" title="matplotlib-绘制精美的图表" href="matplotlib_intro.html" />
+    <link rel="上一篇" title="SciPy-数值计算库" href="scipy_intro.html" /> 
+
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-10837468-1");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="matplotlib_intro.html" title="matplotlib-绘制精美的图表"
+             accesskey="N">下一篇</a></li>
+        <li class="right" >
+          <a href="scipy_intro.html" title="SciPy-数值计算库"
+             accesskey="P">上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="sympy">
+<h1>SymPy-符号运算好帮手<a class="headerlink" href="#sympy" title="Permalink to this headline">¶</a></h1>
+<p>SymPy是Python的数学符号计算库，用它可以进行数学公式的符号推导。为了调用方便，下面所有的实例程序都假设事先从sympy库导入了所有内容：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sympy</span> <span class="kn">import</span> <span class="o">*</span>
+</pre></div>
+</div>
+<div class="section" id="id1">
+<h2>封面上的经典公式<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>本书的封面上的公式：</p>
+<div class="math">
+<p><img src="_images/math/901319b52d756db8a35144ab86d7a0df71866436.png" alt="e^{\mathrm{i} \pi} + 1 = 0" /></p>
+</div><p>叫做欧拉恒等式，其中e是自然指数的底，i是虚数单位， <img class="math" src="_images/math/f2ca003a7da0de4994b4733e203b74ff52d42553.png" alt="\pi"/> 是圆周率。此公式被誉为数学最奇妙的公式，它将5个基本数学常数用加法、乘法和幂运算联系起来。下面用SymPy验证一下这个公式。</p>
+<p>载入的符号中，E表示自然指数的底，I表示虚数单位，pi表示圆周率，因此上述的公式可以直接如下计算：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">E</span><span class="o">**</span><span class="p">(</span><span class="n">I</span><span class="o">*</span><span class="n">pi</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span>
+<span class="go">0</span>
+</pre></div>
+</div>
+<p>欧拉恒等式可以下面的公式进行计算，</p>
+<div class="math">
+<p><img src="_images/math/8efe68d6eeff0f84b68ae77813f03655ebe3cee7.png" alt="e^{{\mathrm{i}}x}=\cos x+ {\mathrm{i}} \sin x" /></p>
+</div><p>为了用SymPy求证上面的公式，我们需要引入变量x。在SymPy中，数学符号是Symbol类的对象，因此必须先创建之后才能使用：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">Symbol</span><span class="p">(</span><span class="s">&#39;x&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>expand函数可以将公式展开，我们用它来展开E**(I*pi)试试看：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">expand</span><span class="p">(</span> <span class="n">E</span><span class="o">**</span><span class="p">(</span><span class="n">I</span><span class="o">*</span><span class="n">x</span><span class="p">)</span> <span class="p">)</span>
+<span class="go">exp(I*x)</span>
+</pre></div>
+</div>
+<p>没有成功，只是换了一种写法而已。这里的exp不是math.exp或者numpy.exp，而是sympy.exp，它是一个类，用来表述自然指数函数。</p>
+<p>expand函数有关键字参数complex，当它为True时，expand将把公式分为实数和虚数两个部分：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">expand</span><span class="p">(</span><span class="n">exp</span><span class="p">(</span><span class="n">I</span><span class="o">*</span><span class="n">x</span><span class="p">),</span> <span class="nb">complex</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="go">I*exp(-im(x))*sin(re(x)) + cos(re(x))*exp(-im(x))</span>
+</pre></div>
+</div>
+<p>这次得到的结果相当复杂，其中sin, cos, re, im都是sympy定义的类，re表示取实数部分，im表示取虚数部分。显然这里的运算将符号x当作复数了。为了指定符号x必须是实数，我们需要如下重新定义符号x：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">Symbol</span><span class="p">(</span><span class="s">&quot;x&quot;</span><span class="p">,</span> <span class="n">real</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">expand</span><span class="p">(</span><span class="n">exp</span><span class="p">(</span><span class="n">I</span><span class="o">*</span><span class="n">x</span><span class="p">),</span> <span class="nb">complex</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="go">I*sin(x) + cos(x)</span>
+</pre></div>
+</div>
+<p>终于得到了我们需要的公式。那么如何证明它呢。我们可以用泰勒多项式展开：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">tmp</span> <span class="o">=</span> <span class="n">series</span><span class="p">(</span><span class="n">exp</span><span class="p">(</span><span class="n">I</span><span class="o">*</span><span class="n">x</span><span class="p">),</span> <span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pprint</span><span class="p">(</span><span class="n">tmp</span><span class="p">)</span>
+<span class="go">           2      3    4      5     6      7      8        9</span>
+<span class="go">          x    I*x    x    I*x     x    I*x      x      I*x</span>
+<span class="go">1 + I*x - -- - ---- + -- + ---- - --- - ---- + ----- + ------ + O(x**10)</span>
+<span class="go">          2     6     24   120    720   5040   40320   362880</span>
+</pre></div>
+</div>
+<p>series是泰勒展开函数，pprint将公式用更好看的格式打印出来。下面分别获得tmp的实部和虚部，分别和cos(x)和sin(x)的展开公式进行比较：</p>
+<blockquote>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">pprint</span><span class="p">(</span><span class="n">re</span><span class="p">(</span><span class="n">tmp</span><span class="p">))</span>
+<span class="go">                    2    4     6      8</span>
+<span class="go">                   x    x     x      x</span>
+<span class="go">1 + re(O(x**10)) - -- + -- - --- + -----</span>
+<span class="go">                   2    24   720   40320</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">pprint</span><span class="p">(</span> <span class="n">series</span><span class="p">(</span> <span class="n">cos</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span> <span class="p">)</span>
+<span class="go">     2    4     6      8</span>
+<span class="go">    x    x     x      x</span>
+<span class="go">1 - -- + -- - --- + ----- + O(x**10)</span>
+<span class="go">    2    24   720   40320</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">pprint</span><span class="p">(</span><span class="n">im</span><span class="p">(</span><span class="n">tmp</span><span class="p">))</span>
+<span class="go">                    3     5     7       9</span>
+<span class="go">                   x     x     x       x</span>
+<span class="go">x + im(O(x**10)) - -- + --- - ---- + ------</span>
+<span class="go">                   6    120   5040   362880</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">pprint</span><span class="p">(</span><span class="n">series</span><span class="p">(</span><span class="n">sin</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+<span class="go">     3     5     7       9</span>
+<span class="go">    x     x     x       x</span>
+<span class="go">x - -- + --- - ---- + ------ + O(x**10)</span>
+<span class="go">    6    120   5040   362880</span>
+</pre></div>
+</div>
+</blockquote>
+</div>
+<div class="section" id="id2">
+<h2>球体体积<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p id="sec-sympy-sphere">在<a class="reference external" href="scipy_intro.html#sec-spherevolume"><em>用SciPy数值积分</em></a>一节我们介绍了如何使用数值定积分计算球体的体积，而SymPy的符号积分函数integrate则可以帮助我们进行符号积分。integrate可以进行不定积分：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">integrate</span><span class="p">(</span><span class="n">x</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">x</span><span class="p">)</span>
+<span class="go">-x*cos(x) + sin(x)</span>
+</pre></div>
+</div>
+<p>如果指定x的取值范围的话，integrate则进行定积分运算：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">integrate</span><span class="p">(</span><span class="n">x</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">pi</span><span class="p">))</span>
+<span class="go">-2*pi</span>
+</pre></div>
+</div>
+<p>为了计算球体体积，首先让我们来看看如何计算圆形面积，假设圆形的半径为r，则圆上任意一点的Y坐标函数为：</p>
+<div class="math">
+<p><img src="_images/math/576d4324043d19471c90ec5db4e3cb17d99f53b2.png" alt="y(x) = \sqrt{r^2 - x^2}" /></p>
+</div><p>因此我们可以直接对上述函数在-r到r区间上进行积分得到半圆面积，注意这里我们使用symbols函数一次创建多个符号：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">r</span> <span class="o">=</span> <span class="n">symbols</span><span class="p">(</span><span class="s">&#39;x,y,r&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="mi">2</span> <span class="o">*</span> <span class="n">integrate</span><span class="p">(</span><span class="n">sqrt</span><span class="p">(</span><span class="n">r</span><span class="o">*</span><span class="n">r</span><span class="o">-</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="o">-</span><span class="n">r</span><span class="p">,</span> <span class="n">r</span><span class="p">))</span>
+<span class="go">2*Integral((r**2 - x**2)**(1/2), (x, -r, r))</span>
+</pre></div>
+</div>
+<p>很遗憾，integrate函数没有计算出结果，而是直接返回了我们输入的算式。这是因为SymPy不知道r是大于0的，如下重新定义r，就可以得到正确答案了：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">r</span> <span class="o">=</span> <span class="n">symbols</span><span class="p">(</span><span class="s">&#39;r&#39;</span><span class="p">,</span> <span class="n">positive</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">circle_area</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">integrate</span><span class="p">(</span><span class="n">sqrt</span><span class="p">(</span><span class="n">r</span><span class="o">**</span><span class="mi">2</span><span class="o">-</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="o">-</span><span class="n">r</span><span class="p">,</span> <span class="n">r</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">circle_area</span>
+<span class="go">pi*r**2</span>
+</pre></div>
+</div>
+<p>接下来对此面积公式进行定积分，就可以得到球体的体积，但是随着X轴坐标的变化，对应的切面的的半径会发生变化，现在假设X轴的坐标为x，球体的半径为r，则x处的切面的半径为可以使用前面的公式y(x)计算出。</p>
+<div class="figure" id="fig-mayavi2sphere">
+<img alt="_images/mayavi2_sphere.png" src="_images/mayavi2_sphere.png" />
+<p class="caption">球体体积的双重定积分示意图</p>
+</div>
+<p>因此我们需要对circle_area中的变量r进行替代：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">circle_area</span> <span class="o">=</span> <span class="n">circle_area</span><span class="o">.</span><span class="n">subs</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">r</span><span class="o">**</span><span class="mi">2</span><span class="o">-</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">circle_area</span>
+<span class="go">pi*(r**2 - x**2)</span>
+</pre></div>
+</div>
+<div class="topic">
+<p class="topic-title first">用subs进行算式替换</p>
+<p>subs函数可以将算式中的符号进行替换，它有3种调用方式：</p>
+<ul class="simple">
+<li>expression.subs(x, y) : 将算式中的x替换成y</li>
+<li>expression.subs({x:y,u:v}) : 使用字典进行多次替换</li>
+<li>expression.subs([(x,y),(u,v)]) : 使用列表进行多次替换</li>
+</ul>
+<p>请注意多次替换是顺序执行的，因此：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">expression</span><span class="o">.</span><span class="n">sub</span><span class="p">([(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">),(</span><span class="n">y</span><span class="p">,</span><span class="n">x</span><span class="p">)])</span>
+</pre></div>
+</div>
+<p>并不能对两个符号x,y进行交换。</p>
+</div>
+<p>然后对circle_area中的变量x在区间-r到r上进行定积分，得到球体的体积公式：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">integrate</span><span class="p">(</span><span class="n">circle_area</span><span class="p">,</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="o">-</span><span class="n">r</span><span class="p">,</span> <span class="n">r</span><span class="p">))</span>
+<span class="go">4*pi*r**3/3</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">首页目录</a></h3>
+            <ul>
+<li><a class="reference external" href="#">SymPy-符号运算好帮手</a><ul>
+<li><a class="reference external" href="#id1">封面上的经典公式</a></li>
+<li><a class="reference external" href="#id2">球体体积</a></li>
+</ul>
+</li>
+</ul>
+
+            <h4>上一篇文章</h4>
+            <p class="topless"><a href="scipy_intro.html"
+                                  title="上一篇文章">SciPy-数值计算库</a></p>
+            <h4>下一篇文章</h4>
+            <p class="topless"><a href="matplotlib_intro.html"
+                                  title="下一篇文章">matplotlib-绘制精美的图表</a></p>
+          <div id="searchbox" style="display: none">
+            <h3>快速搜索</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="搜索" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              中文搜索请尽量用空格分开单个的单词，例如搜索"科学 计算"，而不是"科学计算"
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="matplotlib_intro.html" title="matplotlib-绘制精美的图表"
+             >下一篇</a></li>
+        <li class="right" >
+          <a href="scipy_intro.html" title="SciPy-数值计算库"
+             >上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+    &copy; 2009, <a href="http://hyry.dip.jp/blogt.py">HYRY Studio</a>
+      由 <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.4. 编译
+    </div>
+  </body>
+</html>

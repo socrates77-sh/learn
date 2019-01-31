@@ -1,0 +1,26 @@
+##########
+Visual使用手册
+##########
+
+.. topic:: 在ipython中交互式地使用
+
+    visual库可以在IPython中交互式的使用，启动ipython之后，只需要先执行：
+    
+    >>> from visual import *
+    
+    之后就可以随心所欲的调用visual库通过的函数。需要注意的是如果你关闭了visual弹出的场景窗口的话，ipython对话也随之结束。如果你需要关闭场景窗口可以用下面的语句： 
+
+    >>> scene.visible = False
+
+    .. _fig-vpythonmanual01:
+    
+    .. figure:: images/vpython_manual_01.png
+    
+        在IPython中交互式地观察visual的运行结果
+    
+    上图是用IPython交互式的使用visual的一个例子，可以看到通过IPython能够控制多个场景窗口。
+
+.. toctree::
+
+    visual_manual_display.rst
+

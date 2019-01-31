@@ -1,0 +1,12 @@
+##########
+FFT卷积的速度比较
+##########
+
+相关文档： :doc:`frequency_process`
+
+直接卷积的复杂度为O(N*N)，FFT的复杂度为O(N*log(N))，此程序分别计算直接卷积和快速卷积的耗时曲线。请注意Y轴为每点的平均运算时间。
+
+.. image:: images/spectrum_example_09.png
+
+.. literalinclude:: examples/spectrum_fft_convolve_timeit.py
+

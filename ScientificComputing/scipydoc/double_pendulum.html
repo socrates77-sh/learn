@@ -1,0 +1,576 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>单摆和双摆模拟 &mdash; 用Python做科学计算</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link type="text/css" href="_static/jquery-ui-1.7.2.custom.css" rel="stylesheet" />	
+    <link type="text/css" href="_static/comments.css" rel="stylesheet" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '#',
+        VERSION:     '1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/jquery-ui-1.7.2.custom.min.js"></script>
+    <script type="text/javascript" src="_static/pydoc.js"></script>
+    <link rel="top" title="用Python做科学计算" href="index.html" />
+    <link rel="下一篇" title="分形与混沌" href="fractal_chaos.html" />
+    <link rel="上一篇" title="自适应滤波器和NLMS模拟" href="fast_nlms_in_python.html" /> 
+
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-10837468-1");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="fractal_chaos.html" title="分形与混沌"
+             accesskey="N">下一篇</a></li>
+        <li class="right" >
+          <a href="fast_nlms_in_python.html" title="自适应滤波器和NLMS模拟"
+             accesskey="P">上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="id1">
+<h1>单摆和双摆模拟<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id2">
+<h2>单摆模拟<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>由一根不可伸长、质量不计的绳子，上端固定，下端系一质点，这样的装置叫做单摆。</p>
+<div class="figure" id="fig-simplependlum">
+<img alt="_images/simple_pendulum.png" src="_images/simple_pendulum.png" />
+<p class="caption">单摆装置示意图</p>
+</div>
+<p>根据牛顿力学定律，我们可以列出如下微分方程：</p>
+<div class="math">
+<p><img src="_images/math/5c0c6a5b6246e87cc2ba8974f37630833d23a98d.png" alt="{d^2\theta\over dt^2}+{g\over \ell} \sin\theta=0" /></p>
+</div><p>其中 <img class="math" src="_images/math/52e8ed7a3ba22130ad3984eb2cd413406475a689.png" alt="\theta"/> 为单摆的摆角， <img class="math" src="_images/math/63c17c295325f731666c7d74952b563a01e00fcc.png" alt="\ell"/> 为单摆的长度， g为重力加速度。</p>
+<p>此微分方程的符号解无法直接求出，因此只能调用odeint对其求数值解。</p>
+<p>odeint函数的调用参数如下：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">odeint</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>其中func是一个Python的函数对象，用来计算微分方程组中每个未知函数的导数，y0为微分方程组中每个未知函数的初始值，t为需要进行数值求解的时间点。它返回的是一个二维数组result，其第0轴的长度为t的长度，第1轴的长度为变量的个数，因此 result[:, i] 为第i个未知函数的解。</p>
+<p>计算微分的func函数的调用参数为： func(y, t)，其中y是一个数组，为每个未知函数在t时刻的值，而func的返回值也是数组，它为每个未知函数在t时刻的导数。</p>
+<p>odeint要求每个微分方程只包含一阶导数，因此我们需要对前面的微分方程做如下的变形：</p>
+<div class="math">
+<p><img src="_images/math/11e6f919dbdce66797d1472096a1ea24d6453012.png" alt="{d\theta(t)\over dt} = v(t)" /></p>
+</div><div class="math">
+<p><img src="_images/math/7e1544d63b0bca4af6dfa042218076e79141c1de.png" alt="{dv(t)\over dt} = -{g\over \ell} \sin\theta(t)" /></p>
+</div><p>下面是利用odeint计算单摆轨迹的程序：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">sin</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy.integrate</span> <span class="kn">import</span> <span class="n">odeint</span>
+
+<span class="n">g</span> <span class="o">=</span> <span class="mf">9.8</span>
+
+<span class="k">def</span> <span class="nf">pendulum_equations</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">l</span><span class="p">):</span>
+    <span class="n">th</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">w</span>
+    <span class="n">dth</span> <span class="o">=</span> <span class="n">v</span>
+    <span class="n">dv</span>  <span class="o">=</span> <span class="o">-</span> <span class="n">g</span><span class="o">/</span><span class="n">l</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">th</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">dth</span><span class="p">,</span> <span class="n">dv</span>
+    
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">pylab</span> <span class="kn">as</span> <span class="nn">pl</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">)</span>
+    <span class="n">track</span> <span class="o">=</span> <span class="n">odeint</span><span class="p">(</span><span class="n">pendulum_equations</span><span class="p">,</span> <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">t</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,))</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">track</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">u&quot;单摆的角度变化, 初始角度=1.0弧度&quot;</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">u&quot;时间(秒)&quot;</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">u&quot;震度角度(弧度)&quot;</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>odeint函数还有一个关键字参数args，其值为一个组元，这些值都会作为额外的参数传递给func函数。程序使用这种方式将单摆的长度传递给pendulum_equations函数。</p>
+<div class="figure" id="fig-simplependulum01">
+<img alt="_images/simple_pendulum01.png" src="_images/simple_pendulum01.png" style="width: 14cm;" />
+<p class="caption">初始角度为1弧度的单摆摆动角度和时间的关系</p>
+</div>
+<div class="section" id="id3">
+<h3>计算摆动周期<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<p>高中物理课介绍过当最大摆动角度很小时，单摆的摆动周期可以使用如下公式计算：</p>
+<div class="math">
+<p><img src="_images/math/b98e393c76b19789508feec5bfc078e39493b387.png" alt="T_0 = 2\pi\sqrt{\frac{\ell}{g}}" /></p>
+</div><p>这是因为当 <img class="math" src="_images/math/00b3f96ef433f476d66cef95b28fa129abc7e267.png" alt="\theta &lt;&lt; 1"/> 时， <img class="math" src="_images/math/503e5025adc0f279c803ce9a82bddc5ac8b4eff0.png" alt="\sin\theta\approx\theta"/> ， 这样微分方程就变成了：</p>
+<div class="math">
+<p><img src="_images/math/c87fc57f3c805df7cc6da0c0746e81748c2331b0.png" alt="{d^2\theta\over dt^2}+{g\over \ell}\theta=0" /></p>
+</div><p>此微分方程的解是一个简谐震动方程，很容易计算其摆动周期。但是当初始摆角增大时，上述的近似处理会带来无法忽视的误差。下面让我们来看看如何用数值计算的方法求出单摆在任意初始摆角时的摆动周期。</p>
+<p>要计算摆动周期只需要计算从最大摆角到0摆角所需的时间，摆动周期是此时间的4倍。为了计算出这个时间值，首先需要定义一个函数pendulum_th计算任意时刻的摆角：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">pendulum_th</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">th0</span><span class="p">):</span>
+    <span class="n">track</span> <span class="o">=</span> <span class="n">odeint</span><span class="p">(</span><span class="n">pendulum_equations</span><span class="p">,</span> <span class="p">(</span><span class="n">th0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">t</span><span class="p">],</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">l</span><span class="p">,))</span>
+    <span class="k">return</span> <span class="n">track</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>pendulum_th函数计算长度为l初始角度为th0的单摆在时刻t的摆角。此函数仍然使用odeint进行微分方程组求解，只是我们只需要计算时刻t的摆角，因此传递给odeint的时间序列为[0, t]。 odeint内部会对时间进行细分，保证最终的解是正确的。</p>
+<p>接下来只需要找到第一个时pendulum_th的结果为0的时间即可。这相当于对pendulum_th函数求解，可以使用 scipy.optimize.fsolve 函数对这种非线性方程进行求解。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">pendulum_period</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">th0</span><span class="p">):</span>
+    <span class="n">t0</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="n">sqrt</span><span class="p">(</span> <span class="n">l</span><span class="o">/</span><span class="n">g</span> <span class="p">)</span> <span class="o">/</span> <span class="mi">4</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">fsolve</span><span class="p">(</span> <span class="n">pendulum_th</span><span class="p">,</span> <span class="n">t0</span><span class="p">,</span> <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">th0</span><span class="p">)</span> <span class="p">)</span>
+    <span class="k">return</span> <span class="n">t</span><span class="o">*</span><span class="mi">4</span>
+</pre></div>
+</div>
+<p>和odeint一样，我们通过fsolve的args关键字参数将额外的参数传递给pendulum_th函数。fsolve求解时需要一个初始值尽量接近真实的解，用小角度单摆的周期的1/4作为这个初始值是一个很不错的选择。下面利用pendulum_period函数计算出初始摆动角度从0到90度的摆动周期：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">ths</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">)</span>
+<span class="n">periods</span> <span class="o">=</span> <span class="p">[</span><span class="n">pendulum_period</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">th</span><span class="p">)</span> <span class="k">for</span> <span class="n">th</span> <span class="ow">in</span> <span class="n">ths</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>为了验证fsolve求解摆动周期的正确性，我从维基百科中找到摆动周期的精确解：</p>
+<div class="math">
+<p><img src="_images/math/facc780ecf9702a904d20d00d23b0527eedaee15.png" alt="T = 4\sqrt{\ell\over g}K\left(\sin{\theta_0\over 2} \right)" /></p>
+</div><p>其中的函数K为第一类完全椭圆积分函数，其定义如下：</p>
+<div class="math">
+<p><img src="_images/math/b9caf31850c33e2b1e2781a26b2b0cc566f6fe60.png" alt="K(k) = \int_0^{\pi/2} \frac{{\rm{d}}\theta}{\sqrt{1-k^2 \sin^2\theta}}" /></p>
+</div><p>我们可以用 scipy.special.ellipk 来计算此函数的值：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">periods2</span> <span class="o">=</span> <span class="mi">4</span><span class="o">*</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="n">g</span><span class="p">)</span><span class="o">*</span><span class="n">ellipk</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">ths</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>下图比较两种计算方法，我们看到其结果是完全一致的：</p>
+<div class="figure" id="fig-simplependulum02">
+<img alt="_images/simple_pendulum02.png" src="_images/simple_pendulum02.png" style="width: 14cm;" />
+<p class="caption">单摆的摆动周期和初始角度的关系</p>
+</div>
+<p>完整的程序请参见： <a class="reference external" href="example_simple_pendulum_period.html"><em>单摆摆动周期的计算</em></a></p>
+</div>
+</div>
+<div class="section" id="id4">
+<h2>双摆模拟<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<p>接下来让我们来看看如何对双摆系统进行模拟。双摆系统的如下图所示，</p>
+<div class="figure" id="fig-doublependulum01">
+<img alt="_images/double_pendulum01.png" src="_images/double_pendulum01.png" />
+<p class="caption">双摆装置示意图</p>
+</div>
+<p>两根长度为L1和L2的无质量的细棒的顶端有质量分别为m1和m2的两个球，初始角度为 <img class="math" src="_images/math/3dd2b053518a1dc68824d714682ff9df76d8f151.png" alt="\theta_1"/> 和 <img class="math" src="_images/math/981e552986db2a6a782e1699452472a78544d757.png" alt="\theta_2"/> ， 要求计算从此初始状态释放之后的两个球的运动轨迹。</p>
+<div class="section" id="id5">
+<h3>公式推导<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<p>本节首先介绍如何利用拉格朗日力学获得双摆系统的微分方程组。</p>
+<div class="topic">
+<p class="topic-title first">拉格朗日力学(摘自维基百科)</p>
+<p>拉格朗日力学是分析力学中的一种。於 1788 年由拉格朗日所创立，拉格朗日力学是对经典力学的一种的新的理论表述。</p>
+<p>经典力学最初的表述形式由牛顿建立，它着重於分析位移，速度，加速度，力等矢量间的关系，又称为矢量力学。拉格朗日引入了广义坐标的概念，又运用达朗贝尔原理，求得与牛顿第二定律等价的拉格朗日方程。不仅如此，拉格朗日方程具有更普遍的意义，适用范围更广泛。还有，选取恰当的广义坐标，可以大大地简化拉格朗日方程的求解过程。</p>
+</div>
+<p>假设杆L1连接的球体的坐标为x1和y1，杆L2连接的球体的坐标为x2和y2，那么x1,y1,x2,y2和两个角度之间有如下关系：</p>
+<div class="math">
+<p><img src="_images/math/b56cd367b20a37562966b10cd8138ff81f6bff79.png" alt="x_1 &amp;= L_1 \sin(\theta_1)" /></p>
+</div><div class="math">
+<p><img src="_images/math/f5960a6c333f9b26cecc7268d99b52cd817eadce.png" alt="y_1 &amp;= -L_1 \cos(\theta_1)" /></p>
+</div><div class="math">
+<p><img src="_images/math/dbd805edf8ebbf58b84663ec393fc0a5b62ec8f9.png" alt="x_2 &amp;= L_1 \sin(\theta_1) + L_2 \sin(\theta_2)" /></p>
+</div><div class="math">
+<p><img src="_images/math/2fd9da7b98e15b2bd8aa237c22c7aae8ff999702.png" alt="y_2 &amp;= -L_1 \cos(\theta_1) - L_2 \cos(\theta_2)" /></p>
+</div><p>根据拉格朗日量的公式：</p>
+<div class="math">
+<p><img src="_images/math/b95a0acc3619b1a619a78a882a952db834758bbe.png" alt="\mathcal{L}=T-V" /></p>
+</div><p>其中T为系统的动能，V为系统的势能，可以得到如下公式：</p>
+<div class="math">
+<p><img src="_images/math/6181dde22c45b5304f242cf9a6626021e66d2ce6.png" alt="\mathcal{L} = \frac{m_1}{2} ( {\dot x_1}^2 + {\dot y_1}^2 ) + \frac{m_2}{2} ( {\dot x_2}^2 + {\dot y_2}^2 ) - m_1 g y_1 - m_2 g y_2" /></p>
+</div><p>其中正号的项目为两个小球的动能，符号的项目为两个小球的势能。</p>
+<p>将前面的坐标和角度之间的关系公式带入之后整理可得：</p>
+<div class="math">
+<p><img src="_images/math/ddb810d6eed716ca3b15c0a3e9c94185accee394.png" alt="\mathcal{L} = \frac{m_1+m_2}{2} L_1^2 {\dot \theta_1}^2 + \frac{m_2}{2} L_2^2 {\dot \theta_2}^2 + m_2 L_1 L_2 {\dot \theta_1} {\dot \theta_2} \cos(\theta_1 - \theta_2) +
+
+(m_1 + m_2) g L_1 \cos(\theta_1) + m_2 g L_2 \cos(\theta_2)" /></p>
+</div><p>对于变量 <img class="math" src="_images/math/3dd2b053518a1dc68824d714682ff9df76d8f151.png" alt="\theta_1"/> 的拉格朗日方程：</p>
+<div class="math">
+<p><img src="_images/math/2d7cc4b7ff469518f76d829ff0e2a4a876d09af2.png" alt="\frac{d}{dt}\frac{\partial \mathcal{L}}{\partial \dot \theta_1} - \frac{\partial \mathcal{L}}{\partial \theta_1} = 0" /></p>
+</div><p>得到：</p>
+<div class="math">
+<p><img src="_images/math/3242e083b65bfc52f350c86d099e9ff85a371903.png" alt="L_1 [(m_1+m_2)L_1{\ddot \theta_1} + m_2 L_2 \cos(\theta_1 - \theta_2) {\ddot \theta_2} + m_2 L_2 \sin(\theta_1 - \theta_2) {\dot \theta_2}^2 + (m_1+m_2) g \sin(\theta_1)] = 0" /></p>
+</div><p>对于变量 <img class="math" src="_images/math/981e552986db2a6a782e1699452472a78544d757.png" alt="\theta_2"/> 的拉格朗日方程：</p>
+<div class="math">
+<p><img src="_images/math/a92598cd01f40cfbdf4588237026670c116691a3.png" alt="\frac{d}{dt}\frac{\partial \mathcal{L}}{\partial \dot \theta_2} - \frac{\partial \mathcal{L}}{\partial \theta_2} = 0" /></p>
+</div><p>得到：</p>
+<div class="math">
+<p><img src="_images/math/24540f2fe08a9c35292f1e9b075dec5aa30fc63b.png" alt="m_2 L_2 [L_2 {\ddot \theta_2} + L_1 \cos(\theta_1 - \theta_2) {\ddot \theta_1} - L_1 \sin(\theta_1 - \theta_2) {\dot \theta_1}^2 + g \sin(\theta_2)] = 0" /></p>
+</div><p>这一计算过程可以用sympy进行推导：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="kn">from</span> <span class="nn">sympy</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">sympy</span> <span class="kn">import</span> <span class="n">Derivative</span> <span class="k">as</span> <span class="n">D</span>
+
+<span class="n">var</span><span class="p">(</span><span class="s">&quot;x1 x2 y1 y2 l1 l2 m1 m2 th1 th2 dth1 dth2 ddth1 ddth2 t g tmp&quot;</span><span class="p">)</span>
+
+<span class="n">sublist</span> <span class="o">=</span> <span class="p">[</span>
+<span class="p">(</span><span class="n">D</span><span class="p">(</span><span class="n">th1</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="n">t</span><span class="p">,</span> <span class="n">t</span><span class="p">),</span> <span class="n">ddth1</span><span class="p">),</span>
+<span class="p">(</span><span class="n">D</span><span class="p">(</span><span class="n">th1</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="n">t</span><span class="p">),</span> <span class="n">dth1</span><span class="p">),</span>
+<span class="p">(</span><span class="n">D</span><span class="p">(</span><span class="n">th2</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="n">t</span><span class="p">,</span> <span class="n">t</span><span class="p">),</span> <span class="n">ddth2</span><span class="p">),</span>
+<span class="p">(</span><span class="n">D</span><span class="p">(</span><span class="n">th2</span><span class="p">(</span><span class="n">t</span><span class="p">),</span><span class="n">t</span><span class="p">),</span> <span class="n">dth2</span><span class="p">),</span>
+<span class="p">(</span><span class="n">th1</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="n">th1</span><span class="p">),</span>
+<span class="p">(</span><span class="n">th2</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="n">th2</span><span class="p">)</span>    
+<span class="p">]</span>
+
+<span class="n">x1</span> <span class="o">=</span> <span class="n">l1</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">th1</span><span class="p">(</span><span class="n">t</span><span class="p">))</span>
+<span class="n">y1</span> <span class="o">=</span> <span class="o">-</span><span class="n">l1</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">th1</span><span class="p">(</span><span class="n">t</span><span class="p">))</span>
+<span class="n">x2</span> <span class="o">=</span> <span class="n">l1</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">th1</span><span class="p">(</span><span class="n">t</span><span class="p">))</span> <span class="o">+</span> <span class="n">l2</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">th2</span><span class="p">(</span><span class="n">t</span><span class="p">))</span>
+<span class="n">y2</span> <span class="o">=</span> <span class="o">-</span><span class="n">l1</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">th1</span><span class="p">(</span><span class="n">t</span><span class="p">))</span> <span class="o">-</span> <span class="n">l2</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">th2</span><span class="p">(</span><span class="n">t</span><span class="p">))</span>
+
+<span class="n">vx1</span> <span class="o">=</span> <span class="n">diff</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+<span class="n">vx2</span> <span class="o">=</span> <span class="n">diff</span><span class="p">(</span><span class="n">x2</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+<span class="n">vy1</span> <span class="o">=</span> <span class="n">diff</span><span class="p">(</span><span class="n">y1</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+<span class="n">vy2</span> <span class="o">=</span> <span class="n">diff</span><span class="p">(</span><span class="n">y2</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+
+<span class="c"># 拉格朗日量</span>
+<span class="n">L</span> <span class="o">=</span> <span class="n">m1</span><span class="o">/</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">vx1</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">vy1</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="n">m2</span><span class="o">/</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">vx2</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">vy2</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="n">m1</span><span class="o">*</span><span class="n">g</span><span class="o">*</span><span class="n">y1</span> <span class="o">-</span> <span class="n">m2</span><span class="o">*</span><span class="n">g</span><span class="o">*</span><span class="n">y2</span>
+
+<span class="c"># 拉格朗日方程</span>
+<span class="k">def</span> <span class="nf">lagrange_equation</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>    
+    <span class="n">a</span> <span class="o">=</span> <span class="n">L</span><span class="o">.</span><span class="n">subs</span><span class="p">(</span><span class="n">D</span><span class="p">(</span><span class="n">v</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="n">t</span><span class="p">),</span> <span class="n">tmp</span><span class="p">)</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">tmp</span><span class="p">)</span><span class="o">.</span><span class="n">subs</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="n">D</span><span class="p">(</span><span class="n">v</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="n">t</span><span class="p">))</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">L</span><span class="o">.</span><span class="n">subs</span><span class="p">(</span><span class="n">D</span><span class="p">(</span><span class="n">v</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="n">t</span><span class="p">),</span> <span class="n">tmp</span><span class="p">)</span><span class="o">.</span><span class="n">subs</span><span class="p">(</span><span class="n">v</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="n">v</span><span class="p">)</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="o">.</span><span class="n">subs</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">v</span><span class="p">(</span><span class="n">t</span><span class="p">))</span><span class="o">.</span><span class="n">subs</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="n">D</span><span class="p">(</span><span class="n">v</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="n">t</span><span class="p">))</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">-</span> <span class="n">b</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">subs</span><span class="p">(</span><span class="n">sublist</span><span class="p">)</span>  
+    <span class="n">c</span> <span class="o">=</span> <span class="n">trigsimp</span><span class="p">(</span><span class="n">simplify</span><span class="p">(</span><span class="n">c</span><span class="p">))</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">collect</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="p">[</span><span class="n">th1</span><span class="p">,</span><span class="n">th2</span><span class="p">,</span><span class="n">dth1</span><span class="p">,</span><span class="n">dth2</span><span class="p">,</span><span class="n">ddth1</span><span class="p">,</span><span class="n">ddth2</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">c</span>
+
+<span class="n">eq1</span> <span class="o">=</span> <span class="n">lagrange_equation</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">th1</span><span class="p">)</span>
+<span class="n">eq2</span> <span class="o">=</span> <span class="n">lagrange_equation</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">th2</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>执行此程序之后，eq1对应于 <img class="math" src="_images/math/3dd2b053518a1dc68824d714682ff9df76d8f151.png" alt="\theta_1"/> 的拉格朗日方程， eq2对应于 <img class="math" src="_images/math/981e552986db2a6a782e1699452472a78544d757.png" alt="\theta_2"/> 的方程。</p>
+<p>由于sympy只能对符号变量求导数，即只能计算 D(L, t), 而不能计算D(f, v(t))。 因此在求偏导数之前，将偏导数变量置换为一个tmp变量，然后对tmp变量求导数，例如下面的程序行对D(v(t), t)求偏导数，即计算 <img class="math" src="_images/math/7482b548e92f54147a53a2368ac3d7dc3f729fc0.png" alt="\partial \mathcal{L} / \partial \dot v"/></p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">L</span><span class="o">.</span><span class="n">subs</span><span class="p">(</span><span class="n">D</span><span class="p">(</span><span class="n">v</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="n">t</span><span class="p">),</span> <span class="n">tmp</span><span class="p">)</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">tmp</span><span class="p">)</span><span class="o">.</span><span class="n">subs</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="n">D</span><span class="p">(</span><span class="n">v</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="n">t</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>而在计算 <img class="math" src="_images/math/570a36411ed630a030d5bc56025f06bfd089b010.png" alt="\partial \mathcal{L} / \partial v"/> 时，需要将v(t)替换为v之后再进行微分计算。由于将v(t)替换为v的同时，会将 D(v(t), t) 中的也进行替换，这是我们不希望的结果，因此先将 D(v(t), t) 替换为tmp，微分计算完毕之后再替换回去：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">L</span><span class="o">.</span><span class="n">subs</span><span class="p">(</span><span class="n">D</span><span class="p">(</span><span class="n">v</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="n">t</span><span class="p">),</span> <span class="n">tmp</span><span class="p">)</span><span class="o">.</span><span class="n">subs</span><span class="p">(</span><span class="n">v</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="n">v</span><span class="p">)</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="o">.</span><span class="n">subs</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">v</span><span class="p">(</span><span class="n">t</span><span class="p">))</span><span class="o">.</span><span class="n">subs</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="n">D</span><span class="p">(</span><span class="n">v</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="n">t</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>最后得到的eq1, eq2的值为：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">eq1</span>
+<span class="go">ddth1*(m1*l1**2 + m2*l1**2) +</span>
+<span class="go">ddth2*(l1*l2*m2*cos(th1)*cos(th2) + l1*l2*m2*sin(th1)*sin(th2)) +</span>
+<span class="go">dth2**2*(l1*l2*m2*cos(th2)*sin(th1) - l1*l2*m2*cos(th1)*sin(th2)) +</span>
+<span class="go">g*l1*m1*sin(th1) + g*l1*m2*sin(th1)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">eq2</span>
+<span class="go">ddth1*(l1*l2*m2*cos(th1)*cos(th2) + l1*l2*m2*sin(th1)*sin(th2)) +</span>
+<span class="go">dth1**2*(l1*l2*m2*cos(th1)*sin(th2) - l1*l2*m2*cos(th2)*sin(th1)) +</span>
+<span class="go">g*l2*m2*sin(th2) + ddth2*m2*l2**2</span>
+</pre></div>
+</div>
+<p>结果看上去挺复杂，其实只要运用如下的三角公式就和前面的结果一致了：</p>
+<div class="math">
+<p><img src="_images/math/5149d766733feeccc71ce88a0b4d99749b762842.png" alt="\sin \left(x+y\right)=\sin x \cos y + \cos x \sin y
+
+\cos \left(x+y\right)=\cos x \cos y - \sin x \sin y
+
+\sin \left(x-y\right)=\sin x \cos y - \cos x \sin y
+
+\cos \left(x-y\right)=\cos x \cos y + \sin x \sin y" /></p>
+</div></div>
+<div class="section" id="id6">
+<h3>微分方程的数值解<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+<p>接下来要做的事情就是对如下的微分方程求数值解：</p>
+<div class="math">
+<p><img src="_images/math/9190da4793ae43b293d654dcd4306ef240231b9c.png" alt="(m_1+m_2)L_1{\ddot \theta_1} + m_2 L_2 \cos(\theta_1 - \theta_2) {\ddot \theta_2} + m_2 L_2 \sin(\theta_1 - \theta_2) {\dot \theta_2}^2 + (m_1+m_2) g \sin(\theta_1) = 0" /></p>
+</div><div class="math">
+<p><img src="_images/math/b84829e3c95459457c3e0a715f38ba1b87714b12.png" alt="L_2 {\ddot \theta_2} + L_1 \cos(\theta_1 - \theta_2) {\ddot \theta_1} - L_1 \sin(\theta_1 - \theta_2) {\dot \theta_1}^2 + g \sin(\theta_2) = 0" /></p>
+</div><p>由于方程中包含二阶导数，因此无法直接使用odeint函数进行数值求解，我们很容易将其改写为4个一阶微分方程组，4个未知变量为： <img class="math" src="_images/math/a4f63a5263e9063c2d4678ac60472eb58f56f033.png" alt="\theta_1, \theta_2, v_1, v_2"/> ， 其中 <img class="math" src="_images/math/9afbfae25b59266a9671ebb0c4701949665702b0.png" alt="v_1, v_2"/> 为两个杆转动的角速度。</p>
+<div class="math">
+<p><img src="_images/math/0808baaad17640c8477bf36deac2a1a720925d83.png" alt="\dot \theta_1 = v_1" /></p>
+</div><div class="math">
+<p><img src="_images/math/b6ae8c07d20f755449bc1ad513113d4d6256c626.png" alt="\dot \theta_2 = v_2" /></p>
+</div><div class="math">
+<p><img src="_images/math/c904385da2db690b09d4dd8e204c37090ba349b7.png" alt="(m_1+m_2)L_1{\dot v_1} + m_2 L_2 \cos(\theta_1 - \theta_2) {\dot v_2} + m_2 L_2 \sin(\theta_1 - \theta_2) {\dot \theta_2}^2 + (m_1+m_2) g \sin(\theta_1) = 0" /></p>
+</div><div class="math">
+<p><img src="_images/math/ef65ef31869c53b53d2ad2fb631175e0aaaa1e0e.png" alt="L_2 {\dot v_2} + L_1 \cos(\theta_1 - \theta_2) {\dot v_1} - L_1 \sin(\theta_1 - \theta_2) {\dot \theta_1}^2 + g \sin(\theta_2) = 0" /></p>
+</div><p>下面的程序利用 scipy.integrate.odeint 对此微分方程组进行数值求解：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">sin</span><span class="p">,</span><span class="n">cos</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy.integrate</span> <span class="kn">import</span> <span class="n">odeint</span>
+
+<span class="n">g</span> <span class="o">=</span> <span class="mf">9.8</span>
+
+<span class="k">class</span> <span class="nc">DoublePendulum</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">m1</span><span class="p">,</span> <span class="n">m2</span><span class="p">,</span> <span class="n">l1</span><span class="p">,</span> <span class="n">l2</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">m1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">m2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">l1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">l2</span> <span class="o">=</span> <span class="n">m1</span><span class="p">,</span> <span class="n">m2</span><span class="p">,</span> <span class="n">l1</span><span class="p">,</span> <span class="n">l2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">init_status</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">])</span>
+        
+    <span class="k">def</span> <span class="nf">equations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        微分方程公式</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">m1</span><span class="p">,</span> <span class="n">m2</span><span class="p">,</span> <span class="n">l1</span><span class="p">,</span> <span class="n">l2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">m1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">m2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">l1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">l2</span>
+        <span class="n">th1</span><span class="p">,</span> <span class="n">th2</span><span class="p">,</span> <span class="n">v1</span><span class="p">,</span> <span class="n">v2</span> <span class="o">=</span> <span class="n">w</span>
+        <span class="n">dth1</span> <span class="o">=</span> <span class="n">v1</span>
+        <span class="n">dth2</span> <span class="o">=</span> <span class="n">v2</span>
+        
+        <span class="c">#eq of th1</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">l1</span><span class="o">*</span><span class="n">l1</span><span class="o">*</span><span class="p">(</span><span class="n">m1</span><span class="o">+</span><span class="n">m2</span><span class="p">)</span>  <span class="c"># dv1 parameter</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">l1</span><span class="o">*</span><span class="n">m2</span><span class="o">*</span><span class="n">l2</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">th1</span><span class="o">-</span><span class="n">th2</span><span class="p">)</span> <span class="c"># dv2 paramter</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">l1</span><span class="o">*</span><span class="p">(</span><span class="n">m2</span><span class="o">*</span><span class="n">l2</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">th1</span><span class="o">-</span><span class="n">th2</span><span class="p">)</span><span class="o">*</span><span class="n">dth2</span><span class="o">*</span><span class="n">dth2</span> <span class="o">+</span> <span class="p">(</span><span class="n">m1</span><span class="o">+</span><span class="n">m2</span><span class="p">)</span><span class="o">*</span><span class="n">g</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">th1</span><span class="p">))</span>
+        
+        <span class="c">#eq of th2</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">m2</span><span class="o">*</span><span class="n">l2</span><span class="o">*</span><span class="n">l1</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">th1</span><span class="o">-</span><span class="n">th2</span><span class="p">)</span> <span class="c"># dv1 parameter</span>
+        <span class="n">e</span> <span class="o">=</span> <span class="n">m2</span><span class="o">*</span><span class="n">l2</span><span class="o">*</span><span class="n">l2</span> <span class="c"># dv2 parameter</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">m2</span><span class="o">*</span><span class="n">l2</span><span class="o">*</span><span class="p">(</span><span class="o">-</span><span class="n">l1</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">th1</span><span class="o">-</span><span class="n">th2</span><span class="p">)</span><span class="o">*</span><span class="n">dth1</span><span class="o">*</span><span class="n">dth1</span> <span class="o">+</span> <span class="n">g</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">th2</span><span class="p">))</span>
+        
+        <span class="n">dv1</span><span class="p">,</span> <span class="n">dv2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">([[</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">],[</span><span class="n">d</span><span class="p">,</span><span class="n">e</span><span class="p">]],</span> <span class="p">[</span><span class="o">-</span><span class="n">c</span><span class="p">,</span><span class="o">-</span><span class="n">f</span><span class="p">])</span>
+        
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">dth1</span><span class="p">,</span> <span class="n">dth2</span><span class="p">,</span> <span class="n">dv1</span><span class="p">,</span> <span class="n">dv2</span><span class="p">])</span>
+        
+<span class="k">def</span> <span class="nf">double_pendulum_odeint</span><span class="p">(</span><span class="n">pendulum</span><span class="p">,</span> <span class="n">ts</span><span class="p">,</span> <span class="n">te</span><span class="p">,</span> <span class="n">tstep</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    对双摆系统的微分方程组进行数值求解，返回两个小球的X-Y坐标</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span> <span class="n">te</span><span class="p">,</span> <span class="n">tstep</span><span class="p">)</span>
+    <span class="n">track</span> <span class="o">=</span> <span class="n">odeint</span><span class="p">(</span><span class="n">pendulum</span><span class="o">.</span><span class="n">equations</span><span class="p">,</span> <span class="n">pendulum</span><span class="o">.</span><span class="n">init_status</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+    <span class="n">th1_array</span><span class="p">,</span> <span class="n">th2_array</span> <span class="o">=</span> <span class="n">track</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">track</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">l1</span><span class="p">,</span> <span class="n">l2</span> <span class="o">=</span> <span class="n">pendulum</span><span class="o">.</span><span class="n">l1</span><span class="p">,</span> <span class="n">pendulum</span><span class="o">.</span><span class="n">l2</span>
+    <span class="n">x1</span> <span class="o">=</span> <span class="n">l1</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">th1_array</span><span class="p">)</span>
+    <span class="n">y1</span> <span class="o">=</span> <span class="o">-</span><span class="n">l1</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">th1_array</span><span class="p">)</span>
+    <span class="n">x2</span> <span class="o">=</span> <span class="n">x1</span> <span class="o">+</span> <span class="n">l2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">th2_array</span><span class="p">)</span>
+    <span class="n">y2</span> <span class="o">=</span> <span class="n">y1</span> <span class="o">-</span> <span class="n">l2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">th2_array</span><span class="p">)</span>
+    <span class="n">pendulum</span><span class="o">.</span><span class="n">init_status</span> <span class="o">=</span> <span class="n">track</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,:]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="c">#将最后的状态赋给pendulum</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">]</span>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&quot;__main__&quot;</span><span class="p">:</span>    
+    <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">pl</span>
+    <span class="n">pendulum</span> <span class="o">=</span> <span class="n">DoublePendulum</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">)</span> 
+    <span class="n">th1</span><span class="p">,</span> <span class="n">th2</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span>
+    <span class="n">pendulum</span><span class="o">.</span><span class="n">init_status</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">th1</span><span class="p">,</span> <span class="n">th2</span>
+    <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span> <span class="o">=</span> <span class="n">double_pendulum_odeint</span><span class="p">(</span><span class="n">pendulum</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mf">0.02</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span><span class="n">y1</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="s">u&quot;上球&quot;</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x2</span><span class="p">,</span><span class="n">y2</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="s">u&quot;下球&quot;</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">u&quot;双摆系统的轨迹, 初始角度=</span><span class="si">%s</span><span class="s">,</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">th1</span><span class="p">,</span> <span class="n">th2</span><span class="p">))</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s">&quot;equal&quot;</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>程序中的 DoublePendulum.equations 函数计算各个未知函数的导数，其输入参数w数组中的变量依次为：</p>
+<ul class="simple">
+<li>th1: 上球角度</li>
+<li>th2: 下球角度</li>
+<li>v1: 上球角速度</li>
+<li>v2: 下球角速度</li>
+</ul>
+<p>返回值为每个变量的导数：</p>
+<ul class="simple">
+<li>dth1: 上球角速度</li>
+<li>dth2: 下球角速度</li>
+<li>dv1: 上球角加速度</li>
+<li>dv2: 下球角加速度</li>
+</ul>
+<p>其中dth1和dth2很容易计算，它们直接等于传入的角速度变量：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">dth1</span> <span class="o">=</span> <span class="n">v1</span>
+<span class="n">dth2</span> <span class="o">=</span> <span class="n">v2</span>
+</pre></div>
+</div>
+<p>为了计算dv1和dv2，需要将微分方程组进行变形为如下格式 :</p>
+<div class="math">
+<p><img src="_images/math/47827c6cd286f5e2e5d906f8e99385366e0db189.png" alt="\dot v_1 = ...
+
+\dot v_2 = ..." /></p>
+</div><p>如果我们希望让程序做这个事情的话，可以计算出 dv1 和 dv2 的系数，然后调用 linalg.solve 求解线型方程组：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c">#eq of th1</span>
+<span class="n">a</span> <span class="o">=</span> <span class="n">l1</span><span class="o">*</span><span class="n">l1</span><span class="o">*</span><span class="p">(</span><span class="n">m1</span><span class="o">+</span><span class="n">m2</span><span class="p">)</span>  <span class="c"># dv1 parameter</span>
+<span class="n">b</span> <span class="o">=</span> <span class="n">l1</span><span class="o">*</span><span class="n">m2</span><span class="o">*</span><span class="n">l2</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">th1</span><span class="o">-</span><span class="n">th2</span><span class="p">)</span> <span class="c"># dv2 paramter</span>
+<span class="n">c</span> <span class="o">=</span> <span class="n">l1</span><span class="o">*</span><span class="p">(</span><span class="n">m2</span><span class="o">*</span><span class="n">l2</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">th1</span><span class="o">-</span><span class="n">th2</span><span class="p">)</span><span class="o">*</span><span class="n">dth2</span><span class="o">*</span><span class="n">dth2</span> <span class="o">+</span> <span class="p">(</span><span class="n">m1</span><span class="o">+</span><span class="n">m2</span><span class="p">)</span><span class="o">*</span><span class="n">g</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">th1</span><span class="p">))</span>
+
+<span class="c">#eq of th2</span>
+<span class="n">d</span> <span class="o">=</span> <span class="n">m2</span><span class="o">*</span><span class="n">l2</span><span class="o">*</span><span class="n">l1</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">th1</span><span class="o">-</span><span class="n">th2</span><span class="p">)</span> <span class="c"># dv1 parameter</span>
+<span class="n">e</span> <span class="o">=</span> <span class="n">m2</span><span class="o">*</span><span class="n">l2</span><span class="o">*</span><span class="n">l2</span> <span class="c"># dv2 parameter</span>
+<span class="n">f</span> <span class="o">=</span> <span class="n">m2</span><span class="o">*</span><span class="n">l2</span><span class="o">*</span><span class="p">(</span><span class="o">-</span><span class="n">l1</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">th1</span><span class="o">-</span><span class="n">th2</span><span class="p">)</span><span class="o">*</span><span class="n">dth1</span><span class="o">*</span><span class="n">dth1</span> <span class="o">+</span> <span class="n">g</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">th2</span><span class="p">))</span>
+
+<span class="n">dv1</span><span class="p">,</span> <span class="n">dv2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">([[</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">],[</span><span class="n">d</span><span class="p">,</span><span class="n">e</span><span class="p">]],</span> <span class="p">[</span><span class="o">-</span><span class="n">c</span><span class="p">,</span><span class="o">-</span><span class="n">f</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>上面的程序相当于将原始的微分方程组变换为</p>
+<div class="math">
+<p><img src="_images/math/0adfbc12bbe1ff9d4511bc29a532781e32e7609e.png" alt="a \dot v_1 + b \dot v_2 + c = 0
+
+d \dot v_1 + e \dot v_2 + f = 0" /></p>
+</div><p>程序绘制的小球运动轨迹如下：</p>
+<div class="figure" id="fig-doublependulum02">
+<img alt="_images/double_pendulum02.png" src="_images/double_pendulum02.png" style="width: 14cm;" />
+<p class="caption">初始角度微小时的双摆的摆动轨迹</p>
+</div>
+<div class="figure" id="fig-doublependulum03">
+<img alt="_images/double_pendulum03.png" src="_images/double_pendulum03.png" style="width: 14cm;" />
+<p class="caption">大初始角度时双摆的摆动轨迹呈现混沌现象</p>
+</div>
+<p>可以看出当初始角度很大的时候，摆动出现混沌现象。</p>
+</div>
+<div class="section" id="id7">
+<h3>动画显示<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
+<p>计算出小球的轨迹之后我们很容易将结果可视化，制作成动画效果。制作动画可以有多种选择：</p>
+<ul class="simple">
+<li>visual库可以制作3D动画</li>
+<li>pygame制作快速的2D动画</li>
+<li>tkinter或者wxpython直接在界面上绘制动画</li>
+</ul>
+<p>这里介绍如何使用matplotlib制作动画。整个动画绘制程序如下：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="kn">import</span> <span class="nn">matplotlib</span>
+<span class="n">matplotlib</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s">&#39;WXAgg&#39;</span><span class="p">)</span> <span class="c"># do this before importing pylab</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">pl</span>
+<span class="kn">from</span> <span class="nn">double_pendulum_odeint</span> <span class="kn">import</span> <span class="n">double_pendulum_odeint</span><span class="p">,</span> <span class="n">DoublePendulum</span>
+
+<span class="n">fig</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span>
+<span class="n">line1</span><span class="p">,</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="s">&quot;-o&quot;</span><span class="p">)</span>
+<span class="n">line2</span><span class="p">,</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="s">&quot;-o&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s">&quot;equal&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span><span class="mi">4</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="n">pendulum</span> <span class="o">=</span> <span class="n">DoublePendulum</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">)</span>
+<span class="n">pendulum</span><span class="o">.</span><span class="n">init_status</span><span class="p">[:]</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
+
+<span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span> <span class="o">=</span> <span class="p">[],[],[],[]</span>
+<span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
+
+<span class="k">def</span> <span class="nf">update_line</span><span class="p">(</span><span class="n">event</span><span class="p">):</span>
+    <span class="k">global</span> <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">y2</span><span class="p">,</span> <span class="n">idx</span>
+    <span class="k">if</span> <span class="n">idx</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">x1</span><span class="p">):</span>
+        <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span> <span class="o">=</span> <span class="n">double_pendulum_odeint</span><span class="p">(</span><span class="n">pendulum</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">)</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span> 
+    <span class="n">line1</span><span class="o">.</span><span class="n">set_xdata</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="n">x1</span><span class="p">[</span><span class="n">idx</span><span class="p">]])</span>
+    <span class="n">line1</span><span class="o">.</span><span class="n">set_ydata</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="n">y1</span><span class="p">[</span><span class="n">idx</span><span class="p">]])</span>
+    <span class="n">line2</span><span class="o">.</span><span class="n">set_xdata</span><span class="p">([</span><span class="n">x1</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">x2</span><span class="p">[</span><span class="n">idx</span><span class="p">]])</span>
+    <span class="n">line2</span><span class="o">.</span><span class="n">set_ydata</span><span class="p">([</span><span class="n">y1</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">y2</span><span class="p">[</span><span class="n">idx</span><span class="p">]])</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>                 
+    <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+
+<span class="kn">import</span> <span class="nn">wx</span>
+<span class="nb">id</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">NewId</span><span class="p">()</span>
+<span class="n">actor</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">frame</span>
+<span class="n">timer</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Timer</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="nb">id</span><span class="p">)</span>
+<span class="n">timer</span><span class="o">.</span><span class="n">Start</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">wx</span><span class="o">.</span><span class="n">EVT_TIMER</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">update_line</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>程序中强制使用WXAgg进行后台绘制：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">matplotlib</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s">&#39;WXAgg&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>然后启动wx库中的时间事件调用update_line函数重新设置两条直线的端点位置：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">wx</span>
+<span class="nb">id</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">NewId</span><span class="p">()</span>
+<span class="n">actor</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">frame</span>
+<span class="n">timer</span> <span class="o">=</span> <span class="n">wx</span><span class="o">.</span><span class="n">Timer</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="nb">id</span><span class="p">)</span>
+<span class="n">timer</span><span class="o">.</span><span class="n">Start</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">wx</span><span class="o">.</span><span class="n">EVT_TIMER</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">update_line</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>在update_line函数中，每次轨迹数组播放完毕之后，就调用：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">if</span> <span class="n">idx</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">x1</span><span class="p">):</span>
+    <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span> <span class="o">=</span> <span class="n">double_pendulum_odeint</span><span class="p">(</span><span class="n">pendulum</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">)</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
+</pre></div>
+</div>
+<p>重新生成下一秒钟的轨迹。由于在 double_pendulum_odeint 函数中会将odeint计算的最终的状态赋给 pendulum.init_status ，因此连续调用 double_pendulum_odeint 函数可以生成连续的运动轨迹</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">double_pendulum_odeint</span><span class="p">(</span><span class="n">pendulum</span><span class="p">,</span> <span class="n">ts</span><span class="p">,</span> <span class="n">te</span><span class="p">,</span> <span class="n">tstep</span><span class="p">):</span>
+    <span class="o">...</span>
+    <span class="n">track</span> <span class="o">=</span> <span class="n">odeint</span><span class="p">(</span><span class="n">pendulum</span><span class="o">.</span><span class="n">equations</span><span class="p">,</span> <span class="n">pendulum</span><span class="o">.</span><span class="n">init_status</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+    <span class="o">...</span>
+    <span class="n">pendulum</span><span class="o">.</span><span class="n">init_status</span> <span class="o">=</span> <span class="n">track</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,:]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>程序的动画效果如下图所示：</p>
+<div class="figure" id="fig-doublependulum04">
+<img alt="_images/double_pendulum04.png" src="_images/double_pendulum04.png" />
+<p class="caption">双摆的摆动动画效果截图</p>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">首页目录</a></h3>
+            <ul>
+<li><a class="reference external" href="#">单摆和双摆模拟</a><ul>
+<li><a class="reference external" href="#id2">单摆模拟</a><ul>
+<li><a class="reference external" href="#id3">计算摆动周期</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#id4">双摆模拟</a><ul>
+<li><a class="reference external" href="#id5">公式推导</a></li>
+<li><a class="reference external" href="#id6">微分方程的数值解</a></li>
+<li><a class="reference external" href="#id7">动画显示</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            <h4>上一篇文章</h4>
+            <p class="topless"><a href="fast_nlms_in_python.html"
+                                  title="上一篇文章">自适应滤波器和NLMS模拟</a></p>
+            <h4>下一篇文章</h4>
+            <p class="topless"><a href="fractal_chaos.html"
+                                  title="下一篇文章">分形与混沌</a></p>
+          <div id="searchbox" style="display: none">
+            <h3>快速搜索</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="搜索" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              中文搜索请尽量用空格分开单个的单词，例如搜索"科学 计算"，而不是"科学计算"
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="fractal_chaos.html" title="分形与混沌"
+             >下一篇</a></li>
+        <li class="right" >
+          <a href="fast_nlms_in_python.html" title="自适应滤波器和NLMS模拟"
+             >上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+    &copy; 2009, <a href="http://hyry.dip.jp/blogt.py">HYRY Studio</a>
+      由 <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.4. 编译
+    </div>
+  </body>
+</html>

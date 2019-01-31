@@ -1,0 +1,1276 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>数字信号系统 &mdash; 用Python做科学计算</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link type="text/css" href="_static/jquery-ui-1.7.2.custom.css" rel="stylesheet" />	
+    <link type="text/css" href="_static/comments.css" rel="stylesheet" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '#',
+        VERSION:     '1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/jquery-ui-1.7.2.custom.min.js"></script>
+    <script type="text/javascript" src="_static/pydoc.js"></script>
+    <link rel="top" title="用Python做科学计算" href="index.html" />
+    <link rel="下一篇" title="FFT演示程序" href="fft_study.html" />
+    <link rel="上一篇" title="声音的输入输出" href="wave_pyaudio.html" /> 
+
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-10837468-1");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="fft_study.html" title="FFT演示程序"
+             accesskey="N">下一篇</a></li>
+        <li class="right" >
+          <a href="wave_pyaudio.html" title="声音的输入输出"
+             accesskey="P">上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="id1">
+<h1>数字信号系统<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="firiir">
+<h2>FIR和IIR滤波器<a class="headerlink" href="#firiir" title="Permalink to this headline">¶</a></h2>
+<p>在数字信号处理领域中，数字滤波器占有非常重要的地位。根据其计算方式可以分为FIR(有限脉冲响应)滤波器，和IIR(无限脉冲响应)滤波器两种。</p>
+<p>FIR滤波器根据如下公式进行计算：</p>
+<div class="math">
+<p><img src="_images/math/f9f90f3b95dd35ca559d96d8a94be77e25fe8297.png" alt="y[m] &amp; = b[0] x[m] + b[1] x[m-1] + \cdots + b[P] x[n-P]" /></p>
+</div><p>IIR滤波器根据如下公式(直接1型)进行计算：</p>
+<div class="math">
+<p><img src="_images/math/9dc8d92251861d1a85de34d8768f0fff51ed84f5.png" alt="y[m] &amp; = b[0] x[m] + b[1] x[m-1] + \cdots + b[P] x[m-P] \\
+     &amp; - a[1] y[m-1] - a[2] y[m-2] - \cdots - a[Q] y[m-Q]" /></p>
+</div><p>其中x是输入信号，数组a和b是滤波器的系数，y是滤波器的输出。我们可以把FIR滤波器看作是IIR滤波器的一种特殊情况：当系数a都为0时就从IIR滤波器变为了FIR滤波器了。</p>
+<p>根据FIR滤波器的计算公式我们可以知道，时刻m的输出y[m]由时刻m的输入x[m]以及之前的输入x[m-1] ... x[m-P]和滤波器的系数b[0] ... b[P]求乘积和而得。而IIR滤波器只不过是再减去之前的输出y[m-1] ... y[m-Q]和系数a[1] ... a[m-Q]的乘积和。</p>
+<p>总之，数字滤波器的计算方法并不复杂，仅仅是数组对应元素的乘积和求和而已。然而其计算量对于Python来说是相当大的：通常FIR滤波器的系数长度都上百，而CD音质的数字声音信号一秒钟有44100个取样值，假设滤波器的长度是100，那么一秒钟需要计算4百万次以上的乘积和加法。这对于Python这样的动态语言来说是很困难的。</p>
+<p>因此scipy的signal库中提供了lfilter函数完成数字滤波器的计算工作。由于它是在C语言级别实现的，因此处理速度相当快：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">signal</span><span class="o">.</span><span class="n">lfilter</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">zi</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>其中的b和a是滤波器的系数，x是输入。lfilter函数并不是直接使用上面的IIR滤波器计算公式进行计算，而是对其进行了如下的变形：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">y</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">=</span> <span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">+</span> <span class="n">z</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">m</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>                         <span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">z</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">m</span><span class="p">]</span> <span class="o">=</span> <span class="n">b</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">+</span> <span class="n">z</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">m</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">a</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">y</span><span class="p">[</span><span class="n">m</span><span class="p">]</span>           <span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="o">...</span>
+<span class="n">z</span><span class="p">[</span><span class="n">n</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span><span class="n">m</span><span class="p">]</span> <span class="o">=</span> <span class="n">b</span><span class="p">[</span><span class="n">n</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">+</span> <span class="n">z</span><span class="p">[</span><span class="n">n</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="n">m</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">a</span><span class="p">[</span><span class="n">n</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span><span class="o">*</span><span class="n">y</span><span class="p">[</span><span class="n">m</span><span class="p">]</span>
+<span class="n">z</span><span class="p">[</span><span class="n">n</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="n">m</span><span class="p">]</span> <span class="o">=</span> <span class="n">b</span><span class="p">[</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="o">-</span> <span class="n">a</span><span class="p">[</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">y</span><span class="p">[</span><span class="n">m</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>这段公式就没有那么直白了，但是只需要仔细的观察一下就不难发现，将式(2)的时间变为m-1，得到：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">z</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">m</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">b</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="n">m</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">z</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">m</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">a</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">y</span><span class="p">[</span><span class="n">m</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>     <span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>将其带入到式(1)中，发现b[0]*x[m], b[1]*x[m-1], - a[1]*y[m-1]等项已经和IIR公式中的一致，依次如此代入下去最后得到的公式和IIR滤波器的公式是一致的。这个计算公式被称为直接2型。</p>
+<p>直接1型的公式中，为了计算m时刻的输出y[m]，除了需要m时刻的输入x[m]之外，还需要x[m-1]到x[m-P]和y[m-1]到y[m-Q]，这些值都需要被作为滤波器的内部状态保存起来，因此需要保存P+Q个数。而根据直接2型的公式，只需要保存n-1个数z[0]到z[n-2]，其中n为 max(len(a), len(b)) ，即max(P, Q)。数组z就是滤波器的状态。</p>
+<p>滤波器的初始状态通过关键字参数zi传到lfilter函数，当zi不是None时，lfilter将返回滤波器的最终状态zf，于是其返回值为(y, zf)，如果zi为None的话，那么只返回滤波器的输出y。</p>
+<p>当使用lfilter对很长的输入进行滤波计算时，不能一次把数据都读入到数组x中，因此需要对数据进行分段滤波，这时就需要将上一次调用lfilter时返回的数组zf，传递到下一次lfilter函数调用。下面的程序演示了这种分段滤波的方法：</p>
+<div class="highlight-python"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39</pre></div></td><td class="code"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="kn">import</span> <span class="nn">scipy.signal</span> <span class="kn">as</span> <span class="nn">signal</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pylab</span> <span class="kn">as</span> <span class="nn">pl</span>
+
+<span class="c"># 某个均衡滤波器的参数</span>
+<span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.947463016918843</span><span class="p">,</span> <span class="mf">0.9555873701383931</span><span class="p">])</span>
+<span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.9833716591860479</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.947463016918843</span><span class="p">,</span> <span class="mf">0.9722157109523452</span><span class="p">])</span>
+
+<span class="c"># 44.1kHz， 1秒的频率扫描波</span>
+<span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="mf">44100.0</span><span class="p">)</span>
+<span class="n">x</span><span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">chirp</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">f0</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">t1</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">f1</span><span class="o">=</span><span class="mf">1000.0</span><span class="p">)</span>
+
+<span class="c"># 直接一次计算滤波器的输出</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">lfilter</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+
+<span class="c"># 将输入信号分为50个数据一组</span>
+<span class="n">x2</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">50</span><span class="p">))</span>
+
+<span class="c"># 滤波器的初始状态为0， 长度是滤波器系数长度-1</span>
+<span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">),</span><span class="nb">len</span><span class="p">(</span><span class="n">b</span><span class="p">))</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+<span class="n">y2</span> <span class="o">=</span> <span class="p">[]</span> <span class="c"># 保存输出的列表</span>
+
+<span class="k">for</span> <span class="n">tx</span> <span class="ow">in</span> <span class="n">x2</span><span class="p">:</span>
+    <span class="c"># 对每段信号进行滤波，并更新滤波器的状态z</span>
+    <span class="n">ty</span><span class="p">,</span> <span class="n">z</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">lfilter</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">tx</span><span class="p">,</span> <span class="n">zi</span><span class="o">=</span><span class="n">z</span><span class="p">)</span>
+    <span class="c"># 将输出添加到输出列表中</span>
+    <span class="n">y2</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ty</span><span class="p">)</span>
+    
+<span class="c"># 将输出y2转换为一维数组</span>
+<span class="n">y2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y2</span><span class="p">)</span>
+<span class="n">y2</span> <span class="o">=</span> <span class="n">y2</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,))</span>
+
+<span class="c"># 输出y和y2之间的误差</span>
+<span class="k">print</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">y</span><span class="o">-</span><span class="n">y2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="c"># 绘图</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">y2</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</td></tr></table></div>
+<p>程序所输出的误差为0，经过滤波器之后的频率扫描波形如下图所示：</p>
+<div class="figure" id="fig-filter01">
+<img alt="_images/filter_01.png" src="_images/filter_01.png" style="width: 14cm;" />
+<p class="caption">经过均衡滤波器之后的频率扫描波形</p>
+</div>
+<p>此程序中使用的IIR滤波器的系数为二次均衡滤波器的系数，其系数的设计算法将在下节进行介绍。为了观察滤波器的频率特性，我们让它对频率扫描波进行处理。分别采用一次滤波和分段滤波两种方式调用lfilter函数，我们看到两个结果完全一样。使用分段滤波结合pyaudio库，我们很容易写出对声卡采集的连续的声音信号进行滤波并输出的实时滤波程序。</p>
+<p>如果将一个脉冲信号输入到滤波器中，所得到的输出被称为滤波器的其脉冲响应。所谓脉冲信号就是在时刻0为1，其余时刻均为0的信号。根据FIR滤波器的公式，FIR滤波器的脉冲响应就是滤波器的系数。而IIR滤波器的脉冲响应就不是很直观了，下面使用lfilter计算IIR滤波器的脉冲响应，其中的IIR滤波器的系数和前面的一样（在IPython或者Spyder中运行上面的程序之后，再输入下面的程序）：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">impulse</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">impulse</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">h</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">lfilter</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">impulse</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">h</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="go">-4.2666825205952273e-12</span>
+</pre></div>
+</div>
+<div class="figure" id="fig-filter02">
+<img alt="_images/filter_02.png" src="_images/filter_02.png" style="width: 14cm;" />
+<p class="caption">均衡滤波器的脉冲响应</p>
+</div>
+<p>如果你观察一下h的具体的值就会发现随着时间的推移，h越来越小，但是始终不会为0，其脉冲响应是无限长度的，因此才被称作无限脉冲响应滤波器。如果我们将h当作FIR滤波器的系数对信号x进行滤波的话，得到的结果</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">y3</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">lfilter</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">y</span><span class="o">-</span><span class="n">y3</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+<span class="go">3.7835244127856444e-17</span>
+</pre></div>
+</div>
+<p>显然由于h是逐渐衰减的，只要我们测量足够长的脉冲响应，就可以用FIR滤波器足够精确地模拟IIR滤波器。下图显示的是误差和FIR滤波器的长度之间的关系。显然由于IIR滤波器的脉冲响应是呈指数衰减的，因此精度随着长度呈指数增加，请注意Y轴是对数坐标。</p>
+<div class="figure" id="fig-filter03">
+<img alt="_images/filter_03.png" src="_images/filter_03.png" style="width: 14cm;" />
+<p class="caption">随着FIR滤波器的长度的增加误差呈指数减小</p>
+</div>
+<p>此图的计算程序如下，注意用lfilter计算FIR滤波器时，设置参数a的值为1：</p>
+<div class="highlight-python"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34</pre></div></td><td class="code"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="kn">import</span> <span class="nn">scipy.signal</span> <span class="kn">as</span> <span class="nn">signal</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pylab</span> <span class="kn">as</span> <span class="nn">pl</span>
+
+<span class="c"># 某个均衡滤波器的参数</span>
+<span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.947463016918843</span><span class="p">,</span> <span class="mf">0.9555873701383931</span><span class="p">])</span>
+<span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.9833716591860479</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.947463016918843</span><span class="p">,</span> <span class="mf">0.9722157109523452</span><span class="p">])</span>
+
+<span class="c"># 44.1kHz， 1秒的频率扫描波</span>
+<span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="mf">44100.0</span><span class="p">)</span>
+<span class="n">x</span><span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">chirp</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">f0</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">t1</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">f1</span><span class="o">=</span><span class="mf">1000.0</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">lfilter</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+<span class="n">ns</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1100</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="n">err</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">ns</span><span class="p">:</span>
+    <span class="c"># 计算脉冲响应</span>
+    <span class="n">impulse</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+    <span class="n">impulse</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">lfilter</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">impulse</span><span class="p">)</span>
+    
+    <span class="c"># 直接FIR滤波器的输出</span>
+    <span class="n">y2</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">lfilter</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+   
+    <span class="c"># 输出y和y2之间的误差</span>
+    <span class="n">err</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">y</span><span class="o">-</span><span class="n">y2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+
+<span class="c"># 绘图</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">semilogy</span><span class="p">(</span><span class="n">ns</span> <span class="p">,</span> <span class="n">err</span><span class="p">,</span> <span class="s">&quot;-o&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">u&quot;脉冲响应长度&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">u&quot;FIR模拟IIR的误差&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</td></tr></table></div>
+</div>
+<div class="section" id="fir">
+<h2>FIR滤波器设计<a class="headerlink" href="#fir" title="Permalink to this headline">¶</a></h2>
+<p>理想的低通滤波器频率响应如下图所示：</p>
+<div class="figure" id="fig-filteridealowpass">
+<img alt="_images/filter_idealowpass.png" src="_images/filter_idealowpass.png" />
+<p class="caption">理想低通滤波器的频率响应</p>
+</div>
+<p>其中 <img class="math" src="_images/math/16670cf12516b015de3ef53a592f3a6d19e96c3c.png" alt="f_s"/> 为取样频率， <img class="math" src="_images/math/5190caf4999f2c15c41331f1172ce648ecd030fa.png" alt="f_c"/> 为阻带频率。通常为了计算方便，将取样频率正规化为1。于是 <img class="math" src="_images/math/5190caf4999f2c15c41331f1172ce648ecd030fa.png" alt="f_c"/> 的含义就是每个取样点所包含的信号的周期数，例如0.1表示每个取样点包含0.1个周期，即一个周期有10个取样点。根据离散傅立叶变换的公式可以求出此理想低通滤波器的脉冲响应为：</p>
+<div class="math">
+<p><img src="_images/math/ffb4b4af0e6dc0c1b1285956da78e1085bb08582.png" alt="h_{ideal}(n) = \frac{\sin(2 \pi f_c)}{\pi n} = 2 f_c sinc(2 f_c n)" /></p>
+</div><p>其中n为负无穷到正无穷的整数。显然此脉冲响应不但无限长，而且不满足因果律，因为输入信号在0时刻出现的脉冲，而输出信号却在0时刻之前就有值了。</p>
+<p>这样的脉冲响应当然无法用FIR滤波器实现，一个最直观的近似方法就是取 <img class="math" src="_images/math/9aecd1facea58b49ab3848078354a52ca52b1121.png" alt="h_{ideal}"/> 中 0&lt;=n&lt;L 的L个值当作低通FIR滤波器的系数。下面的程序计算此低通滤波器的频率响应：</p>
+<div class="highlight-python"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17</pre></div></td><td class="code"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="kn">import</span> <span class="nn">scipy.signal</span> <span class="kn">as</span> <span class="nn">signal</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pylab</span> <span class="kn">as</span> <span class="nn">pl</span>
+
+<span class="k">def</span> <span class="nf">h_ideal</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">fc</span><span class="p">):</span>
+    <span class="k">return</span> <span class="mi">2</span><span class="o">*</span><span class="n">fc</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sinc</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">fc</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))</span>
+
+<span class="n">b</span> <span class="o">=</span> <span class="n">h_ideal</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">)</span>
+
+<span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">freqz</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+
+<span class="n">pl</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">w</span><span class="o">/</span><span class="mi">2</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="mi">20</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">h</span><span class="p">)))</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">u&quot;正规化频率 周期/取样&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">u&quot;幅值(dB)&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</td></tr></table></div>
+<div class="figure" id="fig-filter04">
+<img alt="_images/filter_04.png" src="_images/filter_04.png" style="width: 14cm;" />
+<p class="caption">截取sinc函数正时间部分作为脉冲响应的低通滤波器</p>
+</div>
+<div class="topic">
+<p class="topic-title first">用freqz计算频率响应</p>
+<p>freqz用于计算数字滤波器的频率响应，它的调用方式如下：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">freqz</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">worN</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">whole</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">plot</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>其中b和a是滤波器的系数，worN为所计算的频率点数，whole为0表示计算频率的上限为pi，whole为1表示计算频率的上限为2*pi。</p>
+<p>它返回一个组元 (w,h) ，其中w为所有计算了响应的频率数组，其值为正规化的圆频率，因此通过w/(2*pi)可以计算出对应的正规化频率。h是一个复数数组，它表示滤波器系统在每个对应的频率点的响应。复数的幅值表示滤波器的增益特性，相角表示滤波器的相位特性。</p>
+</div>
+<p>程序中使用freqz计算滤波器的频率响应，并用 20*np.log10(np.abs(h)) 计算h以dB衡量的幅值。</p>
+<div class="section" id="firwin">
+<h3>用firwin设计滤波器<a class="headerlink" href="#firwin" title="Permalink to this headline">¶</a></h3>
+<p>显然此频率响应和理想的低通滤波器相差甚远，并且即使增加FIR滤波器的系数也没有作用。因为我们舍弃了n&lt;0的那一半系数，而这些系数有着相当大的影响，因此只截取n&gt;=0的部分是不够的，如果我们将n&lt;0的那一半系数也添加进滤波器的话，得到的频率响应将会有很大的改善。如下重新定义h_ideal函数，它返回<img class="math" src="_images/math/9aecd1facea58b49ab3848078354a52ca52b1121.png" alt="h_{ideal}"/>中-n到n之间的系数：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">h_ideal</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">fc</span><span class="p">):</span>
+    <span class="k">return</span> <span class="mi">2</span><span class="o">*</span><span class="n">fc</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sinc</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">fc</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>下面是添加n&lt;0系数之后的频率响应：</p>
+<div class="figure" id="fig-filter05">
+<img alt="_images/filter_05.png" src="_images/filter_05.png" style="width: 14cm;" />
+<p class="caption">对称截取sinc函数的低通滤波器</p>
+</div>
+<p>这样做虽然改善了频率响应，但是给系统带来了许多延时，为了频率响应更好必须增加滤波器的点数，然而为了减少延时，必须减少点数，为了解决这个矛盾，我们给系数乘上一个窗函数，让它快速收敛。</p>
+<p>SciPy提供了firwin用窗函数设计低通滤波器，firwin的调用形式如下：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">firwin</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">cutoff</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="s">&#39;hamming&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>其中N为滤波器的长度；cutoff为以<img class="math" src="_images/math/b22bfaf05edf23d3c266d69cd867545006f3f810.png" alt="f_s/2"/>正规化的频率；window为所使用的窗函数。</p>
+<p>下面的程序用firwin设计低通滤波器，并且和上面的结果进行比较，注意由于firwin的cutoff频率是以取样频率/2正规化的，因此它是前面所介绍的<img class="math" src="_images/math/5190caf4999f2c15c41331f1172ce648ecd030fa.png" alt="f_c"/>的两倍。</p>
+<div class="highlight-python"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26</pre></div></td><td class="code"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="kn">import</span> <span class="nn">scipy.signal</span> <span class="kn">as</span> <span class="nn">signal</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pylab</span> <span class="kn">as</span> <span class="nn">pl</span>
+
+<span class="k">def</span> <span class="nf">h_ideal</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">fc</span><span class="p">):</span>
+    <span class="k">return</span> <span class="mi">2</span><span class="o">*</span><span class="n">fc</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sinc</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">fc</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))</span>
+
+<span class="n">b</span> <span class="o">=</span> <span class="n">h_ideal</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">)</span> <span class="c"># 以fs正规化的频率</span>
+<span class="n">b2</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">firwin</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">b</span><span class="p">),</span> <span class="mf">0.5</span><span class="p">)</span> <span class="c"># 以fs/2正规化的频率</span>
+
+<span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">freqz</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+<span class="n">w2</span><span class="p">,</span> <span class="n">h2</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">freqz</span><span class="p">(</span><span class="n">b2</span><span class="p">)</span>
+
+<span class="n">pl</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="mi">6</span><span class="p">))</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">211</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">w</span><span class="o">/</span><span class="mi">2</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="mi">20</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">h</span><span class="p">)),</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;h_ideal&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">w2</span><span class="o">/</span><span class="mi">2</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="mi">20</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">h2</span><span class="p">)),</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;firwin&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">u&quot;正规化频率 周期/取样&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">u&quot;幅值(dB)&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">212</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;h_ideal&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">b2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;firwin&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</td></tr></table></div>
+<div class="figure" id="fig-filter06">
+<img alt="_images/filter_06.png" src="_images/filter_06.png" style="width: 14cm;" />
+<p class="caption">firwin使用窗函数设计的低通滤波器的频率响应和脉冲响应</p>
+</div>
+<p>使用firwin函数设计的滤波器并不是最优化的，为了实现同样效果频率响应，还存在长度更短的FIR滤波器。</p>
+</div>
+<div class="section" id="remez">
+<h3>用remez设计滤波器<a class="headerlink" href="#remez" title="Permalink to this headline">¶</a></h3>
+<p>remez函数能够帮助我们找到更优的滤波器系数。remez的调用形式如下：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">remez</span><span class="p">(</span><span class="n">numtaps</span><span class="p">,</span> <span class="n">bands</span><span class="p">,</span> <span class="n">desired</span><span class="p">,</span>
+    <span class="n">weight</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">Hz</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s">&#39;bandpass&#39;</span><span class="p">,</span> <span class="n">maxiter</span><span class="o">=</span><span class="mi">25</span><span class="p">,</span> <span class="n">grid_density</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>其中：</p>
+<ul class="simple">
+<li><strong>numtaps</strong> : 所设计的FIR滤波器的长度</li>
+<li><strong>bands</strong> ： 一个递增序列，它包括频率响应中的所有频带的边界，其值在0到Hz/2之间，如果参数Hz为缺省值1的话，那么可以把它当作是以取样频率正规化的频率</li>
+<li><strong>desired</strong> : 长度为bands的一半的增益序列，它给出频率响应在bands中的每个频带的增益值</li>
+<li><strong>weight</strong> : 长度和desired一样的权重序列，它给出desired中的每个增益所占的权重，即给出desired中的每个增益的重要性，值越大表示其越重要</li>
+<li><strong>type</strong> : 'bandpass'或者'differentiator'，本书只介绍type为'bandpass'的情况</li>
+</ul>
+<div class="topic">
+<p class="topic-title first">remez算法</p>
+<p>remez是一种迭代算法，它能够找到一个n阶多项式，使得在指定的区间中此多项式和指定函数之间的最大误差最小化。由于FIR滤波器的频率响应实际上是一个多项式函数（请参考下节内容），因此可以用remez算法进行FIR滤波器系数设计。</p>
+</div>
+<p>remez返回经过remez算法最优化之后的FIR滤波器的系数。此系数和用firwin所设计的结果一样是对称的。当numtaps为偶数时，所设计的滤波器对于取样频率/2的响应为0，因此无法设计出长度为偶数的高通滤波器。</p>
+<p>下面的程序演示通过remez设计高通滤波器：</p>
+<div class="highlight-python"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14</pre></div></td><td class="code"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="kn">import</span> <span class="nn">scipy.signal</span> <span class="kn">as</span> <span class="nn">signal</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pylab</span> <span class="kn">as</span> <span class="nn">pl</span>
+
+<span class="k">for</span> <span class="n">length</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">11</span><span class="p">,</span> <span class="mi">31</span><span class="p">,</span> <span class="mi">51</span><span class="p">,</span> <span class="mi">101</span><span class="p">,</span> <span class="mi">201</span><span class="p">]:</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">remez</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.18</span><span class="p">,</span>  <span class="mf">0.2</span><span class="p">,</span>  <span class="mf">0.50</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.01</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">freqz</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">w</span><span class="o">/</span><span class="mi">2</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="mi">20</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">h</span><span class="p">)),</span> <span class="n">label</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">length</span><span class="p">))</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">u&quot;正规化频率 周期/取样&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">u&quot;幅值(dB)&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">u&quot;remez设计高通滤波器 - 滤波器长度和频响的关系&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</td></tr></table></div>
+<p>程序中，remez函数的bands参数给出两个频带(以取样频率正规化)：0到0.18和0.2到0.5，而desired给出两个频带的增益分别为0.01和1，因此它所设计的是一个通带频率为0.2、阻带增益为-40dB的高通滤波器。</p>
+<p>此程序显示出滤波器长度和频率响应之间存在如下关系，可以看出滤波器越长，频率响应越接近设计值：</p>
+<div class="figure" id="fig-filter07">
+<img alt="_images/filter_07.png" src="_images/filter_07.png" style="width: 14cm;" />
+<p class="caption">remez设计的高通滤波器，长度越长频率响应越接近设计值</p>
+</div>
+<p>下图显示权值和频率响应之间的关系，图中的滤波器长度为101。我们注意到，当权值为1, 0.01(红色曲线)时，两个频带的增益抖动量相同，这个权值正好和增益desired的设置相反。这时因为缺省情况下，增益越大的频带的频率响应要求越精确，而当权值和增益的乘积相等时，频率响应的误差也就相同了。</p>
+<div class="figure" id="fig-filter08">
+<img alt="_images/filter_08.png" src="_images/filter_08.png" style="width: 14cm;" />
+<p class="caption">remez设计滤波器时权值影响频率响应</p>
+</div>
+</div>
+<div class="section" id="id2">
+<h3>滤波器级联<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p>假设有两个滤波器h1和h2，我们将h1的输出输入到h2，这样得到的滤波器称为h1和h2的级联。级联后的滤波器的脉冲响应为h1和h2的脉冲响应的卷积，而其频率响应为两个滤波器的频率响应的乘积。</p>
+<p>下面的程序先用remez分别设计一个高通滤波器h1和一个低通滤波器h2，然后通过卷积计算出它们的级联滤波器h3的系数：</p>
+<div class="highlight-python"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17</pre></div></td><td class="code"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="kn">import</span> <span class="nn">scipy.signal</span> <span class="kn">as</span> <span class="nn">signal</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pylab</span> <span class="kn">as</span> <span class="nn">pl</span>
+
+<span class="n">h1</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">remez</span><span class="p">(</span><span class="mi">201</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.18</span><span class="p">,</span>  <span class="mf">0.2</span><span class="p">,</span>  <span class="mf">0.50</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.01</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+<span class="n">h2</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">remez</span><span class="p">(</span><span class="mi">201</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.38</span><span class="p">,</span>  <span class="mf">0.4</span><span class="p">,</span>  <span class="mf">0.50</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">))</span>
+<span class="n">h3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">h1</span><span class="p">,</span> <span class="n">h2</span><span class="p">)</span>
+
+<span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">freqz</span><span class="p">(</span><span class="n">h3</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">w</span><span class="o">/</span><span class="mi">2</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="mi">20</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">h</span><span class="p">)))</span>
+
+<span class="n">pl</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">u&quot;正规化频率 周期/取样&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">u&quot;幅值(dB)&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">u&quot;低通和高通级联为带通滤波器&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</td></tr></table></div>
+<p>最后使用freqz函数计算h3的频率响应：</p>
+<div class="figure" id="fig-filter09">
+<img alt="_images/filter_09.png" src="_images/filter_09.png" style="width: 14cm;" />
+<p class="caption">低通和高通滤波器级联之后是带通滤波器</p>
+</div>
+<p>可以看出，所得到的是一个带通滤波器。</p>
+<p>我们也可以直接用remez设计带通滤波器：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">h4</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">remez</span><span class="p">(</span><span class="mi">201</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.18</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.38</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.50</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.01</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>如果你观察此滤波器的频率响应的话，发现它和h3的基本一致，如果比较h3和h4的话，我们得到如下结果：</p>
+<div class="figure" id="fig-filter10">
+<img alt="_images/filter_10.png" src="_images/filter_10.png" style="width: 14cm;" />
+<p class="caption">级联的滤波器和remz设计的带通滤波器的脉冲响应近似</p>
+</div>
+<p>可以看出虽然h3的长度几乎是h4的两倍，但是由于它的许多系数都接近于0，因此h3和h4的频率响应近似相同。</p>
+</div>
+</div>
+<div class="section" id="iir">
+<h2>IIR滤波器设计<a class="headerlink" href="#iir" title="Permalink to this headline">¶</a></h2>
+<p>通常在设计数字IIR滤波器时，都会先设计一个对应的模拟滤波器，然后通过双线性变换将模拟滤波器转换为数字滤波器。这意味着我们需要在s复平面上设计滤波器的传递函数H(s)。当H(s)的所有的极点都在s的左半平面时，滤波器的响应是稳定的。下面以巴特沃斯滤波器为例，说明这一设计过程。</p>
+<div class="section" id="id3">
+<h3>巴特沃斯低通滤波器<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<p id="sec-filter-butter">巴特沃斯低通滤波器的振幅的平方和频率之间的关系可以用如下公式表示：</p>
+<div class="math">
+<p><img src="_images/math/261ebb0b6b022adb48078a224d82b88d09a29fe7.png" alt="|H(j\omega)|^2 = \frac {1}{1+\left(\frac{\omega}{\omega_c}\right)^{2n}}" /></p>
+</div><p>其中n为滤波器的阶数，<img class="math" src="_images/math/e27cd714588d3a61522c9e2b6b8a9baae9e8f1b4.png" alt="\omega_c"/>为振幅下降3dB时的截止频率。这个公式很容易理解：</p>
+<ul class="simple">
+<li>当<img class="math" src="_images/math/2a68a5afc04781e08ccf84cd501bf42153d347be.png" alt="\omega&lt;\omega_c"/>时，<img class="math" src="_images/math/54d7d48553f4d9e7ab418118607ea324cbfddfda.png" alt="\omega"/>越小，振幅越接近于1</li>
+<li>当<img class="math" src="_images/math/be48f6f30d57a693361bb56385e05496409180c1.png" alt="\omega&gt;\omega_c"/>时，<img class="math" src="_images/math/54d7d48553f4d9e7ab418118607ea324cbfddfda.png" alt="\omega"/>越大，振幅越接近于0</li>
+<li>随着n的增大，振幅接近于1或者0的速度将变快，即n越大，低通滤波器在阻频带的衰减速度将越快</li>
+<li>当<img class="math" src="_images/math/cf80665ebee48b95205b01f8ff1d055bbb152a8a.png" alt="\omega=\omega_c"/>时，振幅的平方为1/2，即-3dB</li>
+</ul>
+<p>下面我们推导出巴特沃斯低通滤波器的传递函数H(s)，其中<img class="math" src="_images/math/7c0bc5438f1d922d58172a68d503205109401b85.png" alt="s = \delta + j \omega"/>，为复数平面上的点。</p>
+<p>由于当<img class="math" src="_images/math/665e50232b40d5702d96d6299cd607294fe30ba1.png" alt="s =j \omega"/>时，<img class="math" src="_images/math/e51ac8b7e6218825c641df409ac8945085154638.png" alt="H(s)H(-s) = |H(j\omega)|^2"/>，因此将<img class="math" src="_images/math/1a2e907c7878436b7265edfe944787060c6edd29.png" alt="\omega =s/j"/>带入到巴特沃斯低通滤波器的振幅平方公式中可以得到：</p>
+<div class="math">
+<p><img src="_images/math/e96ce624f84d45493ee52d89ac5394c8a29bc402.png" alt="H(s)H(-s) = \frac {{G_0}^2}{1+\left (\frac{-s^2}{\omega_c^2}\right)^n}" /></p>
+</div><p>此公式有2n个极点，其中n个在左半平面，n个在右半平面，由于H(s)必须是稳定的，因此左半平面的n的极点属于H(s)。</p>
+<p>最后得到的传递函数为：</p>
+<div class="math">
+<p><img src="_images/math/3119e7ed074b8b10f4e3449e53d0bfe1f87d9db7.png" alt="H(s)=\frac{1}{\prod_{k=1}^n (s-s_k)/\omega_c}" /></p>
+</div><p>其中<img class="math" src="_images/math/fdc028050428615cc28ee3c1f9a67eda8e9a726c.png" alt="s_k"/>为左半平面上的极点：</p>
+<div class="math">
+<p><img src="_images/math/dba413d2a00b92758986ac8cb0f4f3bc7e11fbe9.png" alt="s_k = \omega_c e^{\frac{j(2k+n - 1)\pi}{2n}}\qquad\mathrm{k = 1,2,3, \ldots, n}" /></p>
+</div><p>下面的程序绘制6、7阶巴特沃斯低通滤波器的S复平面上的极点：</p>
+<div class="highlight-python"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18</pre></div></td><td class="code"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">signal</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">pl</span>
+
+<span class="n">pl</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="mi">5</span><span class="p">))</span>
+
+<span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">butter</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">analog</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">z</span><span class="p">,</span><span class="n">p</span><span class="p">,</span><span class="n">k</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">tf2zpk</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">p</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">p</span><span class="p">),</span> <span class="s">&#39;^&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;6阶巴特沃斯极点&quot;</span><span class="p">)</span>
+
+<span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">butter</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">analog</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">z</span><span class="p">,</span><span class="n">p</span><span class="p">,</span><span class="n">k</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">tf2zpk</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">p</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">p</span><span class="p">),</span> <span class="s">&#39;s&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">u&quot;7阶巴特沃斯极点&quot;</span><span class="p">)</span>
+
+<span class="n">pl</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s">&quot;equal&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s">&quot;center right&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</td></tr></table></div>
+<p>程序中，使用butter函数设计巴特沃斯滤波器，缺省情况下它设计的是数字滤波器，为了设计模拟滤波器，需要传递关键字参数analog=1。获得传递函数的b和a的系数之后，通过tf2zpk函数将它们转换为零点和极点：</p>
+<div class="figure" id="fig-filkterbutter01">
+<img alt="_images/filter_butter01.png" src="_images/filter_butter01.png" style="width: 12cm;" />
+<p class="caption">巴特沃斯低通滤波器在S复平面上的极点分布</p>
+</div>
+</div>
+<div class="section" id="id4">
+<h3>双线性变换<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<p id="sec-filter-bilinear">有了连续时间的传递函数H(s)，下一步就是如何将它转换为离散时间的传递函数H(z)。转换的方法有几种，其中最常用的是双线性变换，其变换公式为：</p>
+<div class="math">
+<p><img src="_images/math/c74c0b99da0e4f574da95b314e35f03418d6c3f5.png" alt="s \leftarrow \frac{2}{T} \frac{z - 1}{z + 1}" /></p>
+</div><p>其中T为离散时间的取样周期。双线性变换公式的推导过程请参考下面的链接：</p>
+<p>双线性变换公式推导： <a class="reference external" href="http://en.wikipedia.org/wiki/Bilinear_transform">http://en.wikipedia.org/wiki/Bilinear_transform</a></p>
+<p>双线性变换实际上是s复平面和z复平面上的点的映射变换，他将s复平面上的竖线变换成z复平面上的圆，而s复平面上的Y轴对应于z复平面上的单位圆。下面的程序演示了这一对应关系：</p>
+<div class="highlight-python"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28</pre></div></td><td class="code"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pylab</span> <span class="kn">as</span> <span class="nn">pl</span>
+
+<span class="k">def</span> <span class="nf">stoz</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    将s复平面映射到z复平面</span>
+<span class="sd">    为了方便起见，假设取样周期T=1</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span><span class="mi">2</span><span class="o">+</span><span class="n">s</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">-</span><span class="n">s</span><span class="p">)</span>
+    
+<span class="k">def</span> <span class="nf">make_vline</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mf">100.0</span><span class="p">,</span><span class="mf">100.0</span><span class="p">,</span><span class="mi">20000</span><span class="p">)</span>
+    
+<span class="n">fig</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span>    
+<span class="n">axs</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">121</span><span class="p">)</span>
+<span class="n">axz</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">122</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">make_vline</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="n">stoz</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+    <span class="n">axs</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">s</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
+    <span class="n">axz</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">z</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">z</span><span class="p">))</span>
+
+<span class="n">axs</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span><span class="mi">4</span><span class="p">)</span>
+<span class="n">axz</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s">&quot;equal&quot;</span><span class="p">)</span>
+<span class="n">axz</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+
+<span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</td></tr></table></div>
+<p>程序中的stoz函数是将s变换为z的变换公式，只需要对上述的双线性变换公式稍作变形即可得到，这里为了方便起见，假设取样周期T=1。</p>
+<div class="figure" id="fig-filterbilinear01">
+<img alt="_images/filter_bilinear01.png" src="_images/filter_bilinear01.png" style="width: 14cm;" />
+<p class="caption">双线性变换将s平面(左图)上的竖线变换为z平面上的圆(右图)</p>
+</div>
+<p>通过双线性变换之后，滤波器的频率响应会发生变化。在下一节中我们会介绍，离散时间的滤波器的频率响应是将其传递函数H(z)用<img class="math" src="_images/math/6435f22ea7e69692647a0a613d3b5c6373967f10.png" alt="z=e^{j\omega T}"/>进行替换。将其带入到双线性变换公式得到：</p>
+<div class="math">
+<p><img src="_images/math/1e8d4b6b4e63ce4c17208b7354b66d5e6ceb9edb.png" alt="s = \frac{2}{T} \frac{z - 1}{z + 1}  = \frac{2}{T} \frac{e^{j\omega T} - 1}{e^{j\omega T} + 1} = \frac{2}{T} \frac{e^{j \omega T/2} - e^{-j \omega T/2}}{e^{j \omega T/2} + e^{-j \omega T/2}} = j \frac{2}{T} \tan{(\omega T / 2)}" /></p>
+</div><p>对于s平面上的点来说，过原点的竖线<img class="math" src="_images/math/38096563cacf3ba1e0b821cc087e8f3f04e4ec59.png" alt="s=j \omega"/>就是连续时间传递函数H(s)的频率响应，因此双线性变换将离散时间的频率<img class="math" src="_images/math/54d7d48553f4d9e7ab418118607ea324cbfddfda.png" alt="\omega"/>通过如下的公式转换为连续时间的频率<img class="math" src="_images/math/14257f4b7d3de5ab6b94eb3ab9bb6ba45ff424de.png" alt="\omega_a"/>:</p>
+<div class="math">
+<p><img src="_images/math/00dcd8070bb6e802f0396ac853b1097548f4a16e.png" alt="\omega_a = \frac{2}{T} \tan \left( \omega \frac{T}{2} \right)" /></p>
+</div><p>而其反函数为：</p>
+<div class="math">
+<p><img src="_images/math/7091e1566dcc83213c0b72394dbf08c62b9feef8.png" alt="\omega = \frac{2}{T} \arctan \left( \omega_a \frac{T}{2} \right)" /></p>
+</div><p>下面让我们用程序来验证这个频率转换公式。首先我们载入所需要的库，并且定义离散时间的取样频率fs为8kHz，设计的巴特沃斯低通滤波器通带截至频率为1kHz：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">signal</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fs</span> <span class="o">=</span> <span class="mf">8000.0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">=</span> <span class="mf">1000.0</span>
+</pre></div>
+</div>
+<p>下面使用butter函数设计一个3阶的巴特沃斯滤波器，注意关键字参数analog=1，表示设计连续时间传递函数H(s)的系数，由于通带频率参数为圆频率，因此需要乘以2*pi：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">butter</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">pi</span><span class="o">*</span><span class="n">f</span><span class="p">,</span> <span class="n">analog</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="topic">
+<p class="topic-title first">模拟滤波器的系数b和a和H(s)的关系</p>
+<p>假设b和a的长度分别为M和N，模拟滤波器的系数中b[0]为分子中<img class="math" src="_images/math/281ba7e88239abf1c9cc73f08d4a8ec2c19f1b5c.png" alt="s^{M-1}"/>项的系数，a[0]为分母中<img class="math" src="_images/math/f9c0795989d3abe6deb8f82bd70ec2ceda3e4b29.png" alt="s^{N-1}"/>，b[-1]和a[-1]为分子分母的常数项的系数，即：</p>
+<div class="math">
+<p><img src="_images/math/7e16702923cd2a055e28fe5d04e31cde70283fc7.png" alt="H(s) = \frac{b_0 s^{M-1} + b_1 s^{M-2} + \ldots + b_{M-1}}{a_0 s^{N-1} + a_1 s^{N-2} + \ldots + a_{N-1}}" /></p>
+</div></div>
+<p>然后调用双线性变换函数bilinear，将系数转换为离散时间的传递函数系数，通过关键字参数fs指定取样频率：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">b2</span><span class="p">,</span> <span class="n">a2</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">bilinear</span><span class="p">(</span><span class="n">b</span><span class="p">,</span><span class="n">a</span><span class="p">,</span><span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>接下来调用freqz函数得到此数字滤波器的频率响应，为了得到尽可能精确的值，我们通过worN关键字参数让它计算10000点的频率响应：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">w2</span><span class="p">,</span> <span class="n">h2</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">freqz</span><span class="p">(</span><span class="n">b2</span><span class="p">,</span><span class="n">a2</span><span class="p">,</span><span class="n">worN</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>接下来将h2转换为增益，并且找到增益为-3dB(精确值为10*log10(0.5))时所对应的正规化圆频率w的下标idx，w/(2*pi)*fs就是其对应的实际频率值：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">p2</span> <span class="o">=</span> <span class="mi">20</span><span class="o">*</span><span class="n">log10</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">h2</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">idx</span> <span class="o">=</span> <span class="n">argmin</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">p2</span><span class="o">-</span><span class="mi">10</span><span class="o">*</span><span class="n">log10</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">w2</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">/</span><span class="mi">2</span><span class="o">/</span><span class="n">pi</span><span class="o">*</span><span class="mi">8000</span>
+<span class="go">952.8</span>
+</pre></div>
+</div>
+<p>通过频率转换公式得到的频率为：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="mi">2</span><span class="o">*</span><span class="n">fs</span><span class="o">*</span><span class="n">arctan</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">pi</span><span class="o">*</span><span class="n">f</span><span class="o">/</span><span class="mi">2</span><span class="o">/</span><span class="n">fs</span><span class="p">)</span> <span class="o">/</span><span class="mi">2</span><span class="o">/</span><span class="n">pi</span>
+<span class="go">952.8840223</span>
+</pre></div>
+</div>
+<p>实际使用scipy.signal库设计IIR滤波器没有这么麻烦，因为它所提供的滤波器设计函数缺省都是直接设计数字滤波器。这些函数设计数字滤波器时采用的取样频率为2，即以香农频率fs/2为1进行正规化。因此要设计取样频率为fs、通带频率为f的滤波器需要将通带频率正规化为f/(fs/2)，下面调用butter函数设计数字低通滤波器，这里使用上述计算所得的通带频率：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span> <span class="n">b3</span><span class="p">,</span><span class="n">a3</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">butter</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mf">952.8840223</span><span class="o">/</span><span class="p">(</span><span class="n">fs</span><span class="o">/</span><span class="mi">2</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">sum</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">b3</span><span class="o">-</span><span class="n">b2</span><span class="p">))</span>
+<span class="go">1.3226225670237568e-13</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">sum</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">a3</span><span class="o">-</span><span class="n">a2</span><span class="p">))</span>
+<span class="go">7.0876637892069994e-13</span>
+</pre></div>
+</div>
+<div class="topic">
+<p class="topic-title first">数字滤波器的系数b和a和H(z)的关系</p>
+<p>假设b和a的长度分别为M和N，数字滤波器的系数中b[0]和a[0]分别为分子分母中常数项的系数，a[-1]为分母中<img class="math" src="_images/math/999c2402bed9b19554a8f8942060c8310ba9e397.png" alt="z^{-(N-1)}"/>，b[-1]为分子中<img class="math" src="_images/math/27c5e00bd3f47cc0e4097bd0ba4ae52438e6ce43.png" alt="z^{-(M-1)}"/>的系数，即：</p>
+<div class="math">
+<p><img src="_images/math/83d6420edf922bf3441b9da637b6d91a1a5d13c5.png" alt="H(s) = \frac{b_0  + b_1 z^{-1} + \ldots + b_{M-1} z^{-(M-1)}}{a_0  + a_1 z^{-1} + \ldots + a_{N-1} z^{-(N-1)}}" /></p>
+</div></div>
+<p>所得的滤波器的系数b3和a3与手工通过bilinear函数计算的系数b2和a2是一致的。在signal库设计数字滤波器时，其内部会先通过频率转换公式对频率进行转换，然后设计连续时间的传递函数系数，最后通过bilinear函数进行系数转换。有兴趣的读者可以查看signal.iirfilter函数的源代码。</p>
+</div>
+<div class="section" id="id5">
+<h3>滤波器的频带转换<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<p id="sec-iirbandtrans">只要知道了低通滤波器的传递函数H(s)，就很容易利用变量替换设计出同样阶数的高通、带通或者其它通带频率的低通滤波器。让我们来看看低通滤波器的变换。</p>
+<p>假设我们使用巴特沃斯低通滤波器设计公式，设计出通带频率为1弧度/秒的标准低通滤波器：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">butter</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">analog</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+<span class="go">array([ 1.])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+<span class="go">array([ 1.        ,  1.41421356,  1.        ])</span>
+</pre></div>
+</div>
+<div class="math">
+<p><img src="_images/math/e582d9b4ac30148ba8ab33270dafa9794424db62.png" alt="H(s) = \frac{1}{s^2 + 1.4142 s + 1}" /></p>
+</div><p>为了让它变为通带频率为<img class="math" src="_images/math/e27cd714588d3a61522c9e2b6b8a9baae9e8f1b4.png" alt="\omega_c"/>的低通滤波器，只需要进行如下替换：</p>
+<div class="math">
+<p><img src="_images/math/5537d2267a0f2efe47864b8d50b9f7457b7e6880.png" alt="s \to \frac{s}{\omega_c}" /></p>
+</div><p>由于当<img class="math" src="_images/math/665e50232b40d5702d96d6299cd607294fe30ba1.png" alt="s =j \omega"/>时，H(s)就是滤波器的频率响应。因此所设计的标准低通滤波器H(s)在<img class="math" src="_images/math/b8291bfd968bc0eeac0b4f8c47b5a1ebfeed1416.png" alt="s =j"/>时振幅下降3dB的，而<img class="math" src="_images/math/86d9e43cbfac531f29eea8fb6d3e98915c44685a.png" alt="H(s/\omega_c)"/>则在<img class="math" src="_images/math/2bea3584edc0cacaa0fde78868121d586a86b04d.png" alt="s =j\omega_c"/>处下降3dB。下面是通带频率为2弧度/秒的2阶低通滤波器的系数：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">b2</span><span class="p">,</span> <span class="n">a2</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">butter</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="n">analog</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">b2</span><span class="p">)</span>
+<span class="go">array([ 4.])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">a2</span><span class="p">)</span>
+<span class="go">array([ 1.        ,  2.82842712,  4.        ])</span>
+</pre></div>
+</div>
+<p>可以看出将<img class="math" src="_images/math/6e354e14d345c6b374650cac0c06684c33ca95bb.png" alt="s \to \frac{s}{2}"/>代入到前面的H(s)中即可得到这些系数。</p>
+<p>低通滤波器转高通滤波器的替代公式为：</p>
+<div class="math">
+<p><img src="_images/math/ea55204242c5b5ae7419913da8784e1ae1b18e56.png" alt="s \to \frac{\omega_c}{s}" /></p>
+</div><p>此替代公式很容易理解：</p>
+<ul class="simple">
+<li>若<img class="math" src="_images/math/54d7d48553f4d9e7ab418118607ea324cbfddfda.png" alt="\omega"/>为0，则替代之后的频率为无穷大，而低通滤波器无穷大处的频率响应为0，即转换之后的滤波器在0处的频率响应为0；</li>
+<li>若<img class="math" src="_images/math/54d7d48553f4d9e7ab418118607ea324cbfddfda.png" alt="\omega"/>为无穷大，则替代之后的频率为0，因此转换之后的滤波器在无穷大处频率响应为1。</li>
+</ul>
+<p>下面设计通带频率为1弧度/秒的高通滤波器：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">b3</span><span class="p">,</span><span class="n">a3</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">butter</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mf">1.0</span><span class="p">,</span><span class="n">btype</span><span class="o">=</span><span class="s">&quot;high&quot;</span><span class="p">,</span><span class="n">analog</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">b3</span><span class="p">)</span>
+<span class="go">array([ 1.,  0.,  0.])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">a3</span><span class="p">)</span>
+<span class="go">array([ 1.        ,  1.41421356,  1.        ])</span>
+</pre></div>
+</div>
+<p>可以看出这些系数是将<img class="math" src="_images/math/e7b5f82ae7c7670618b3e863cc751435a61e3b9b.png" alt="s \to \frac{1}{s}"/>带入到H(s)中之后，上下分母乘以<img class="math" src="_images/math/752ccf51ef0be42644a0099346e876310df962f3.png" alt="s^2"/>之后得到的。</p>
+<p>低通滤波器还可以转换为带通滤波器，这可能有点难以理解，让我们先来看看替代公式，假设带通滤波器的高低通带频率为<img class="math" src="_images/math/7cef5fa7ec053472a6e471aaacb0c5927ce36b36.png" alt="\omega_2"/>和<img class="math" src="_images/math/cddbccf89c00e019e9878f87f8d6325697e3f2fa.png" alt="\omega_1"/>：</p>
+<div class="math">
+<p><img src="_images/math/0331757d864ed60e5e91a3fa69dcecc3e85be43b.png" alt="s \to \frac{\omega_0}{\Delta\omega} \left( \frac{s}{\omega_0} + \frac{\omega_0}{s} \right)" /></p>
+</div><p>其中<img class="math" src="_images/math/d4460eaf64c47a23a1cdca01874dcad8443dd452.png" alt="\Delta\omega=\omega_2-\omega_1"/>，<img class="math" src="_images/math/0ea936a1e55c8ee3cf92c5e250205e38482c7db4.png" alt="\omega_0=\sqrt{\omega_1\omega_2}"/>。<img class="math" src="_images/math/bf31bce62cbbbca4974de1eef9d505f70645bae2.png" alt="\Delta\omega"/> 被称为通带带宽，而<img class="math" src="_images/math/e8c615c0bcf030a0d2bfe9cd1ceacf491ba4ccbf.png" alt="\omega_0"/>则是通带的中心频率。</p>
+<p>让我们通过下面的程序来研究一下为何这种替代能够将低通映射为带通滤波器：</p>
+<div class="highlight-python"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42</pre></div></td><td class="code"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">signal</span>
+<span class="kn">import</span> <span class="nn">pylab</span> <span class="kn">as</span> <span class="nn">pl</span>
+
+<span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">butter</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">analog</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c"># 低通-&gt;带通的频率变换函数</span>
+<span class="n">w1</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="c"># 低通带频率</span>
+<span class="n">w2</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="c"># 高通带频率</span>
+<span class="n">dw</span> <span class="o">=</span> <span class="n">w2</span> <span class="o">-</span> <span class="n">w1</span> <span class="c"># 通带宽度</span>
+<span class="n">w0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">w1</span><span class="o">*</span><span class="n">w2</span><span class="p">)</span> <span class="c"># 通带中心频率</span>
+
+<span class="c"># 产生10**-2到10**2的频率点</span>
+<span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
+
+<span class="c"># 使用频率变换公式计算出转换之后的频率</span>
+<span class="n">nw</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">w0</span><span class="o">/</span><span class="n">dw</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">w</span><span class="o">/</span><span class="n">w0</span> <span class="o">+</span> <span class="n">w0</span><span class="o">/</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">w</span><span class="p">)))</span>
+
+<span class="n">_</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">freqs</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">worN</span><span class="o">=</span><span class="n">nw</span><span class="p">)</span>
+<span class="n">h</span> <span class="o">=</span> <span class="mi">20</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">h</span><span class="p">))</span>
+
+<span class="n">pl</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="mi">5</span><span class="p">))</span>
+
+<span class="n">pl</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">221</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">semilogx</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">nw</span><span class="p">)</span> <span class="c"># X轴使用log坐标绘图</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">u&quot;变换前圆频率(弧度/秒)&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">u&quot;变换后圆频率(弧度/秒)&quot;</span><span class="p">)</span>
+
+<span class="n">pl</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">222</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">nw</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">u&quot;低通滤波器的频率响应(dB)&quot;</span><span class="p">)</span>
+
+<span class="n">pl</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">212</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">semilogx</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">u&quot;变换前圆频率(弧度/秒)&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">u&quot;带通滤波器的频率响应(dB)&quot;</span><span class="p">)</span>
+
+<span class="n">pl</span><span class="o">.</span><span class="n">subplots_adjust</span><span class="p">(</span><span class="n">wspace</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">hspace</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">top</span><span class="o">=</span><span class="mf">0.95</span><span class="p">,</span> <span class="n">bottom</span><span class="o">=</span><span class="mf">0.14</span><span class="p">)</span>
+
+<span class="k">print</span> <span class="s">&quot;center:&quot;</span><span class="p">,</span> <span class="n">w</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">nw</span><span class="p">))]</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</td></tr></table></div>
+<p>程序中先使用butter函数设计一个模拟的二阶标准低通滤波器：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">butter</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">analog</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>我们要将其转换为通带频率为w1=1到w2=2的带通滤波器：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># 低通-&gt;带通的频率变换函数</span>
+<span class="n">w1</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="c"># 低通带频率</span>
+<span class="n">w2</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="c"># 高通带频率</span>
+<span class="n">dw</span> <span class="o">=</span> <span class="n">w2</span> <span class="o">-</span> <span class="n">w1</span> <span class="c"># 通带带宽</span>
+<span class="n">w0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">w1</span><span class="o">*</span><span class="n">w2</span><span class="p">)</span> <span class="c"># 通带中心频率</span>
+</pre></div>
+</div>
+<p>假设我们关心的频率响应的频率段为0.01到100，使用logspace函数产生一个这个区间的等比数列w：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>通过带通频率转换公式将其转换为新的频率序列nw：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">nw</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">w0</span><span class="o">/</span><span class="n">dw</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">w</span><span class="o">/</span><span class="n">w0</span> <span class="o">+</span> <span class="n">w0</span><span class="o">/</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">w</span><span class="p">)))</span>
+</pre></div>
+</div>
+<p>使用此新的频率序列nw计算出每个频率点对应的低通滤波器的频率响应，注意我们通过worN关键字传输让freqs函数计算指定频率的频率响应：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">_</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">freqs</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">worN</span><span class="o">=</span><span class="n">nw</span><span class="p">)</span>
+<span class="n">h</span> <span class="o">=</span> <span class="mi">20</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">h</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>下面的语句就绘制出w和h的关系，也就是带通滤波器的频率响应：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">pl</span><span class="o">.</span><span class="n">semilogx</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><a href="#fig-filterbandpassiir">下图</a>是程序的输出。其中左上图绘制的是频率转换函数，右上图绘制的是低通滤波器的频率响应(X轴为响应，Y轴为频率)，最下面绘制的是最终的带通滤波器的频率响应。</p>
+<div class="figure" id="fig-filterbandpassiir">
+<img alt="_images/filter_bandpass_iir.png" src="_images/filter_bandpass_iir.png" style="width: 14cm;" />
+<p class="caption">使用频率转换公式将低通变为带通滤波器</p>
+</div>
+<p>由于带通的频率转换公式将0到无穷大映射到正无穷到负无穷，而低通滤波器在正负无穷处的频率响应都为0，因此可以想象转换后的滤波器是一个带通滤波器。而转换之后的频率nw为0的点所对应的原始频率就是带通滤波器的中心频率，此处的频率响应为1，下面的程序找到nw绝对值最小的下标，并输出其对应的转换前的频率，我们看到它和w0是一致的：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">w</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">nw</span><span class="p">))]</span>
+<span class="go">1.4130259906</span>
+</pre></div>
+</div>
+<p>事实上，scipy.signal库已经为我们提供了频带转换的函数：</p>
+<ul class="simple">
+<li>lp2lp : 低通转低通</li>
+<li>lp2hp : 低通转高通</li>
+<li>lp2bp : 低通转带通</li>
+<li>lp2bs : 低通转带阻，转带阻的公式留给读者思考</li>
+</ul>
+<p>下面以lp2bp为例简要说明一下函数的用法，假设b,a为二阶标准低通滤波器，下面的语句将转换为通带为1到2弧度的带通滤波器，前两个参数为滤波器的系数，后两个参数分别为中心频率和通带带宽：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">butter</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">analog</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">b3</span><span class="p">,</span> <span class="n">a3</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">lp2bp</span><span class="p">(</span><span class="n">b</span><span class="p">,</span><span class="n">a</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>我们也可以直接调用butter设计一个低通滤波器：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">b4</span><span class="p">,</span> <span class="n">a4</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">butter</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span> <span class="n">btype</span><span class="o">=</span><span class="s">&#39;bandpass&#39;</span><span class="p">,</span> <span class="n">analog</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>两个结果是完全一致的：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">b3</span><span class="o">==</span><span class="n">b4</span><span class="p">)</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">a3</span><span class="o">==</span><span class="n">a4</span><span class="p">)</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="id6">
+<h2>滤波器的频率响应<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h2>
+<p>前面的许多例子中都使用函数freqz计算滤波器的频率响应，在这一节中，让我们来深入研究一下freqz是如何计算频率响应的。在IPython中输入：</p>
+<div class="highlight-python"><pre>&gt;&gt;&gt; import scipy.signal
+&gt;&gt;&gt; signal.freqz??</pre>
+</div>
+<p>即可看到freqz的完整的实现函数，下面是其完整的源程序(除去文档说明):</p>
+<div class="highlight-python"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20</pre></div></td><td class="code"><div class="highlight"><pre><span class="k">def</span> <span class="nf">freqz</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">worN</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">whole</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">plot</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">atleast_1d</span><span class="p">,</span> <span class="p">(</span><span class="n">b</span><span class="p">,</span><span class="n">a</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">whole</span><span class="p">:</span>
+        <span class="n">lastpoint</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="n">pi</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">lastpoint</span> <span class="o">=</span> <span class="n">pi</span>
+    <span class="k">if</span> <span class="n">worN</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">N</span> <span class="o">=</span> <span class="mi">512</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">lastpoint</span><span class="p">,</span><span class="n">lastpoint</span><span class="o">/</span><span class="n">N</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">worN</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">IntType</span><span class="p">):</span>
+        <span class="n">N</span> <span class="o">=</span> <span class="n">worN</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">lastpoint</span><span class="p">,</span><span class="n">lastpoint</span><span class="o">/</span><span class="n">N</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">worN</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">atleast_1d</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
+    <span class="n">zm1</span> <span class="o">=</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">w</span><span class="p">)</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">polyval</span><span class="p">(</span><span class="n">b</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">zm1</span><span class="p">)</span> <span class="o">/</span> <span class="n">polyval</span><span class="p">(</span><span class="n">a</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">zm1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">plot</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">plot</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span>
+</pre></div>
+</td></tr></table></div>
+<p>研究一下这段代码，不难发现真正的计算频率响应的代码可以用如下3行程序概括：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">w</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">pi</span><span class="p">,</span><span class="n">pi</span><span class="o">/</span><span class="n">N</span><span class="p">)</span>
+<span class="n">zm1</span> <span class="o">=</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">w</span><span class="p">)</span>
+<span class="n">h</span> <span class="o">=</span> <span class="n">polyval</span><span class="p">(</span><span class="n">b</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">zm1</span><span class="p">)</span> <span class="o">/</span> <span class="n">polyval</span><span class="p">(</span><span class="n">a</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">zm1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>为了弄清楚为什么这3行代码能够计算滤波器的频率响应，让我们先来学习一下相关的理论知识。</p>
+<p>滤波器的频率响应由滤波器的传递函数给出，IIR滤波器的计算公式如下：</p>
+<div class="math">
+<p><img src="_images/math/9dc8d92251861d1a85de34d8768f0fff51ed84f5.png" alt="y[m] &amp; = b[0] x[m] + b[1] x[m-1] + \cdots + b[P] x[m-P] \\
+     &amp; - a[1] y[m-1] - a[2] y[m-2] - \cdots - a[Q] y[m-Q]" /></p>
+</div><p>根据Z变换的相关公式，容易求得其传递函数为：</p>
+<div class="math">
+<p><img src="_images/math/5e99afb082a78b5567e0914843c1651e5d25de50.png" alt="H(z) = \frac{Y(z)}{X(z)} = \frac{b[0] + z^{-1}b[1] + z^{-2}b[2] + \cdots + z^{-M}b[P]}{1 + z^{-1}a[1] + z^{-2}a[2] + \cdots + z^{-N}a[Q]}" /></p>
+</div><p>其中z为复数平面上的任意一点。当z为单位圆上的点，即 <img class="math" src="_images/math/9594734c3ab86906bd3dbb2177799245e0df7473.png" alt="z=e^{j\omega}"/> 时， <img class="math" src="_images/math/6fc2064be7bb7cf60a09dc48e44ed63942f12aef.png" alt="H(\omega)"/> 就是滤波器的频率响应。 <img class="math" src="_images/math/54d7d48553f4d9e7ab418118607ea324cbfddfda.png" alt="\omega"/> 被称之为圆频率，当其取值从0到2*pi变化时， <img class="math" src="_images/math/c74c59ec39e266703030fc50cb3c480b66ea0df6.png" alt="e^{j\omega}"/> 正好绕复数平面单位圆转一圈。由于复数平面上下两个半平面的复数存在共轭关系，因此通常只需要求上半圆的频率响应，因此下面的语句将上半圆等分为N份：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">w</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">pi</span><span class="p">,</span><span class="n">pi</span><span class="o">/</span><span class="n">N</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>然后计算w中每点对应的复数值 <img class="math" src="_images/math/8eb46909a3fdb297ffac138b414683d1bcb43b9a.png" alt="z^{-1}"/> ，注意这里将负号带入，于是传递函数的分子分母部分就都变成了zm1的多项式函数：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">zm1</span> <span class="o">=</span> <span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">w</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>最后带入传递函数的公式中计算出频率响应h：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">h</span> <span class="o">=</span> <span class="n">polyval</span><span class="p">(</span><span class="n">b</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">zm1</span><span class="p">)</span> <span class="o">/</span> <span class="n">polyval</span><span class="p">(</span><span class="n">a</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">zm1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>polyval(p, x)函数对于数组x中的每个元素计算多项式p的值，其计算公式如下：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="o">**</span><span class="n">N</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="o">**</span><span class="n">N</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="o">...</span> <span class="o">+</span> <span class="n">p</span><span class="p">[</span><span class="n">N</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span><span class="o">*</span><span class="n">x</span> <span class="o">+</span> <span class="n">p</span><span class="p">[</span><span class="n">N</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>由于滤波器系数b和a的顺序正好和polyval的多项式系数p的顺序相反，因此通过数组切片运算b[::-1]将滤波器的系数反转。由于数组zm1中的值都为复数，因此所得到的频率响应h的值也都是复数。复数的幅值对应于频率响应中的增益特性，而其相角对应于频率响应中相位特性。</p>
+<p>freqz中在Z平面单位圆上所取的点是等距线性的，然而我们经常需要在绘制频率响应图表时要求频率坐标为对数坐标，对于对数坐标，等距的频率点会造成低频过疏，高频过密的问题，因此我们可以如下改造freqz函数，使其更适合计算对数频率坐标的频率响应。</p>
+<div class="highlight-python"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31</pre></div></td><td class="code"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pylab</span> <span class="kn">as</span> <span class="nn">pl</span>
+<span class="kn">import</span> <span class="nn">scipy.signal</span> <span class="kn">as</span> <span class="nn">signal</span>
+
+<span class="k">def</span> <span class="nf">logfreqz</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">f0</span><span class="p">,</span> <span class="n">f1</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">N</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    以对数频率坐标计算滤波器b,a的频率响应</span>
+<span class="sd">    f0, f1: 计算频率响应的开始频率和结束频率</span>
+<span class="sd">    fs: 取样频率</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">w0</span><span class="p">,</span> <span class="n">w1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">f0</span><span class="o">/</span><span class="n">fs</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">f1</span><span class="o">/</span><span class="n">fs</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+    <span class="c"># 不包括结束频率</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span><span class="n">w0</span><span class="p">,</span> <span class="n">w1</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">zm1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">w</span><span class="p">)</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyval</span><span class="p">(</span><span class="n">b</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">zm1</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">polyval</span><span class="p">(</span><span class="n">a</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">zm1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">w</span><span class="o">/</span><span class="mi">2</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="n">fs</span><span class="p">,</span> <span class="n">h</span>
+    
+<span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">):</span>    
+    <span class="c"># 设计n阶的通频为0.1*4000 = 400Hz的高通滤波器</span>
+    <span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">iirfilter</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>    
+    <span class="n">f</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">logfreqz</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">,</span> <span class="mf">4000.0</span><span class="p">,</span> <span class="mf">8000.0</span><span class="p">,</span> <span class="mi">400</span><span class="p">)</span>
+    <span class="n">gain</span> <span class="o">=</span> <span class="mi">20</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">h</span><span class="p">))</span>
+    <span class="n">pl</span><span class="o">.</span><span class="n">semilogx</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">gain</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&quot;N=</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">n</span><span class="p">)</span>
+    <span class="n">slope</span> <span class="o">=</span> <span class="p">(</span><span class="n">gain</span><span class="p">[</span><span class="mi">100</span><span class="p">]</span><span class="o">-</span><span class="n">gain</span><span class="p">[</span><span class="mi">10</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">f</span><span class="p">[</span><span class="mi">100</span><span class="p">])</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">f</span><span class="p">[</span><span class="mi">10</span><span class="p">]))</span>
+    <span class="k">print</span> <span class="s">&quot;N=</span><span class="si">%s</span><span class="s">, slope=</span><span class="si">%s</span><span class="s"> dB&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">slope</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="o">-</span><span class="mi">100</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">u&quot;频率(Hz)&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">u&quot;增益(dB)&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</td></tr></table></div>
+<p>程序中的logfreqz函数计算系数为b和a的滤波器在f0到f1之间的频率响应，fs为取样频率，N为计算的点数。首先通过f/fs*2*pi将实际频率转换为与之对应的圆频率。然后通过logspace函数计算频率点的等比数列。最后和freqz一样通过调用polyval计算频率响应，返回值为实际频率点和对应的频率响应。</p>
+<p>接下来通过调用iirfilter设计5个不同阶的IIR高通滤波器，通频为0.1，如果取样频率为8kHz的话，那么实际的通频为0.1*4kHz=400Hz。5个IIR滤波器的增益特性如下图所示：</p>
+<div class="figure" id="fig-filter11">
+<img alt="_images/filter_11.png" src="_images/filter_11.png" style="width: 14cm;" />
+<p class="caption">iirfilter设计5个不同阶的IIR高通滤波器</p>
+</div>
+<p>由此图可知，随着IIR滤波器的阶数的增加，增益的下降速度增加，程序中第25行计算出下降处两个倍频之间的增益差值，其结果如下：</p>
+<div class="highlight-python"><pre>N=1, slope=5.9955865774 dB
+N=2, slope=12.0417201051 dB
+N=3, slope=18.0630802032 dB
+N=4, slope=24.0841135443 dB
+N=5, slope=30.1051375912 dB</pre>
+</div>
+<p>即IIR滤波器的阶数每增加1，其增益的下降速度增加 6dB/oct (6dB每倍频)。并且所有曲线的相交于一点：此处的频率正好是400Hz，增益为-3dB。</p>
+</div>
+<div class="section" id="id7">
+<h2>二次均衡器设计工具<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h2>
+<p>也许很少有人知道，无论是古老的盒式录音机还是现代的流行数码音响设备，以及众多的音乐播放软件，其中绝大多数的均衡器都只是一系列简单的二次IIR滤波器组合而成。</p>
+<p>二次IIR滤波器的传递函数如下：</p>
+<div class="math">
+<p><img src="_images/math/a4e28fcd6f26880dfe3090cff4de3b0b8a185d2d.png" alt="H(z) = \frac{b0 + b1 \cdot z^{-1} + b2 \cdot z^{-2}}{a0 + a1 \cdot z^{-1} + a2 \cdot z^{-2}}" /></p>
+</div><p>当a0的值不为1时，可以将所有系数b0, b1, b2, a0, a1, a2都除以a0，这样就能得到a0=1的五个系数： b0, b1, b2, a1, a2。即二次均衡滤波器的频率响应曲线由这5个独立的参数决定。其频率响应如下图所示：</p>
+<div class="figure" id="fig-filter12">
+<img alt="_images/filter_12.png" src="_images/filter_12.png" style="width: 14cm;" />
+<p class="caption">二次均衡滤波器的频率响应</p>
+</div>
+<p>从图中可以看出，根据频率响应曲线的两个参数：中心频率f0，振幅峰值peak：</p>
+<ul class="simple">
+<li>频率为0时频率响应为1</li>
+<li>频率为取样频率一半时(圆频率为pi)，频率响应为1</li>
+<li>频率为中心频率f0时，振幅达到峰值peak</li>
+<li>频率响应在中心频率f0处的导数为0</li>
+</ul>
+<p>这样就有了4个方程，再加上一个Q值决定振幅驼峰的宽度，因此一共5个方程决定5个系数。</p>
+<p>Audio EQ Cookbook ( <a class="reference external" href="http://www.musicdsp.org/files/Audio-EQ-Cookbook.txt">http://www.musicdsp.org/files/Audio-EQ-Cookbook.txt</a> ) 中提供了二次均衡器系数的设计公式，根据这个设计手册，很容易写出如下的设计均衡器参数的函数：</p>
+<div class="highlight-python"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33</pre></div></td><td class="code"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+
+<span class="kn">import</span> <span class="nn">scipy.signal</span> <span class="kn">as</span> <span class="nn">signal</span>
+<span class="kn">import</span> <span class="nn">pylab</span> <span class="kn">as</span> <span class="nn">pl</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="k">def</span> <span class="nf">design_equalizer</span><span class="p">(</span><span class="n">freq</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">gain</span><span class="p">,</span> <span class="n">Fs</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;设计二次均衡滤波器的系数&#39;&#39;&#39;</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="mi">10</span><span class="o">**</span><span class="p">(</span><span class="n">gain</span><span class="o">/</span><span class="mf">40.0</span><span class="p">)</span>
+    <span class="n">w0</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="n">math</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="n">freq</span><span class="o">/</span><span class="n">Fs</span>
+    <span class="n">alpha</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">w0</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">/</span> <span class="n">Q</span>
+    
+    <span class="n">b0</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">A</span>
+    <span class="n">b1</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span><span class="o">*</span><span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">w0</span><span class="p">)</span>
+    <span class="n">b2</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">A</span>
+    <span class="n">a0</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">alpha</span> <span class="o">/</span> <span class="n">A</span>
+    <span class="n">a1</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span><span class="o">*</span><span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">w0</span><span class="p">)</span>
+    <span class="n">a2</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">alpha</span> <span class="o">/</span> <span class="n">A</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">b0</span><span class="o">/</span><span class="n">a0</span><span class="p">,</span><span class="n">b1</span><span class="o">/</span><span class="n">a0</span><span class="p">,</span><span class="n">b2</span><span class="o">/</span><span class="n">a0</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">a1</span><span class="o">/</span><span class="n">a0</span><span class="p">,</span> <span class="n">a2</span><span class="o">/</span><span class="n">a0</span><span class="p">]</span>    
+    
+<span class="n">pl</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">freq</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">2000</span><span class="p">,</span> <span class="mi">4000</span><span class="p">]:</span>  
+    <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">]:</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="o">-</span><span class="mi">10</span><span class="p">]:</span>
+            <span class="n">b</span><span class="p">,</span><span class="n">a</span> <span class="o">=</span> <span class="n">design_equalizer</span><span class="p">(</span><span class="n">freq</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="mi">44100</span><span class="p">)</span>
+            <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">freqz</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span>
+            <span class="n">pl</span><span class="o">.</span><span class="n">semilogx</span><span class="p">(</span><span class="n">w</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="mi">44100</span><span class="p">,</span> <span class="mi">20</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">h</span><span class="p">)))</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">44100</span><span class="p">)</span>      
+<span class="n">pl</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s">u&quot;频率(Hz)&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s">u&quot;振幅(dB)&quot;</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">subplots_adjust</span><span class="p">(</span><span class="n">bottom</span><span class="o">=</span><span class="mf">0.15</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</td></tr></table></div>
+<p>使用上节介绍的对数频率响应的求法以及TraitsUI和Chaco等界面库，我们可以设计如下界面的二次均衡器设计程序：</p>
+<div class="figure" id="fig-filterequalizerdesigner">
+<img alt="_images/filter_equalizer_designer.png" src="_images/filter_equalizer_designer.png" style="width: 14cm;" />
+<p class="caption">二次均衡器设计工具的界面</p>
+</div>
+<p>用户可以使用此程序添加、删除和编辑二次均衡器，并且即时查看均衡器级联之后的频率响应。完整的程序请参照： <a class="reference external" href="example_equalizer_designer.html"><em>二次均衡器设计</em></a></p>
+<div class="topic">
+<p class="topic-title first">ScrubberEditor的BUG</p>
+<p>如果界面中的ScrubberEditor无法用鼠标拖动修改的话，那么你需要修改site-packages目录下的 scrubber_editor.py 文件：</p>
+<div class="highlight-python"><pre>TraitsBackendWX-3.2.0-py2.6.egg\enthought\traits\ui\wx\scrubber_editor.py</pre>
+</div>
+<p>按照如下打星号的行进行修改：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># Establish the slider increment:</span>
+<span class="n">increment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">factory</span><span class="o">.</span><span class="n">increment</span>
+<span class="k">if</span> <span class="n">increment</span> <span class="o">&lt;=</span> <span class="mf">0.0</span><span class="p">:</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">low</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">high</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span> <span class="n">low</span><span class="p">,</span> <span class="nb">int</span> <span class="p">):</span>
+        <span class="n">increment</span> <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">increment</span> <span class="o">=</span> <span class="nb">pow</span><span class="p">(</span> <span class="mi">10</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span> <span class="n">log10</span><span class="p">(</span> <span class="p">(</span><span class="n">high</span> <span class="o">-</span> <span class="n">low</span><span class="p">)</span> <span class="o">/</span> <span class="mf">100.0</span> <span class="p">)</span> <span class="p">)</span> <span class="p">)</span>
+
+<span class="bp">self</span><span class="o">.</span><span class="n">increment</span> <span class="o">=</span> <span class="n">increment</span> <span class="c"># ** 将此行移出if作用域</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">首页目录</a></h3>
+            <ul>
+<li><a class="reference external" href="#">数字信号系统</a><ul>
+<li><a class="reference external" href="#firiir">FIR和IIR滤波器</a></li>
+<li><a class="reference external" href="#fir">FIR滤波器设计</a><ul>
+<li><a class="reference external" href="#firwin">用firwin设计滤波器</a></li>
+<li><a class="reference external" href="#remez">用remez设计滤波器</a></li>
+<li><a class="reference external" href="#id2">滤波器级联</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#iir">IIR滤波器设计</a><ul>
+<li><a class="reference external" href="#id3">巴特沃斯低通滤波器</a></li>
+<li><a class="reference external" href="#id4">双线性变换</a></li>
+<li><a class="reference external" href="#id5">滤波器的频带转换</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#id6">滤波器的频率响应</a></li>
+<li><a class="reference external" href="#id7">二次均衡器设计工具</a></li>
+</ul>
+</li>
+</ul>
+
+            <h4>上一篇文章</h4>
+            <p class="topless"><a href="wave_pyaudio.html"
+                                  title="上一篇文章">声音的输入输出</a></p>
+            <h4>下一篇文章</h4>
+            <p class="topless"><a href="fft_study.html"
+                                  title="下一篇文章">FFT演示程序</a></p>
+          <div id="searchbox" style="display: none">
+            <h3>快速搜索</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="搜索" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              中文搜索请尽量用空格分开单个的单词，例如搜索"科学 计算"，而不是"科学计算"
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="fft_study.html" title="FFT演示程序"
+             >下一篇</a></li>
+        <li class="right" >
+          <a href="wave_pyaudio.html" title="声音的输入输出"
+             >上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+    &copy; 2009, <a href="http://hyry.dip.jp/blogt.py">HYRY Studio</a>
+      由 <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.4. 编译
+    </div>
+  </body>
+</html>

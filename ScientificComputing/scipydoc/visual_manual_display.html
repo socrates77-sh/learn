@@ -1,0 +1,247 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>场景窗口 &mdash; 用Python做科学计算</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link type="text/css" href="_static/jquery-ui-1.7.2.custom.css" rel="stylesheet" />	
+    <link type="text/css" href="_static/comments.css" rel="stylesheet" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '#',
+        VERSION:     '1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/jquery-ui-1.7.2.custom.min.js"></script>
+    <script type="text/javascript" src="_static/pydoc.js"></script>
+    <link rel="top" title="用Python做科学计算" href="index.html" />
+    <link rel="up" title="Visual使用手册" href="visual_manual_index.html" />
+    <link rel="下一篇" title="声音的输入输出" href="wave_pyaudio.html" />
+    <link rel="上一篇" title="Visual使用手册" href="visual_manual_index.html" /> 
+
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-10837468-1");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="wave_pyaudio.html" title="声音的输入输出"
+             accesskey="N">下一篇</a></li>
+        <li class="right" >
+          <a href="visual_manual_index.html" title="Visual使用手册"
+             accesskey="P">上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li>
+          <li><a href="visual_manual_index.html" accesskey="U">Visual使用手册</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="id1">
+<h1>场景窗口<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<p>visual中的所有的3D物体都在一个窗口中显示，此窗口为display类的对象，通过这对象我们可以修改窗口的各种属性；控制场景中的照相机，从各个角度观察场景。</p>
+<div class="section" id="id2">
+<h2>控制场景窗口<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>从visual库载入所有对象之后，缺省情况下，有一个可以用变量scene访问的缺省的场景窗口对象，它也是初始情况下的当前窗口：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">visual</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">scene</span>
+<span class="go">&lt;visual.ui.display object at 0x032BF600&gt;</span>
+</pre></div>
+</div>
+<p>我们看到场景窗口对象是visual.ui.display类的一个实例。真正的窗口需要在其中放置物体才会被显示出来。因此如果我们用display()创建自己的窗口对象的话，那么可以不用管这个缺省的窗口对象，我们创建的窗口对象将变成当前窗口。用box等类创建的3D物体将会被放到当前窗口中。下面语句调用display创建一个新的窗口对象：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">scene2</span> <span class="o">=</span> <span class="n">display</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s">&#39;Scene2&#39;</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">600</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>  <span class="o">...</span>
+<span class="go">    center=(5,0,0), background=(0,1,1))</span>
+</pre></div>
+</div>
+<p>执行上面的语句之后，将创建一个标题为Scene2的窗口，其左上角的坐标为(0,0)，宽度为600像素，高度为200像素，照相机所正对的位置的坐标(5,0,0)，也就是说窗口中心的点的3D坐标为(5,0,0)，背景为青色。注意要显示窗口，我们需要往里面放物体：</p>
+<blockquote>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">box</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="o">&lt;</span><span class="n">visual</span><span class="o">.</span><span class="n">primitives</span><span class="o">.</span><span class="n">box</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x0334F090</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">box</span><span class="p">(</span><span class="n">pos</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="o">.</span><span class="n">red</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="o">&lt;</span><span class="n">visual</span><span class="o">.</span><span class="n">primitives</span><span class="o">.</span><span class="n">box</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x0334F120</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+</blockquote>
+<p>第一个立方体放在了缺省坐标(0,0,0)处，其颜色为缺省的白色；第二个立方体放在了坐标(5,0,0)处，颜色为红色。红色立方体在窗口的中心，和我们设置的窗口的center属性一致。</p>
+<div class="figure" id="fig-vpythonmanual02">
+<img alt="_images/vpython_manual_02.png" src="_images/vpython_manual_02.png" />
+<p class="caption">在场景中放置立方体</p>
+</div>
+<p>我们可以调用窗口对象的select方法使其成为当前窗口。通过display.get_selected()可以获得当前窗口对象：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">scene</span><span class="o">.</span><span class="n">select</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sphere</span><span class="p">()</span>
+<span class="go">&lt;visual.primitives.sphere object at 0x0331D7B0&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">scene2</span><span class="o">.</span><span class="n">select</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sphere</span><span class="p">(</span><span class="n">pos</span><span class="o">=</span><span class="p">(</span><span class="mf">2.5</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="o">.</span><span class="n">blue</span><span class="p">)</span>
+<span class="go">&lt;visual.primitives.sphere object at 0x0331D810&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">display</span><span class="o">.</span><span class="n">get_selected</span><span class="p">()</span> <span class="o">==</span> <span class="n">scene2</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+<p>上面的程序先将scene改为当前窗口，然后在其中创建一个球体；接着将scene2改为当前窗口，在其中创建一个蓝色的球体，放在坐标(2.5,0,0)处。最后调用display.get_selected()检查当前窗口是否是scene2。执行这段程序之后，将出现两个场景窗口，缺省窗口的标题为VPython，其中有一个球体；我们自己创建的窗口标题为Scene2，其中有两个立方体和一个球体。</p>
+<div class="figure" id="fig-vpythonmanual03">
+<img alt="_images/vpython_manual_03.png" src="_images/vpython_manual_03.png" />
+<p class="caption">在第二个场景中放置球体</p>
+</div>
+<p>窗口对象有如下的属性：</p>
+<ul>
+<li><p class="first"><strong>foreground</strong> : 在窗口中创建物体时所采用的缺省颜色，缺省值为白色。例如运行 scene.foreground = color.green 之后，窗口中新添加的物体如果不指定颜色的话就会是绿色的。</p>
+</li>
+<li><p class="first"><strong>background</strong> : 窗口的背景颜色，缺省值为黑色。</p>
+</li>
+<li><p class="first"><strong>ambient</strong> : 环境光的颜色，缺省值为color.gray(0.2)，为了和visual 3兼容，使用scene.ambient=0.2和scene.ambient=color.gray(0.2)是一样的。</p>
+</li>
+<li><p class="first"><strong>lights</strong> : 场景窗口中的光源列表，场景中的缺省光源为：</p>
+<blockquote>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">[</span><span class="n">distant_light</span><span class="p">(</span><span class="n">direction</span><span class="o">=</span><span class="p">(</span><span class="mf">0.22</span><span class="p">,</span> <span class="mf">0.44</span><span class="p">,</span> <span class="mf">0.88</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="o">.</span><span class="n">gray</span><span class="p">(</span><span class="mf">0.8</span><span class="p">)),</span>
+ <span class="n">distant_light</span><span class="p">(</span><span class="n">direction</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mf">0.88</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.22</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.44</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="o">.</span><span class="n">gray</span><span class="p">(</span><span class="mf">0.3</span><span class="p">))]</span>
+</pre></div>
+</div>
+<p>可以用如下的语句查看光源的属性：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">scene</span><span class="o">.</span><span class="n">lights</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">direction</span>
+<span class="go">vector(0.218217890235992, 0.436435780471985, 0.87287156094397)</span>
+</pre></div>
+</div>
+</blockquote>
+</li>
+<li><p class="first"><strong>cursor.visible</strong> : 控制场景窗口中鼠标是否显示，如果设置为False的话，那么鼠标将被隐藏。你可以用它在用鼠标拖拽物体时隐藏鼠标，释放物体时显示鼠标。</p>
+</li>
+<li><p class="first"><strong>objects</strong> : 窗口中所有可见的物体的列表，被隐藏的物体和光源不在此列表之中，当通过设置某物体的visible属性隐藏它时，其效果就是将它从此列表中删除。下面的语句让场景中所有的box都变成红色：</p>
+<blockquote>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">scene2</span><span class="o">.</span><span class="n">objects</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">box</span><span class="p">):</span>
+        <span class="n">obj</span><span class="o">.</span><span class="n">color</span> <span class="o">=</span> <span class="n">color</span><span class="o">.</span><span class="n">red</span>
+</pre></div>
+</div>
+</blockquote>
+</li>
+<li><p class="first"><strong>show_rendertime</strong> : 如果其值为true，那么在窗口的左下角将显示如 &quot;cycle:27: 5&quot; 的字样。它表示场景润色的帧之间的间隔为27毫秒，每帧需要5毫秒时间润色。这表明用户的Python程序每帧有22毫秒的处理时间。</p>
+</li>
+<li><p class="first"><strong>stero</strong> : 立体视觉设置。如果你有双色3D立体眼镜的话，不妨试试这个选项。例如scene.stereo=&quot;redcyan&quot;，将润色为红-青立体眼镜用的场景，此外还有&quot;redblue&quot;和&quot;yellowblue&quot;等选项。此外还可以设置为&quot;crosseyed&quot;，它将润色左右两个场景，当你左右眼交叉聚焦到右左两个图时，产生立体效果。和流行一时的立体图片类似，反正我是看不出来。设置为&quot;active&quot;的话，产生可以用shutter glasses观看的立体场景。</p>
+</li>
+<li><p class="first"><strong>stereodepth</strong> : 修改立体视觉的深度，缺省值为0，设置为2有最好的立体效果。这个参数我没有用过。</p>
+</li>
+</ul>
+<p>下面的属性 x, y, width, height, title和fullscreen等都只能在窗口隐藏的时候修改。因此通常是在用display创建窗口的时候同时设置这些属性。如果你需要设置已经显示了的窗口的属性的话，先通过设置visible = False将其隐藏，设置这些属性，最后再重新显示窗口。</p>
+<ul class="simple">
+<li><strong>x, y</strong> : 窗口在屏幕中的位置，窗口左上角的屏幕坐标</li>
+<li><strong>width, height</strong> : 整个窗口的像素宽度和高度，包括边框和标题栏</li>
+<li><strong>title</strong> : 窗口的标题栏中的文字，如果需要设置中文的话，需要设置为windows的缺省编码，例如scene.title = u&quot;中文标题&quot;.encode(&quot;gb2312&quot;)</li>
+<li><strong>fullscreen</strong> : 全屏显示，如果用scene.fullscreen=True全屏显示的话，将没有窗口的边框和标题栏，按Esc键退出</li>
+<li><strong>visible</strong> : 窗口是否可见，当某个物体被添加进窗口时，窗口将自动的被设置为可见</li>
+<li><strong>exit</strong> : 当exit为False的时候，将禁止窗口的关闭按钮，也就是无法通过关闭按钮关闭窗口，缺省值为True。</li>
+</ul>
+</div>
+<div class="section" id="id3">
+<h2>控制照相机<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<p>照相机的控制是通过设置窗口的属性来完成的。</p>
+<ul>
+<li><p class="first"><strong>center</strong> : 照相机所正对的3D空间的坐标点，即使用户旋转场景，照相机也始终正对着这个坐标。如果你修改了center的值的话，照相机将保持其方向不变，进行平行移动使得其正对center坐标。center的缺省值为(0,0,0)。</p>
+<blockquote>
+<div class="figure" id="fig-vpythonmanual04">
+<img alt="_images/vpython_manual_04.png" src="_images/vpython_manual_04.png" />
+<p class="caption">改变照相体的center属性对照相机进行平移</p>
+</div>
+</blockquote>
+</li>
+<li><p class="first"><strong>autocenter</strong> : 如果设置为True的话，将自动计算center属性，使得它为包含所有物体的最小的长方体的中心，此最小长方体的各边与x, y, z轴平行。这样，照相机始终跟随着场景中的物体，因此如果你移动了场景中的任何物体，都有可能改变center属性。</p>
+</li>
+<li><p class="first"><strong>forward</strong> : 照相机所指向的方向。也就是从照相机所在的位置到center的方向矢量。用户不能直接修改照相机所在的位置，但可以通过scene.mouse.camera获得。当用户旋转场景时，其实就是在修改forward属性。当forward被修改之后，照相机将会改变其位置使得其方向和forward矢量平行，其中心正对center点。forward的缺省值为(0,0,-1)，因此是从上往下的俯视观察场景。</p>
+<blockquote>
+<div class="figure" id="fig-vpythonmanual05">
+<img alt="_images/vpython_manual_05.png" src="_images/vpython_manual_05.png" />
+<p class="caption">forward属性改变照相机的方向和位置</p>
+</div>
+</blockquote>
+</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">首页目录</a></h3>
+            <ul>
+<li><a class="reference external" href="#">场景窗口</a><ul>
+<li><a class="reference external" href="#id2">控制场景窗口</a></li>
+<li><a class="reference external" href="#id3">控制照相机</a></li>
+</ul>
+</li>
+</ul>
+
+            <h4>上一篇文章</h4>
+            <p class="topless"><a href="visual_manual_index.html"
+                                  title="上一篇文章">Visual使用手册</a></p>
+            <h4>下一篇文章</h4>
+            <p class="topless"><a href="wave_pyaudio.html"
+                                  title="下一篇文章">声音的输入输出</a></p>
+          <div id="searchbox" style="display: none">
+            <h3>快速搜索</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="搜索" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              中文搜索请尽量用空格分开单个的单词，例如搜索"科学 计算"，而不是"科学计算"
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="wave_pyaudio.html" title="声音的输入输出"
+             >下一篇</a></li>
+        <li class="right" >
+          <a href="visual_manual_index.html" title="Visual使用手册"
+             >上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li>
+          <li><a href="visual_manual_index.html" >Visual使用手册</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+    &copy; 2009, <a href="http://hyry.dip.jp/blogt.py">HYRY Studio</a>
+      由 <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.4. 编译
+    </div>
+  </body>
+</html>

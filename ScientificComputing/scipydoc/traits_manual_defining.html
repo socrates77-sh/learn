@@ -1,0 +1,531 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>定义Traits &mdash; 用Python做科学计算</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link type="text/css" href="_static/jquery-ui-1.7.2.custom.css" rel="stylesheet" />	
+    <link type="text/css" href="_static/comments.css" rel="stylesheet" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '#',
+        VERSION:     '1',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/jquery-ui-1.7.2.custom.min.js"></script>
+    <script type="text/javascript" src="_static/pydoc.js"></script>
+    <link rel="top" title="用Python做科学计算" href="index.html" />
+    <link rel="up" title="Traits使用手册" href="traits_manual_index.html" />
+    <link rel="下一篇" title="Trait事件处理" href="traits_manual_notification.html" />
+    <link rel="上一篇" title="Traits使用手册" href="traits_manual_index.html" /> 
+
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-10837468-1");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="traits_manual_notification.html" title="Trait事件处理"
+             accesskey="N">下一篇</a></li>
+        <li class="right" >
+          <a href="traits_manual_index.html" title="Traits使用手册"
+             accesskey="P">上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li>
+          <li><a href="traits_manual_index.html" accesskey="U">Traits使用手册</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="traits">
+<h1>定义Traits<a class="headerlink" href="#traits" title="Permalink to this headline">¶</a></h1>
+<p>在Python程序中按照下面的步骤使用Traits库：</p>
+<ol class="arabic simple">
+<li>从 enthought.traits.api 中载入你所需要的对象</li>
+<li>定义你想使用的traits</li>
+<li>从HasTraits类继承一个新类，在其中使用你定义的traits声明trait属性</li>
+</ol>
+<p>通常第2、3步是放在一起的，也就是说定义traits的同时定义trait属性，在本手册中的大部分例子都是采用这种方式：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">enthought.traits.api</span> <span class="kn">import</span> <span class="n">HasTraits</span><span class="p">,</span> <span class="n">Float</span>
+
+<span class="k">class</span> <span class="nc">Person</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+    <span class="n">weight</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">50.0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>这段程序定义了一个从HasTraits类继承的Person类，在其内部声明了一个名为weight的trait属性，其类型为浮点数，初始值为50.0。trait属性像类的属性一样定义，像实例的属性一样使用。下面我们来看看如何使用trait属性：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">joe</span> <span class="o">=</span> <span class="n">Person</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">joe</span><span class="o">.</span><span class="n">weight</span>
+<span class="go">50.0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">joe</span><span class="o">.</span><span class="n">weight</span> <span class="o">=</span> <span class="mf">70.5</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">joe</span><span class="o">.</span><span class="n">weight</span> <span class="o">=</span> <span class="mi">70</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">joe</span><span class="o">.</span><span class="n">weight</span> <span class="o">=</span> <span class="s">&quot;89&quot;</span>
+<span class="gt">Traceback (most recent call last):</span>
+  File <span class="nb">&quot;...trait_handlers.py&quot;</span>, line <span class="m">175</span>, in <span class="n-Identifier">error value )</span>
+<span class="nc">TraitError</span>: <span class="n-Identifier">The &#39;weight&#39; trait of a Person instance must be a float,</span>
+<span class="go">but a value of &#39;89&#39; &lt;type &#39;str&#39;&gt; was specified.</span>
+</pre></div>
+</div>
+<p>由于joe是Person类的实例，因此它有一个名为weight的trait属性，并且初始值为50.0。由于weight是使用Float声明的，我们能将浮点数赋值给它，由于整数可以不丢失精度的转换为浮点数，因此整数也可以赋值给它。然而，把浮点数赋值给整数trait属性将会产生错误。由于字符串无法转换为浮点数，因此赋值为字符串产生错误，错误的提示信息告诉我们它需要浮点数。</p>
+<p>有时候我们希望trait属性能够自动的进行强制类型转换，这样我们就可以将字符串赋值给类型为float的trait属性，省去了手工转换的麻烦。这种强制类型转换的trait属性都用Casting trait声明，所有的Casting trait都是以 <strong>C</strong> 开头的：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">enthought.traits.api</span> <span class="kn">import</span> <span class="n">HasTraits</span><span class="p">,</span> <span class="n">CFloat</span>
+
+<span class="k">class</span> <span class="nc">Person</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+    <span class="n">cweight</span> <span class="o">=</span> <span class="n">CFloat</span><span class="p">(</span><span class="mf">50.0</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">bill</span> <span class="o">=</span> <span class="n">Person</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">bill</span><span class="o">.</span><span class="n">cweight</span> <span class="o">=</span> <span class="s">&quot;90&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">bill</span><span class="o">.</span><span class="n">cweight</span>
+<span class="go">90.0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">bill</span><span class="o">.</span><span class="n">cweight</span> <span class="o">=</span> <span class="s">&quot;abc&quot;</span>
+<span class="go">Traceback (most recent call last)</span>
+<span class="gp">...</span>
+</pre></div>
+</div>
+<p>这段程序用CFloat声明了一个强制类型转换的trait属性cweight。我们可以将能转换为浮点数的字符串&quot;90&quot;赋值给它，但是 &quot;abc&quot; 这样的字符串赋值仍然会抛出异常。 我们可以想象CFloat的内部处理：它先将传入的值用内部函数float()进行强制类型转换，然后把结果赋值给trait属性。</p>
+<p>我们也可以先单独定义一个traits，然后用它来声明多个类的多个trait属性，下面是一个例子：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">enthought.traits.api</span> <span class="kn">import</span> <span class="n">HasTraits</span><span class="p">,</span> <span class="n">Range</span>
+
+<span class="n">coefficient</span> <span class="o">=</span> <span class="n">Range</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">quadratic</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+    <span class="n">c2</span> <span class="o">=</span> <span class="n">coefficient</span>
+    <span class="n">c1</span> <span class="o">=</span> <span class="n">coefficient</span>
+    <span class="n">c0</span> <span class="o">=</span> <span class="n">coefficient</span>
+    <span class="n">x</span>  <span class="o">=</span> <span class="n">Range</span><span class="p">(</span><span class="o">-</span><span class="mf">100.0</span><span class="p">,</span> <span class="mf">100.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>在这个例子中，我们需要定义多个trait属性，其类型都为Range(具有取值范围的浮点值)，并且范围都是-1.0到1.0，初始值为0.0。为了体现代码重用，我们先用coefficient = Range(-1.0, 1.0, 0.0)定义了一个traits，然后在quadratic类中使用它定义三个trait属性：c0, c1, c2。</p>
+<div class="section" id="id1">
+<h2>预定义的Traits<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>Traits库为Python的许多数据类型提供了预定义的trait类型。HasTraits派生的类中用trait类型名直接定义trait属性，这个类的所有实例都将拥有一个初始化为缺省值的属性，例如：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Person</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+    <span class="n">age</span> <span class="o">=</span> <span class="n">Float</span>
+</pre></div>
+</div>
+<p>上面的例子为Person类定义了一个age属性，其类型为浮点数，并且被初始化为0.0(Float的缺省值)。如果你希望用别的值初始化trait属性的话，可以把这个值当作参数传递给trait类型：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">age</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">10.0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>几乎所有的trait类型都是可以带括号调用的，它可以接受缺省值或者其它的参数；还可以通过关键字参数接受元数据。 .. TODO:: 插入元数据链接</p>
+<div class="section" id="id2">
+<h3>简单类型<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p>对于每个Python的简单数据类型都对应两种trait类型：强制类型和自动转换类型。它们的区别在于：</p>
+<ul class="simple">
+<li><strong>强制型Trait</strong> : 当这样trait属性被赋值为类型不匹配的数据时，会产生错误</li>
+<li><strong>自动型Trait</strong> : 类型不匹配时会自动调用此类型对应的Pyton内置的转换函数进行类型转换</li>
+</ul>
+<table border="1" class="docutils">
+<colgroup>
+<col width="16%" />
+<col width="15%" />
+<col width="26%" />
+<col width="26%" />
+<col width="16%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">强制型Trait</th>
+<th class="head">自动型Trait</th>
+<th class="head">Python对应的数据类型</th>
+<th class="head">内置缺省值</th>
+<th class="head">自动转换函数</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>Bool</td>
+<td>CBool</td>
+<td>Boolean</td>
+<td>False</td>
+<td>bool()</td>
+</tr>
+<tr><td>Complex</td>
+<td>CComplex</td>
+<td>Complex number</td>
+<td>0+0j</td>
+<td>complex()</td>
+</tr>
+<tr><td>Float</td>
+<td>CFloat</td>
+<td>Floating point number</td>
+<td>0.0</td>
+<td>float()</td>
+</tr>
+<tr><td>Int</td>
+<td>CInt</td>
+<td>Plain integer</td>
+<td>0</td>
+<td>int()</td>
+</tr>
+<tr><td>Long</td>
+<td>CLong</td>
+<td>Long integer</td>
+<td>0L</td>
+<td>int()</td>
+</tr>
+<tr><td>Str</td>
+<td>CStr</td>
+<td>String</td>
+<td>''</td>
+<td>str()</td>
+</tr>
+<tr><td>Unicode</td>
+<td>CUnicode</td>
+<td>Unicode</td>
+<td>u''</td>
+<td>unicode()</td>
+</tr>
+</tbody>
+</table>
+<p>下面的例子演示了强制型Trait和自动型Trait之间的区别：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">enthought.traits.api</span> <span class="kn">import</span> <span class="n">HasTraits</span><span class="p">,</span> <span class="n">Float</span><span class="p">,</span> <span class="n">CFloat</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">Person</span> <span class="p">(</span> <span class="n">HasTraits</span> <span class="p">):</span>
+<span class="gp">... </span>    <span class="n">weight</span>  <span class="o">=</span> <span class="n">Float</span>
+<span class="gp">... </span>    <span class="n">cweight</span> <span class="o">=</span> <span class="n">CFloat</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">bill</span> <span class="o">=</span> <span class="n">Person</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">bill</span><span class="o">.</span><span class="n">weight</span>  <span class="o">=</span> <span class="mi">180</span>    <span class="c"># OK, 整数和浮点数匹配(转换为浮点数而不丢失信息)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">bill</span><span class="o">.</span><span class="n">cweight</span> <span class="o">=</span> <span class="mi">180</span>    <span class="c"># OK,</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">bill</span><span class="o">.</span><span class="n">weight</span>  <span class="o">=</span> <span class="s">&#39;180&#39;</span>  <span class="c"># Error, 字符串和浮点数不匹配</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">bill</span><span class="o">.</span><span class="n">cweight</span> <span class="o">=</span> <span class="s">&#39;180&#39;</span>  <span class="c"># OK, 调用float(&#39;180&#39;)转换为浮点</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">bill</span><span class="o">.</span><span class="n">cweight</span>
+<span class="go">180.0</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id3">
+<h3>其它类型<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<p>除了简单类型以外，Traits库还定义了许多其他的常用的数据类型。几乎所有的Trait类型都可以直接使用其名称或者当作函数调用，并且可以接受多种参数。</p>
+<ul>
+<li><p class="first"><strong>Any</strong> : 任何对象；</p>
+<div class="highlight-python"><pre>Any( [value = None, **metadata] )</pre>
+</div>
+</li>
+<li><p class="first"><strong>Array</strong> : numpy的数组；</p>
+<div class="highlight-python"><pre>Array( [dtype = None, shape = None, value = None, typecode = None, **metadata] )</pre>
+</div>
+</li>
+<li><p class="first"><strong>Button</strong> : 按钮类型，通常用来触发事件，参数都是用来描述界面中的按钮的样式；</p>
+<div class="highlight-python"><pre>Button( [label ="", image = None, style = "button", orientation = "vertical", width_padding = 7, height_padding = 5, **metadata] )</pre>
+</div>
+</li>
+<li><p class="first"><strong>Callable</strong> : 可调用对象；</p>
+<div class="highlight-python"><pre>Callable( [value = None, **metadata] )</pre>
+</div>
+</li>
+<li><p class="first"><strong>CArray</strong> : 可自动转换类型的numpy数组； 调用的参数和Array相同</p>
+</li>
+<li><p class="first"><strong>Class</strong> : Python老式类；</p>
+<div class="highlight-python"><pre>Class( [value, **metadata] )</pre>
+</div>
+</li>
+<li><p class="first"><strong>Code</strong> : 某种编程语言的字符串；</p>
+<div class="highlight-python"><pre>Code( [value = "", minlen = 0, maxlen = sys.maxint, regex = "", **metadata] )</pre>
+</div>
+</li>
+<li><p class="first"><strong>Color</strong> : 界面库中所采用的颜色对象；</p>
+<div class="highlight-python"><pre>Color( [*args, **metadata] )</pre>
+</div>
+</li>
+<li><p class="first"><strong>CSet</strong> :  自动转换类型的集合对象；</p>
+<div class="highlight-python"><pre>CSet( [trait = None, value = None, items = True, **metadata] )</pre>
+</div>
+</li>
+<li><p class="first"><strong>Constant</strong> : 常量对象，其值不能改变，必须指定初始值；</p>
+<div class="highlight-python"><pre>Constant( value*[, ***metadata] )</pre>
+</div>
+</li>
+<li><p class="first"><strong>Dict</strong> : 字典对象，系统还定义了一系列关键字为字符串的字典trait类型：DictStrAny, DictStrBool, ...；</p>
+<div class="highlight-python"><pre>Dict( [key_trait = None, value_trait = None, value = None, items = True, **metadata] )</pre>
+</div>
+</li>
+<li><p class="first"><strong>Directory</strong> : 表示某个目录的路径的字符串；</p>
+<div class="highlight-python"><pre>Directory( [value ="", auto_set = False, entries = 10, exists = False, **metadata] )</pre>
+</div>
+</li>
+<li><p class="first"><strong>Disallow</strong> : 表示不容许任何值，在带有通配符的trait属性定义中使用</p>
+</li>
+<li><p class="first"><strong>Either</strong> : 多个trait类型的复合对象，例如 Either(Str, Float) 表示其定义的属性类型可以是字符串或者浮点数；</p>
+<div class="highlight-python"><pre>Either( val1*[, *val2, ..., valN, **metadata] )</pre>
+</div>
+</li>
+<li><p class="first"><strong>Enum</strong> : 枚举数据，其值可以是候选值中的一个；</p>
+<div class="highlight-python"><pre>Enum( values*[, ***metadata] )</pre>
+</div>
+</li>
+<li><p class="first"><strong>Event</strong> : 触发事件用的对象；</p>
+<div class="highlight-python"><pre>Event( [trait = None, **metadata] )</pre>
+</div>
+</li>
+<li><p class="first"><strong>Expression</strong> : Python的表达式对象；</p>
+<div class="highlight-python"><pre>Expression( [value ="0", **metadata] )</pre>
+</div>
+</li>
+<li><p class="first"><strong>File</strong> : 表示包括路径的文件名的字符串；</p>
+<div class="highlight-python"><pre>File( [value = "", filter = None, auto_set = False, entries = 10, exists = False, **metadata ] )</pre>
+</div>
+</li>
+<li><p class="first"><strong>Font</strong> : 界面库中表示字体的对象；</p>
+<div class="highlight-python"><pre>Font( [*args, **metadata] )</pre>
+</div>
+</li>
+</ul>
+<div class="section" id="thisself">
+<h4>This和self<a class="headerlink" href="#thisself" title="Permalink to this headline">¶</a></h4>
+<p>在预定义的traits中，This和self需要单独说明一下。它们所定义的属性必须是包含此属性的类(或派生类)的对象。This的缺省值为None，而self的缺省值则是包含属性的对象本身。</p>
+<p>下面来看一个例子：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Employee</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+    <span class="n">manager</span> <span class="o">=</span> <span class="bp">self</span>
+</pre></div>
+</div>
+<p>定义了一个Employee类，它有一个manager属性，其类型为Employee，缺省值为对象本身：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">e</span> <span class="o">=</span> <span class="n">Employee</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">e</span><span class="o">.</span><span class="n">manager</span>
+<span class="go">&lt;__main__.Employee object at 0x05DB72A0&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">e</span>
+<span class="go">&lt;__main__.Employee object at 0x05DB72A0&gt;</span>
+</pre></div>
+</div>
+<p>如果用This定义的话，那么缺省值为None。</p>
+<p>一般来说，属性为某个类的实例时可以这样定义：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">manager</span> <span class="o">=</span> <span class="n">Instance</span><span class="p">(</span><span class="n">Empolyee</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>但是对于这个例子中，在定义manager属性时，Empolyee还不存在，因此无法如此定义。如果你喜欢这种方式的话，可以用Instance(&quot;Empolyee&quot;)来定义，当两个类的属性交叉引用时，可以使用这种字符串的方式来定义。</p>
+<p>This和self不但可以表示类本身，还可以表示派生的类：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">enthought.traits.api</span> <span class="kn">import</span> <span class="n">HasTraits</span><span class="p">,</span> <span class="n">This</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">Employee</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+<span class="gp">... </span>   <span class="n">manager</span> <span class="o">=</span> <span class="n">This</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">Executive</span><span class="p">(</span><span class="n">Employee</span><span class="p">):</span>
+<span class="gp">... </span> <span class="k">pass</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fred</span> <span class="o">=</span> <span class="n">Employee</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mary</span> <span class="o">=</span> <span class="n">Executive</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fred</span><span class="o">.</span><span class="n">manager</span> <span class="o">=</span> <span class="n">mary</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mary</span><span class="o">.</span><span class="n">manager</span> <span class="o">=</span> <span class="n">fred</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id4">
+<h4>列出可能的值<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h4>
+<p>使用Enum可以定义枚举类型，在Enum的定义中给出所有可能的值，这些值必须是Python的简单数据类型，例如字符串、整数、浮点数等等，各个可能的值的类型可以不一样。可以直接将可能的值作为参数，或者将其包在某个list中，第一个值为缺省值：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Items</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+    <span class="n">count</span> <span class="o">=</span> <span class="n">Enum</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="s">&quot;many&quot;</span><span class="p">)</span>
+    <span class="c"># 或者：</span>
+    <span class="c"># count = Enum([None, 0, 1, 2, 3, &quot;many&quot;])</span>
+</pre></div>
+</div>
+<p>下面是运行结果：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">item</span> <span class="o">=</span> <span class="n">Items</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">item</span><span class="o">.</span><span class="n">count</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">item</span><span class="o">.</span><span class="n">count</span> <span class="o">=</span> <span class="s">&quot;many&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">item</span><span class="o">.</span><span class="n">count</span> <span class="o">=</span> <span class="mi">5</span>
+</pre></div>
+</div>
+<p>如果你希望候选值是可以变化的话，可以用values关键字指定定义侯选值的属性名：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Items</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+    <span class="n">count_list</span> <span class="o">=</span> <span class="n">List</span><span class="p">([</span><span class="bp">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="s">&quot;many&quot;</span><span class="p">])</span>
+    <span class="n">count</span> <span class="o">=</span> <span class="n">Enum</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="s">&quot;count_list&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>我们定义一个count_list列表，然后在Enum定义中用values关键字指定候选值为count_list属性。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">item</span> <span class="o">=</span> <span class="n">Items</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">item</span><span class="o">.</span><span class="n">count</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="go">Traceback (most recent call last)</span>
+<span class="go">#... 略去错误提示，此错误提示无法显示侯选值列表</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">item</span><span class="o">.</span><span class="n">count_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">item</span><span class="o">.</span><span class="n">count</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">item</span><span class="o">.</span><span class="n">count</span>
+<span class="go">5</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="trait">
+<h2>Trait的元数据<a class="headerlink" href="#trait" title="Permalink to this headline">¶</a></h2>
+<p>Trait对象可以有元数据属性，这些属性保存在HasTraits对象的trait字典中，为了解释什么是trait字典和元数据，让我们先来看一个例子：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">enthought.traits.api</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="k">class</span> <span class="nc">MetadataTest</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="n">Int</span><span class="p">(</span><span class="mi">99</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">Str</span><span class="p">(</span><span class="s">&quot;test&quot;</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s">&quot;a string trait property&quot;</span><span class="p">)</span>
+
+<span class="n">test</span> <span class="o">=</span> <span class="n">MetadataTest</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>在IPython中运行了上面的程序之后，我们对test进行如下操作：</p>
+<blockquote>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">test</span><span class="o">.</span><span class="n">traits</span><span class="p">()</span>
+<span class="go">{&#39;i&#39;: &lt;enthought.traits.traits.CTrait object at 0x05D44EA0&gt;,</span>
+<span class="go">&#39;trait_added&#39;: &lt;enthought.traits.traits.CTrait object at 0x05D17CE8&gt;,</span>
+<span class="go">&#39;s&#39;: &lt;enthought.traits.traits.CTrait object at 0x05D44EF8&gt;,</span>
+<span class="go">&#39;trait_modified&#39;: &lt;enthought.traits.traits.CTrait object at 0x05D17C90&gt;}</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">test</span><span class="o">.</span><span class="n">trait</span><span class="p">(</span><span class="s">&quot;i&quot;</span><span class="p">)</span>
+<span class="go">&lt;enthought.traits.traits.CTrait object at 0x05D44EA0&gt;</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">test</span><span class="o">.</span><span class="n">trait</span><span class="p">(</span><span class="s">&quot;s&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">desc</span>
+<span class="go">&#39;a string trait property&#39;</span>
+</pre></div>
+</div>
+</blockquote>
+<p>通过调用HasTraits对象的traits方法可以得到一个包含其所有trait对象的字典。请注意，trait属性和trait对象是两个东西：</p>
+<ul class="simple">
+<li><strong>trait属性</strong> : 用于保存实际的值，例如：test.i, test.s</li>
+<li><strong>trait对象</strong> : 用于描述trait属性，例如：test.trait(&quot;i&quot;), test.trait(&quot;s&quot;)</li>
+</ul>
+<p>也就是说对于每一个trait属性都有一个与之对应的trait对象描述它。而元数据就是保存在trait对象中的额外的描述属性用的数据。我们看到test的trait对象除了i和s之外，还有trait_added和trait_modified，着两个在HasTraits类中定义。</p>
+<p>元数据可以分为三类：</p>
+<ul class="simple">
+<li><strong>内部属性</strong> : 这些属性是trait对象自带的，只读不能写</li>
+<li><strong>识别属性</strong> : 这些属性是可以自由地设置的，它们可以改变trait的一些行为</li>
+<li><strong>任意属性</strong> : 用户自己添加的属性，需要自己编写程序使用它们</li>
+</ul>
+<div class="section" id="id5">
+<h3>内部元数据<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<p>下面的这些元数据属性在Traits库内部使用，用户可以读取它们的值。</p>
+<ul>
+<li><p class="first"><strong>array</strong> : 是否是数组，不是数组的trait对象没有此属性</p>
+</li>
+<li><p class="first"><strong>default</strong> : 对应的trait属性的缺省值。也就是说： trait属性的缺省值是保存在与其对应的trait对象的元数据属性default中的：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">test</span><span class="o">.</span><span class="n">trait</span><span class="p">(</span><span class="s">&quot;i&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">default</span>
+<span class="go">99</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first"><strong>default_kind</strong> : 一个描述缺省值的类型的字符串，其值可以是 value, list, dict, self, factory, method等：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">test</span><span class="o">.</span><span class="n">trait</span><span class="p">(</span><span class="s">&quot;i&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">default_kind</span>
+<span class="go">&#39;value&#39;</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first"><strong>inner_traits</strong> : 内部的trait对象，在List, Dict等中使用，表示List和Dict内部对象的类型</p>
+</li>
+<li><p class="first"><strong>trait_type</strong> : 描述trait属性的数据类型的对象。下面的例子中，得到的就是定义trait属性时所用的Int类的对象：</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">test</span><span class="o">.</span><span class="n">trait</span><span class="p">(</span><span class="s">&quot;i&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">trait_type</span>
+<span class="go">&lt;enthought.traits.trait_types.Int object at 0x05DBD2D0&gt;</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first"><strong>type</strong> : trait属性的分类，可以是constant, delegate, event, property, trait</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">test</span><span class="o">.</span><span class="n">trait</span><span class="p">(</span><span class="s">&quot;i&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">type</span>
+<span class="go">&#39;trait&#39;</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="id6">
+<h3>能识别的元数据<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+<p>下面的元数据属性不是预定义的，但是可以被HasTraits对象使用：</p>
+<ul class="simple">
+<li><strong>desc</strong> : 描述trait属性用的字符串，在界面中使用</li>
+<li><strong>editor</strong> : 指定一个生成界面时用何种TraitEditor编辑对应的trait属性</li>
+<li><strong>label</strong> : 界面中的trait属性编辑器的标签中的字符串</li>
+<li><strong>rich_compare</strong> : 指定判断trait属性值发生变化的方式。True(缺省)表示按值比较；Flase表示按照对象指针比较</li>
+<li><strong>trait_value</strong> : 指定trait属性是否接受TraitValu类的对象，缺省值为False。当它为True时，将trait属性设置为TraitValue()，将重置trait属性值为缺省值。</li>
+<li><strong>transient</strong> : 指定当对象被保存(持久化)时是否保存此trait属性值。对于大多数trait属性来说，它的缺省值都是True。</li>
+</ul>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">首页目录</a></h3>
+            <ul>
+<li><a class="reference external" href="#">定义Traits</a><ul>
+<li><a class="reference external" href="#id1">预定义的Traits</a><ul>
+<li><a class="reference external" href="#id2">简单类型</a></li>
+<li><a class="reference external" href="#id3">其它类型</a><ul>
+<li><a class="reference external" href="#thisself">This和self</a></li>
+<li><a class="reference external" href="#id4">列出可能的值</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference external" href="#trait">Trait的元数据</a><ul>
+<li><a class="reference external" href="#id5">内部元数据</a></li>
+<li><a class="reference external" href="#id6">能识别的元数据</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            <h4>上一篇文章</h4>
+            <p class="topless"><a href="traits_manual_index.html"
+                                  title="上一篇文章">Traits使用手册</a></p>
+            <h4>下一篇文章</h4>
+            <p class="topless"><a href="traits_manual_notification.html"
+                                  title="下一篇文章">Trait事件处理</a></p>
+          <div id="searchbox" style="display: none">
+            <h3>快速搜索</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="搜索" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              中文搜索请尽量用空格分开单个的单词，例如搜索"科学 计算"，而不是"科学计算"
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="traits_manual_notification.html" title="Trait事件处理"
+             >下一篇</a></li>
+        <li class="right" >
+          <a href="traits_manual_index.html" title="Traits使用手册"
+             >上一篇</a> |</li>
+        <li class="right" style="margin-right:10px">
+        <a href="#" id="toggle_sidebar">←切换侧栏(Alt+X)</a> |
+        </li>
+        <li><a href="index.html">用Python做科学计算</a> &raquo;</li>
+          <li><a href="traits_manual_index.html" >Traits使用手册</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+    &copy; 2009, <a href="http://hyry.dip.jp/blogt.py">HYRY Studio</a>
+      由 <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.4. 编译
+    </div>
+  </body>
+</html>
