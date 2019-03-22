@@ -48,5 +48,5 @@ for i in range(n_clusters):
     members = X[group, :]
     for v in members:
         distance_sum += manhattan_distance(np.array(v), cls.cluster_centers_)
-print distance_sum
+print(distance_sum)
 #结果63538.2443905

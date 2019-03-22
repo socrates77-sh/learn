@@ -78,28 +78,29 @@ def found_from_twoword(oneword_per, twoword_per):
 def predict(word):
     if word == 'jin':
         for i in found_from_oneword(jin_per)[0]:
-            print jin[i]
+            print(jin[i])
     elif word == 'jintian':
         for i in found_from_twoword(jin_per, jintian_per)[0]:
-            print jin[i[0]] + jintian[i[1]]
+            print(jin[i[0]] + jintian[i[1]])
     elif word == 'wo':
         for i in found_from_oneword(wo_per)[0]:
-            print wo[i]
+            print(wo[i])
     elif word == 'women':
         for i in found_from_twoword(wo_per, women_per)[0]:
-            print wo[i[0]] + women[i[1]]
+            print(wo[i[0]] + women[i[1]])
     elif word == 'jintianwo':
         index1, values1 = found_from_oneword(wo_per)
         index2, values2 = found_from_twoword(jin_per, jintian_per)
         last = np.multiply(values1, values1)
         for i in np.argsort(last)[::-1][:N]:
-            print jin[index2[i][0]], jintian[index2[i][1]], wo[i]
+            print(jin[index2[i][0]], jintian[index2[i][1]], wo[i])
     elif word == 'jintianwomen':
         index1, values1 = found_from_twoword(jin_per, jintian_per)
         index2, values2 = found_from_twoword(wo_per, women_per)
         last = np.multiply(values1, values1)
         for i in np.argsort(last)[::-1][:N]:
-            print jin[index1[i][0]], jintian[index1[i][1]], wo[index2[i][0]], women[index2[i][1]]
+            print(jin[index1[i][0]], jintian[index1[i][1]],
+                  wo[index2[i][0]], women[index2[i][1]])
     else:
         pass
 
