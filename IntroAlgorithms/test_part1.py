@@ -75,11 +75,89 @@ class Part1_Find_Max_Subarray(unittest.TestCase):
         self.assertEqual(result, golden)
 
 
-class Par1_Maxtrix_Multiply(unittest.TestCase):
-    def test_square_matrix_multiply(self):
+class Par1_Squrare_Maxtrix_Multiply(unittest.TestCase):
+    def test_matrix_multiply(self):
         m_size = (10, 10)
         a = np.random.randint(-100, 100, size=m_size)
         b = np.random.randint(-100, 100, size=m_size)
         result = square_matrix_multiply(a, b)
         golden = np.matmul(a, b)
         self.assertTrue((result == golden).all())
+
+    def test_matrix_multiply_not_same_size(self):
+        m_size_a = (5, 5)
+        m_size_b = (4, 4)
+        a = np.random.randint(-100, 100, size=m_size_a)
+        b = np.random.randint(-100, 100, size=m_size_b)
+        self.assertRaises(NotSameSizeError,
+                          square_matrix_multiply, a, b)
+
+    def test_matrix_multiply_not_square(self):
+        m_size = (10, 9)
+        a = np.random.randint(-100, 100, size=m_size)
+        b = np.random.randint(-100, 100, size=m_size)
+        self.assertRaises(NotSquareError,
+                          square_matrix_multiply, a, b)
+
+
+class Par1_Squrare_Maxtrix_Multiply_Recursive(unittest.TestCase):
+    def test_matrix_multiply(self):
+        m_size = (16, 16)
+        a = np.random.randint(-100, 100, size=m_size)
+        b = np.random.randint(-100, 100, size=m_size)
+        result = square_matrix_multiply_recursive(a, b)
+        golden = np.matmul(a, b)
+        self.assertTrue((result == golden).all())
+
+    def test_matrix_multiply_not_same_size(self):
+        m_size_a = (5, 5)
+        m_size_b = (4, 4)
+        a = np.random.randint(-100, 100, size=m_size_a)
+        b = np.random.randint(-100, 100, size=m_size_b)
+        self.assertRaises(NotSameSizeError,
+                          square_matrix_multiply_recursive, a, b)
+
+    def test_matrix_multiply_not_square(self):
+        m_size = (10, 9)
+        a = np.random.randint(-100, 100, size=m_size)
+        b = np.random.randint(-100, 100, size=m_size)
+        self.assertRaises(NotSquareError,
+                          square_matrix_multiply_recursive, a, b)
+
+    def test_matrix_multiply_not_power_of_two(self):
+        m_size = (10, 10)
+        a = np.random.randint(-100, 100, size=m_size)
+        b = np.random.randint(-100, 100, size=m_size)
+        self.assertRaises(NotPowOfTwoError,
+                          square_matrix_multiply_recursive, a, b)
+
+class Par1_Squrare_Maxtrix_Multiply_Strassen(unittest.TestCase):
+    def test_matrix_multiply(self):
+        m_size = (16, 16)
+        a = np.random.randint(-100, 100, size=m_size)
+        b = np.random.randint(-100, 100, size=m_size)
+        result = square_matrix_multiply_strassen(a, b)
+        golden = np.matmul(a, b)
+        self.assertTrue((result == golden).all())
+
+    def test_matrix_multiply_not_same_size(self):
+        m_size_a = (5, 5)
+        m_size_b = (4, 4)
+        a = np.random.randint(-100, 100, size=m_size_a)
+        b = np.random.randint(-100, 100, size=m_size_b)
+        self.assertRaises(NotSameSizeError,
+                          square_matrix_multiply_strassen, a, b)
+
+    def test_matrix_multiply_not_square(self):
+        m_size = (10, 9)
+        a = np.random.randint(-100, 100, size=m_size)
+        b = np.random.randint(-100, 100, size=m_size)
+        self.assertRaises(NotSquareError,
+                          square_matrix_multiply_strassen, a, b)
+
+    def test_matrix_multiply_not_power_of_two(self):
+        m_size = (10, 10)
+        a = np.random.randint(-100, 100, size=m_size)
+        b = np.random.randint(-100, 100, size=m_size)
+        self.assertRaises(NotPowOfTwoError,
+                          square_matrix_multiply_strassen, a, b)

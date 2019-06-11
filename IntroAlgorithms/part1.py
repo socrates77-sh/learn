@@ -1,4 +1,5 @@
 import numpy as np
+from my_exception import *
 
 
 def instersion_sort(a_list):
@@ -100,7 +101,12 @@ def find_max_subarray(a_list, low, high):
 
 
 def square_matrix_multiply(a, b):
+    if a.shape != b.shape:
+        raise NotSameSizeError('two matrix are not same size')
     n = a.shape[0]
+    m = a.shape[1]
+    if not n == m:
+        raise NotSquareError('matrix is not square')
     c = np.zeros(a.shape)
     for i in range(n):
         for j in range(n):
@@ -110,15 +116,128 @@ def square_matrix_multiply(a, b):
     return c
 
 
-def main():
-    a = np.random.randint(-100, 100, size=(3, 3))
-    b = np.random.randint(-100, 100, size=(3, 3))
-    c = square_matrix_multiply(a, b)
-    d = np.matmul(a, b)
-    print(c)
-    print(d)
+def square_matrix_multiply_recursive(a, b):
+    if a.shape != b.shape:
+        raise NotSameSizeError('two matrix are not same size')
+    n = a.shape[0]
+    m = a.shape[1]
+    if not n == m:
+        raise NotSquareError('matrix is not square')
+    if n & (n-1) != 0:
+        raise NotPowOfTwoError('matrix row/cloumn is not power of 2')
 
-    print((c == d).all())
+    c = np.zeros(a.shape)
+    if n == 1:
+        c = a*b
+        return c
+    else:
+        h = int(n/2)
+        a11 = a[:h, :h]
+        a12 = a[:h, h:]
+        a21 = a[h:, :h]
+        a22 = a[h:, h:]
+        b11 = b[:h, :h]
+        b12 = b[:h, h:]
+        b21 = b[h:, :h]
+        b22 = b[h:, h:]
+
+        c[:h, :h] = \
+            square_matrix_multiply_recursive(a11, b11) + \
+            square_matrix_multiply_recursive(a12, b21)
+        c[:h, h:] = \
+            square_matrix_multiply_recursive(a11, b12) + \
+            square_matrix_multiply_recursive(a12, b22)
+        c[h:, :h] = \
+            square_matrix_multiply_recursive(a21, b11) + \
+            square_matrix_multiply_recursive(a22, b21)
+        c[h:, h:] = \
+            square_matrix_multiply_recursive(a21, b12) + \
+            square_matrix_multiply_recursive(a22, b22)
+        return c
+
+
+def square_matrix_multiply_strassen(a, b):
+    if a.shape != b.shape:
+        raise NotSameSizeError('two matrix are not same size')
+    n = a.shape[0]
+    m = a.shape[1]
+    if not n == m:
+        raise NotSquareError('matrix is not square')
+    if n & (n-1) != 0:
+        raise NotPowOfTwoError('matrix row/cloumn is not power of 2')
+
+    c = np.zeros(a.shape)
+    if n == 1:
+        c = a*b
+        return c
+    else:
+        h = int(n/2)
+        a11 = a[:h, :h]
+        a12 = a[:h, h:]
+        a21 = a[h:, :h]
+        a22 = a[h:, h:]
+        b11 = b[:h, :h]
+        b12 = b[:h, h:]
+        b21 = b[h:, :h]
+        b22 = b[h:, h:]
+
+        p1 = square_matrix_multiply_strassen(a11, b12) - \
+            square_matrix_multiply_strassen(a11, b22)
+
+        p2 = square_matrix_multiply_strassen(a11, b22) + \
+            square_matrix_multiply_strassen(a12, b22)
+
+        p3 = square_matrix_multiply_strassen(a21, b11) + \
+            square_matrix_multiply_strassen(a22, b11)
+
+        p4 = square_matrix_multiply_strassen(a22, b21) - \
+            square_matrix_multiply_strassen(a22, b11)
+
+        p5 = square_matrix_multiply_strassen(a11, b11) + \
+            square_matrix_multiply_strassen(a11, b22) + \
+            square_matrix_multiply_strassen(a22, b11) + \
+            square_matrix_multiply_strassen(a22, b22)
+
+        p6 = square_matrix_multiply_strassen(a12, b21) + \
+            square_matrix_multiply_strassen(a12, b22) - \
+            square_matrix_multiply_strassen(a22, b21) - \
+            square_matrix_multiply_strassen(a22, b22)
+
+        p7 = square_matrix_multiply_strassen(a11, b11) + \
+            square_matrix_multiply_strassen(a11, b12) - \
+            square_matrix_multiply_strassen(a21, b11) - \
+            square_matrix_multiply_strassen(a21, b12)
+
+        c[:h, :h] = p5+p4-p2+p6
+        c[:h, h:] = p1+p2
+        c[h:, :h] = p3+p4
+        c[h:, h:] = p5+p1-p3-p7
+        return c
+
+
+def main():
+    m_size = (4, 4)
+    a = np.random.randint(-100, 100, size=m_size)
+    b = np.random.randint(-100, 100, size=m_size)
+    c1 = square_matrix_multiply_strassen(a, b)
+    c2 = square_matrix_multiply(a, b)
+    print(a)
+    print(b)
+    print(c1)
+    print(c2)
+
+    # h = int(a.shape[0]/2)
+    # print(a)
+    # # print(b)
+    # print('h=%d' % h)
+    # a11 = a[:h, :h]
+    # a12 = a[:h, h:]
+    # a21 = a[h:, :h]
+    # a22 = a[h:, h:]
+    # print(a11)
+    # print(a12)
+    # print(a21)
+    # print(a22)
 
 
 if __name__ == '__main__':
